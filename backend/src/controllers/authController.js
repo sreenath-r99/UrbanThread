@@ -1,15 +1,18 @@
 import {
   registerUser,
   loginUser,
+  googleAuthUser,
   verifyOTP,
   resendOTP,
   forgotPassword as forgotPasswordService,
+  verifyResetOtp as verifyResetOtpService,
   resetPassword as resetPasswordService,
 } from "../services/authService.js";
 
 // ==========================
 // REGISTER USER
 // ==========================
+
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -27,32 +30,32 @@ export const register = async (req, res) => {
     console.log("REGISTER STEP 2: Calling registerUser");
 
     // Register user and generate OTP
-    const { user, otp } = await registerUser(
+    const { user } = await registerUser(
       name,
       email,
       password
     );
 
-    console.log("REGISTER STEP 3: User registered successfully");
+    console.log(
+      "REGISTER STEP 3: User registered successfully"
+    );
 
     return res.status(201).json({
       success: true,
-      message: "Registration successful. Please verify your OTP.",
+      message:
+        "Registration successful. Please verify your OTP.",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
       },
-
-      // Temporary for development testing
-      // Remove after email OTP sending is implemented
-      otp,
     });
   } catch (error) {
-    console.error("REGISTER ERROR:");
-    console.error(error);
-    console.error(error.stack);
+    console.error(
+      "REGISTER ERROR:",
+      error.message
+    );
 
     return res.status(400).json({
       success: false,
@@ -64,6 +67,7 @@ export const register = async (req, res) => {
 // ==========================
 // LOGIN USER
 // ==========================
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -72,15 +76,14 @@ export const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message:
+          "Email and password are required",
       });
     }
 
     // Call login service
-    const { user, token } = await loginUser(
-      email,
-      password
-    );
+    const { user, token } =
+      await loginUser(email, password);
 
     return res.status(200).json({
       success: true,
@@ -94,6 +97,11 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(
+      "LOGIN ERROR:",
+      error.message
+    );
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -104,19 +112,28 @@ export const login = async (req, res) => {
 // ==========================
 // GET USER PROFILE
 // ==========================
-export const getProfile = async (req, res) => {
+
+export const getProfile = async (
+  req,
+  res
+) => {
   try {
     return res.status(200).json({
       success: true,
-      message: "Profile fetched successfully",
+      message:
+        "Profile fetched successfully",
       user: req.user,
     });
   } catch (error) {
-    console.error("PROFILE ERROR:", error);
+    console.error(
+      "PROFILE ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Something went wrong",
+      message:
+        "Something went wrong",
     });
   }
 };
@@ -124,7 +141,11 @@ export const getProfile = async (req, res) => {
 // ==========================
 // VERIFY OTP
 // ==========================
-export const verifyOtp = async (req, res) => {
+
+export const verifyOtp = async (
+  req,
+  res
+) => {
   try {
     const { email, otp } = req.body;
 
@@ -132,7 +153,8 @@ export const verifyOtp = async (req, res) => {
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Email and OTP are required",
+        message:
+          "Email and OTP are required",
       });
     }
 
@@ -144,7 +166,8 @@ export const verifyOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Email verified successfully",
+      message:
+        "Email verified successfully",
       user: {
         id: user._id,
         name: user.name,
@@ -153,6 +176,11 @@ export const verifyOtp = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(
+      "VERIFY OTP ERROR:",
+      error.message
+    );
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -163,30 +191,35 @@ export const verifyOtp = async (req, res) => {
 // ==========================
 // RESEND OTP
 // ==========================
-export const resendOtp = async (req, res) => {
+
+export const resendOtp = async (
+  req,
+  res
+) => {
   try {
     const { email } = req.body;
 
-    // Basic validation
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Email is required",
+        message:
+          "Email is required",
       });
     }
 
-    // Generate and save new OTP
-    const { otp } = await resendOTP(email);
+    const result =
+      await resendOTP(email);
 
     return res.status(200).json({
       success: true,
-      message: "New OTP generated successfully",
-      
-      // Temporary for development testing
-      // Remove after email sending is implemented
-      otp,
+      message: result.message,
     });
   } catch (error) {
+    console.error(
+      "RESEND OTP ERROR:",
+      error.message
+    );
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -209,14 +242,55 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    const result = await forgotPasswordService(email);
+    const result =
+      await forgotPasswordService(email);
 
     return res.status(200).json({
       success: true,
       message: result.message,
+    });
+  } catch (error) {
+    console.error(
+      "FORGOT PASSWORD ERROR:",
+      error
+    );
 
-      // Temporary for development testing
-      otp: result.otp,
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================
+// VERIFY RESET OTP
+// ==========================
+
+export const verifyResetOtp = async (
+  req,
+  res
+) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Basic validation
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email and OTP are required",
+      });
+    }
+
+    const result =
+      await verifyResetOtpService(
+        email,
+        otp
+      );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
     });
   } catch (error) {
     return res.status(400).json({
@@ -230,12 +304,23 @@ export const forgotPassword = async (req, res) => {
 // RESET PASSWORD
 // ==========================
 
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (
+  req,
+  res
+) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const {
+      email,
+      otp,
+      newPassword,
+    } = req.body;
 
     // Basic validation
-    if (!email || !otp || !newPassword) {
+    if (
+      !email ||
+      !otp ||
+      !newPassword
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -243,7 +328,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Password length validation
+    // Password validation
     if (newPassword.length < 6) {
       return res.status(400).json({
         success: false,
@@ -253,17 +338,85 @@ export const resetPassword = async (req, res) => {
     }
 
     // Reset password
-    const result = await resetPasswordService(
-      email,
-      otp,
-      newPassword
-    );
+    const result =
+      await resetPasswordService(
+        email,
+        otp,
+        newPassword
+      );
 
     return res.status(200).json({
       success: true,
       message: result.message,
     });
   } catch (error) {
+    console.error(
+      "RESET PASSWORD ERROR:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================
+// GOOGLE LOGIN / REGISTER
+// ==========================
+
+export const googleAuth = async (
+  req,
+  res
+) => {
+  try {
+    const { credential } = req.body;
+
+    // Check Google credential
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Google credential is required",
+      });
+    }
+
+    console.log(
+      "GOOGLE AUTH STEP 1: Credential received"
+    );
+
+    // Authenticate user with Google
+    const { user, token } =
+      await googleAuthUser(
+        credential
+      );
+
+    console.log(
+      "GOOGLE AUTH STEP 2: User authenticated:",
+      user.email
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Google authentication successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        googleImage:
+          user.googleImage || null,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "GOOGLE AUTH CONTROLLER ERROR:",
+      error.message
+    );
+
     return res.status(400).json({
       success: false,
       message: error.message,

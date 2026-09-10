@@ -5,9 +5,7 @@ import {
   loginUser,
 } from "../services/authService";
 
-
-const AuthContext = createContext(null);
-
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -18,8 +16,10 @@ export const AuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
+  // =========================
+  // LOAD LOGGED-IN USER
+  // =========================
 
-  // Load logged-in user when application starts
   useEffect(() => {
     const loadUser = async () => {
       if (!token) {
@@ -32,7 +32,10 @@ export const AuthProvider = ({ children }) => {
 
         setUser(response.user);
       } catch (error) {
-        console.error("Failed to load user:", error);
+        console.error(
+          "Failed to load user:",
+          error
+        );
 
         localStorage.removeItem("token");
 
@@ -46,12 +49,22 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [token]);
 
+  // =========================
+  // NORMAL LOGIN
+  // =========================
 
-  // Login
   const login = async (loginData) => {
     const response = await loginUser(loginData);
 
-    localStorage.setItem("token", response.token);
+    localStorage.setItem(
+      "token",
+      response.token
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(response.user)
+    );
 
     setToken(response.token);
     setUser(response.user);
@@ -59,15 +72,45 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
+  // =========================
+  // GOOGLE LOGIN
+  // =========================
 
-  // Logout
+  const googleLogin = (authData) => {
+    const { token, user } = authData;
+
+    if (!token || !user) {
+      throw new Error(
+        "Invalid Google authentication data"
+      );
+    }
+
+    localStorage.setItem(
+      "token",
+      token
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(user)
+    );
+
+    setToken(token);
+    setUser(user);
+  };
+
+  // =========================
+  // LOGOUT
+  // =========================
+
   const logout = () => {
     localStorage.removeItem("token");
+
+    localStorage.removeItem("user");
 
     setToken(null);
     setUser(null);
   };
-
 
   return (
     <AuthContext.Provider
@@ -75,8 +118,11 @@ export const AuthProvider = ({ children }) => {
         user,
         token,
         loading,
+
         login,
+        googleLogin,
         logout,
+
         setUser,
       }}
     >

@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    // ==========================
+    // BASIC USER INFORMATION
+    // ==========================
+
     name: {
       type: String,
       required: true,
@@ -16,11 +20,19 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // ==========================
+    // LOCAL AUTHENTICATION
+    // ==========================
+
     password: {
       type: String,
-      required: true,
       minlength: 6,
+      default: null,
     },
+
+    // ==========================
+    // CONTACT INFORMATION
+    // ==========================
 
     phone: {
       type: String,
@@ -32,11 +44,19 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    // ==========================
+    // ROLE
+    // ==========================
+
     role: {
       type: String,
       enum: ["user", "admin"],
       default: "user",
     },
+
+    // ==========================
+    // ACCOUNT STATUS
+    // ==========================
 
     isBlocked: {
       type: Boolean,
@@ -48,30 +68,49 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // ==========================
+    // AUTHENTICATION PROVIDER
+    // ==========================
+
     authProvider: {
       type: String,
       enum: ["local", "google", "facebook"],
       default: "local",
     },
 
+    // ==========================
+    // GOOGLE AUTHENTICATION
+    // ==========================
+
     googleId: {
       type: String,
       default: null,
     },
+
+    googleImage: {
+      type: String,
+      default: "",
+    },
+
+    // ==========================
+    // FACEBOOK AUTHENTICATION
+    // ==========================
 
     facebookId: {
       type: String,
       default: null,
     },
 
-    // OTP for email verification
+    // ==========================
+    // OTP VERIFICATION
+    // ==========================
+
     otp: {
       type: String,
       select: false,
       default: null,
     },
 
-    // OTP expiration time
     otpExpires: {
       type: Date,
       select: false,
@@ -83,6 +122,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model(
+  "User",
+  userSchema
+);
 
 export default User;

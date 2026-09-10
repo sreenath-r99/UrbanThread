@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { verifyOtp, resendOtp } from "../../services/authService";
 
-import "./VerifyOtp.css";
-
 const VerifyOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,8 +9,17 @@ const VerifyOtp = () => {
   // Get email from Register page
   const email = location.state?.email;
 
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  // OTP state
+  const [otp, setOtp] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
 
+  // 10 minutes = 600 seconds
   const [timeLeft, setTimeLeft] = useState(60);
 
   const [loading, setLoading] = useState(false);
@@ -55,9 +62,10 @@ const VerifyOtp = () => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
-    return `${String(minutes).padStart(2, "0")}:${String(
-      seconds
-    ).padStart(2, "0")}`;
+    return `${String(minutes).padStart(
+      2,
+      "0"
+    )}:${String(seconds).padStart(2, "0")}`;
   };
 
   // =========================
@@ -65,17 +73,19 @@ const VerifyOtp = () => {
   // =========================
 
   const handleChange = (value, index) => {
+    // Allow only numbers
     if (!/^\d*$/.test(value)) return;
 
     const newOtp = [...otp];
 
+    // Only keep the last digit
     newOtp[index] = value.slice(-1);
 
     setOtp(newOtp);
 
-    // Move automatically to next input
+    // Move to next input automatically
     if (value && index < 5) {
-      inputRefs.current[index + 1].focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -89,7 +99,7 @@ const VerifyOtp = () => {
       !otp[index] &&
       index > 0
     ) {
-      inputRefs.current[index - 1].focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -107,11 +117,20 @@ const VerifyOtp = () => {
 
     if (!pastedData) return;
 
-    const newOtp = [...otp];
+    const newOtp = [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ];
 
-    pastedData.split("").forEach((digit, index) => {
-      newOtp[index] = digit;
-    });
+    pastedData.split("").forEach(
+      (digit, index) => {
+        newOtp[index] = digit;
+      }
+    );
 
     setOtp(newOtp);
 
@@ -120,7 +139,7 @@ const VerifyOtp = () => {
       5
     );
 
-    inputRefs.current[lastIndex].focus();
+    inputRefs.current[lastIndex]?.focus();
   };
 
   // =========================
@@ -136,7 +155,9 @@ const VerifyOtp = () => {
     const otpCode = otp.join("");
 
     if (otpCode.length !== 6) {
-      setError("Please enter the complete 6-digit OTP");
+      setError(
+        "Please enter the complete 6-digit OTP"
+      );
       return;
     }
 
@@ -150,9 +171,10 @@ const VerifyOtp = () => {
 
       console.log(response);
 
-      setMessage("Email verified successfully!");
+      setMessage(
+        "Email verified successfully!"
+      );
 
-      // Change this route later according to your flow
       setTimeout(() => {
         navigate("/login");
       }, 1000);
@@ -164,6 +186,7 @@ const VerifyOtp = () => {
         error.response?.data?.message ||
           "Invalid or expired OTP"
       );
+
     } finally {
       setLoading(false);
     }
@@ -188,12 +211,21 @@ const VerifyOtp = () => {
 
       console.log(response);
 
-      setMessage("A new OTP has been sent to your email");
+      setMessage(
+        "A new OTP has been sent to your email"
+      );
 
       // Clear old OTP
-      setOtp(["", "", "", "", "", ""]);
+      setOtp([
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
 
-      // Restart timer
+      // Restart 10-minute timer
       setTimeLeft(60);
 
       // Focus first input
@@ -208,32 +240,109 @@ const VerifyOtp = () => {
         error.response?.data?.message ||
           "Failed to resend OTP"
       );
+
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="otp-page">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#171718] text-white">
 
-      <div className="otp-background-overlay"></div>
+      {/* BACKGROUND DESIGN */}
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          bg-[radial-gradient(circle_at_15%_30%,rgba(255,255,255,0.035),transparent_30%),linear-gradient(120deg,transparent_40%,rgba(255,255,255,0.03)_41%,transparent_42%)]
+        "
+      />
 
       {/* HEADER */}
 
-      <header className="otp-header">
-        <h1>URBANTHREAD</h1>
+      <header
+        className="
+          relative
+          z-10
+          flex
+          h-[90px]
+          items-center
+          justify-center
+        "
+      >
+        <h1
+          className="
+            font-serif
+            text-[22px]
+            font-semibold
+            tracking-[3px]
+            text-[#e4e0da]
+          "
+        >
+          URBANTHREAD
+        </h1>
       </header>
 
 
-      {/* OTP CARD */}
+      {/* MAIN */}
 
-      <main className="otp-main">
+      <main
+        className="
+          relative
+          z-10
+          flex
+          flex-1
+          items-center
+          justify-center
+          px-4
+          pb-[70px]
+        "
+      >
 
-        <div className="otp-card">
+        {/* OTP CARD */}
 
-          <h2>Verify Your Email</h2>
+        <div
+          className="
+            w-full
+            max-w-[390px]
+            border
+            border-[#29292b]
+            bg-[#1d1d1e]
+            px-[35px]
+            pb-[35px]
+            pt-[45px]
+            text-center
+            shadow-[0_20px_60px_rgba(0,0,0,0.35)]
+            sm:min-h-[410px]
+          "
+        >
 
-          <p className="otp-description">
+          {/* TITLE */}
+
+          <h2
+            className="
+              mb-4
+              font-serif
+              text-[22px]
+              text-[#dedad4]
+            "
+          >
+            Verify Your Email
+          </h2>
+
+
+          {/* DESCRIPTION */}
+
+          <p
+            className="
+              mb-[10px]
+              text-[13px]
+              leading-[1.7]
+              text-[#a3a3a5]
+            "
+          >
             Enter the 6-digit code sent to your
             <br />
             email address to continue.
@@ -243,7 +352,14 @@ const VerifyOtp = () => {
           {/* EMAIL */}
 
           {email && (
-            <p className="otp-email">
+            <p
+              className="
+                mb-[25px]
+                break-all
+                text-[12px]
+                text-[#d4cfc7]
+              "
+            >
               {email}
             </p>
           )}
@@ -254,52 +370,115 @@ const VerifyOtp = () => {
             {/* OTP INPUTS */}
 
             <div
-              className="otp-input-container"
+              className="
+                my-[25px]
+                mb-[10px]
+                flex
+                justify-center
+                gap-[7px]
+                sm:gap-[10px]
+              "
               onPaste={handlePaste}
             >
+
               {otp.map((digit, index) => (
+
                 <input
                   key={index}
+
                   ref={(element) => {
-                    inputRefs.current[index] = element;
+                    inputRefs.current[index] =
+                      element;
                   }}
+
                   type="text"
+
                   inputMode="numeric"
+
                   maxLength="1"
+
                   value={digit}
+
                   onChange={(event) =>
                     handleChange(
                       event.target.value,
                       index
                     )
                   }
+
                   onKeyDown={(event) =>
                     handleKeyDown(
                       event,
                       index
                     )
                   }
+
                   autoFocus={index === 0}
+
+                  className="
+                    h-[42px]
+                    w-[38px]
+                    border
+                    border-[#333335]
+                    bg-[#171718]
+                    text-center
+                    text-[18px]
+                    text-white
+                    outline-none
+                    transition
+                    focus:border-[#a99c8c]
+                    focus:ring-1
+                    focus:ring-[#a99c8c]/35
+                  "
                 />
+
               ))}
+
             </div>
 
 
             {/* TIMER */}
 
-            <div className="otp-timer">
+            <div
+              className="
+                mb-[15px]
+                min-h-[28px]
+              "
+            >
 
               {timeLeft > 0 ? (
-                <p>
+
+                <p
+                  className="
+                    text-[12px]
+                    text-[#89898b]
+                  "
+                >
                   Code expires in{" "}
-                  <span>
+
+                  <span
+                    className="
+                      ml-1
+                      font-semibold
+                      text-[#d8d0c5]
+                    "
+                  >
                     {formatTime()}
                   </span>
+
                 </p>
+
               ) : (
-                <p className="otp-expired">
+
+                <p
+                  className="
+                    text-[12px]
+                    text-[#d58c8c]
+                  "
+                >
                   OTP expired
                 </p>
+
               )}
 
             </div>
@@ -308,66 +487,123 @@ const VerifyOtp = () => {
             {/* ERROR */}
 
             {error && (
-              <p className="otp-error">
+
+              <p
+                className="
+                  mb-[15px]
+                  text-[12px]
+                  text-[#e78181]
+                "
+              >
                 {error}
               </p>
+
             )}
 
 
             {/* SUCCESS */}
 
             {message && (
-              <p className="otp-success">
+
+              <p
+                className="
+                  mb-[15px]
+                  text-[12px]
+                  text-[#85bd8a]
+                "
+              >
                 {message}
               </p>
+
             )}
 
 
-            {/* CONFIRM */}
+            {/* CONFIRM BUTTON */}
 
             <button
               type="submit"
-              className="confirm-button"
+
               disabled={loading}
+
+              className="
+                h-[48px]
+                w-full
+                border-none
+                bg-[#e5ded4]
+                text-[12px]
+                font-bold
+                tracking-[1px]
+                text-[#343230]
+                transition
+                hover:bg-[#f0e8dd]
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+              "
             >
+
               {loading
                 ? "VERIFYING..."
                 : "CONFIRM"}
+
             </button>
 
           </form>
 
 
-          {/* RESEND */}
+          {/* RESEND OTP */}
 
           <button
             type="button"
-            className={`resend-button ${
-              timeLeft > 0
-                ? "disabled"
-                : ""
-            }`}
+
             onClick={handleResend}
+
             disabled={
               timeLeft > 0 ||
               resending
             }
+
+            className="
+              mt-5
+              bg-transparent
+              text-[12px]
+              tracking-[0.4px]
+              text-[#d7d0c7]
+              transition
+              hover:text-white
+              disabled:cursor-not-allowed
+              disabled:text-[#5f5f61]
+            "
           >
+
             {resending
               ? "Sending..."
               : timeLeft > 0
               ? `Resend OTP in ${formatTime()}`
               : "Resend OTP"}
+
           </button>
 
 
-          {/* BACK */}
+          {/* BACK BUTTON */}
 
           <button
-            className="back-email-button"
+            type="button"
+
             onClick={() =>
               navigate("/register")
             }
+
+            className="
+              mt-[22px]
+              block
+              w-full
+              bg-transparent
+              text-[11px]
+              tracking-[0.5px]
+              text-[#a5a3a0]
+              transition
+              hover:text-white
+            "
           >
             ← BACK TO EMAIL
           </button>
@@ -379,7 +615,22 @@ const VerifyOtp = () => {
 
       {/* FOOTER */}
 
-      <footer className="otp-footer">
+      <footer
+        className="
+          relative
+          z-10
+          flex
+          h-[55px]
+          items-center
+          justify-center
+          border-t
+          border-[#29292b]
+          text-[10px]
+          font-semibold
+          tracking-[1.2px]
+          text-[#777779]
+        "
+      >
         © 2026 URBANTHREAD. ALL RIGHTS RESERVED.
       </footer>
 
