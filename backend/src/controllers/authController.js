@@ -7,8 +7,13 @@ import {
   forgotPassword as forgotPasswordService,
   verifyResetOtp as verifyResetOtpService,
   resetPassword as resetPasswordService,
+  updateUserProfile,
+  changeUserPassword,
+  requestEmailChange,
+  verifyEmailChangeOtp,
 } from "../services/authService.js";
 
+import { uploadProfileImage } from "../services/cloudinaryService.js";
 // ==========================
 // REGISTER USER
 // ==========================
@@ -414,6 +419,191 @@ export const googleAuth = async (
   } catch (error) {
     console.error(
       "GOOGLE AUTH CONTROLLER ERROR:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================
+// UPDATE USER PROFILE
+// ==========================
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    let profileImageUrl;
+
+    if (req.file) {
+      const cloudinaryResult = await uploadProfileImage(
+        req.file.buffer,
+        req.user._id.toString()
+      );
+
+      profileImageUrl = cloudinaryResult.secure_url;
+    }
+
+    const result = await updateUserProfile(
+      req.user._id,
+      name,
+      phone,
+      profileImageUrl
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    res.status(500).json({
+      message: error.message || "Failed to update profile",
+    });
+  }
+};
+
+// ==========================
+// CHANGE PASSWORD
+// ==========================
+
+export const changePassword = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "New password must be at least 6 characters",
+      });
+    }
+
+    const result = await changeUserPassword(
+      req.user._id,
+      currentPassword,
+      newPassword
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error(
+      "CHANGE PASSWORD ERROR:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================
+// REQUEST EMAIL CHANGE
+// ==========================
+
+export const requestChangeEmail = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      currentPassword,
+      newEmail,
+    } = req.body;
+
+    if (!currentPassword || !newEmail) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Current password and new email are required",
+      });
+    }
+
+    const result = await requestEmailChange(
+      req.user._id,
+      currentPassword,
+      newEmail
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error(
+      "REQUEST EMAIL CHANGE ERROR:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================
+// VERIFY EMAIL CHANGE OTP
+// ==========================
+
+export const verifyChangeEmailOtp = async (
+  req,
+  res
+) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is required",
+      });
+    }
+
+    const user = await verifyEmailChangeOtp(
+      req.user._id,
+      otp
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Email changed successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
+        googleImage: user.googleImage,
+        role: user.role,
+        isVerified: user.isVerified,
+        authProvider: user.authProvider,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "VERIFY EMAIL CHANGE OTP ERROR:",
       error.message
     );
 

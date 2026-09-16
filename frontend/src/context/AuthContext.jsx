@@ -1,4 +1,8 @@
-import { createContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   getProfile,
@@ -21,32 +25,57 @@ export const AuthProvider = ({ children }) => {
   // =========================
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadUser = async () => {
+      // No token means there is no active session.
       if (!token) {
-        setLoading(false);
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
+
         return;
       }
 
       try {
         const response = await getProfile(token);
 
-        setUser(response.user);
+        // Support both possible response structures:
+        // { user: {...} }
+        // or directly { ...user }
+        const authenticatedUser =
+          response?.user || response;
+
+        if (isMounted) {
+          setUser(authenticatedUser);
+        }
       } catch (error) {
         console.error(
-          "Failed to load user:",
+          "Failed to validate session:",
           error
         );
 
+        // Remove invalid or expired session data.
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
-        setToken(null);
-        setUser(null);
+        if (isMounted) {
+          setToken(null);
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   // =========================
@@ -55,6 +84,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (loginData) => {
     const response = await loginUser(loginData);
+
+    if (!response?.token || !response?.user) {
+      throw new Error(
+        "Invalid login response from server"
+      );
+    }
 
     localStorage.setItem(
       "token",
@@ -68,6 +103,7 @@ export const AuthProvider = ({ children }) => {
 
     setToken(response.token);
     setUser(response.user);
+    setLoading(false);
 
     return response;
   };
@@ -77,9 +113,12 @@ export const AuthProvider = ({ children }) => {
   // =========================
 
   const googleLogin = (authData) => {
-    const { token, user } = authData;
+    const {
+      token: googleToken,
+      user: googleUser,
+    } = authData;
 
-    if (!token || !user) {
+    if (!googleToken || !googleUser) {
       throw new Error(
         "Invalid Google authentication data"
       );
@@ -87,16 +126,17 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.setItem(
       "token",
-      token
+      googleToken
     );
 
     localStorage.setItem(
       "user",
-      JSON.stringify(user)
+      JSON.stringify(googleUser)
     );
 
-    setToken(token);
-    setUser(user);
+    setToken(googleToken);
+    setUser(googleUser);
+    setLoading(false);
   };
 
   // =========================
@@ -105,11 +145,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
-
     localStorage.removeItem("user");
 
     setToken(null);
     setUser(null);
+    setLoading(false);
   };
 
   return (

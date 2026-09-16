@@ -44,15 +44,6 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ==========================
-    // ROLE
-    // ==========================
-
-    role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
-    },
 
     // ==========================
     // ACCOUNT STATUS
@@ -102,7 +93,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ==========================
-    // OTP VERIFICATION
+    // REGISTRATION OTP
     // ==========================
 
     otp: {
@@ -112,6 +103,29 @@ const userSchema = new mongoose.Schema(
     },
 
     otpExpires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+
+    // ==========================
+    // EMAIL CHANGE VERIFICATION
+    // ==========================
+
+    pendingEmail: {
+      type: String,
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+
+    emailChangeOtp: {
+      type: String,
+      select: false,
+      default: null,
+    },
+
+    emailChangeOtpExpires: {
       type: Date,
       select: false,
       default: null,

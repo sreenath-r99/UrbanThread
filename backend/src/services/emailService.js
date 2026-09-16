@@ -184,3 +184,97 @@ export const sendPasswordResetOtpEmail = async (
     );
   }
 };
+
+// ==========================
+// SEND CHANGE EMAIL OTP
+// ==========================
+
+export const sendEmailChangeOtpEmail = async (
+  email,
+  otp
+) => {
+  try {
+    await transporter.sendMail({
+      from: {
+        name: "UrbanThread",
+        address: process.env.EMAIL_USER,
+      },
+
+      to: email,
+
+      subject: "Your UrbanThread Email Change Verification Code",
+
+      html: `
+        <div style="
+          font-family: Arial, sans-serif;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 30px;
+          background-color: #f7f7f7;
+        ">
+          <div style="
+            background-color: #ffffff;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+          ">
+            <h1 style="
+              color: #222222;
+              margin-bottom: 20px;
+            ">
+              URBANTHREAD
+            </h1>
+
+            <h2>Change Email Verification</h2>
+
+            <p>
+              We received a request to change the email address
+              associated with your UrbanThread account.
+            </p>
+
+            <p>
+              Use the following OTP to verify your new email address:
+            </p>
+
+            <div style="
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 25px 0;
+              padding: 15px;
+              background-color: #f1f1f1;
+            ">
+              ${otp}
+            </div>
+
+            <p style="
+              color: #777777;
+              font-size: 14px;
+            ">
+              This OTP will expire in 10 minutes.
+            </p>
+
+            <p style="
+              color: #777777;
+              font-size: 12px;
+              margin-top: 25px;
+            ">
+              If you did not request this email change,
+              please ignore this email.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log(
+      `Email change OTP sent successfully to ${email}`
+    );
+  } catch (error) {
+    console.error("EMAIL CHANGE OTP ERROR:", error);
+
+    throw new Error(
+      "Failed to send email change OTP"
+    );
+  }
+};

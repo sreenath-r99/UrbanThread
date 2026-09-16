@@ -3,9 +3,11 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 import User from "../models/User.js";
+
 import {
   sendOtpEmail,
   sendPasswordResetOtpEmail,
+  sendEmailChangeOtpEmail,
 } from "./emailService.js";
 
 // ==========================
@@ -633,4 +635,289 @@ export const googleAuthUser = async (
     user,
     token,
   };
+};
+
+// ==========================
+// UPDATE USER PROFILE
+// ==========================
+
+export const updateUserProfile = async (
+  userId,
+  name,
+  phone,
+  profileImageUrl
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (name !== undefined) {
+    user.name = name;
+  }
+
+  if (phone !== undefined) {
+    user.phone = phone;
+  }
+
+  if (profileImageUrl) {
+    user.profileImage = profileImageUrl;
+  }
+
+  await user.save();
+
+  return {
+    message: "Profile updated successfully",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      profileImage: user.profileImage,
+      googleImage: user.googleImage,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
+  };
+};
+
+// ==========================
+// CHANGE PASSWORD
+// ==========================
+
+export const changeUserPassword = async (
+  userId,
+  currentPassword,
+  newPassword
+) => {
+  // Find user and include password
+  const user = await User.findById(userId).select(
+    "+password"
+  );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.isBlocked) {
+    throw new Error("Your account has been blocked");
+  }
+
+  // Google users do not have a local password
+  if (!user.password) {
+    throw new Error(
+      "Google accounts cannot change password here. Please continue with Google login."
+    );
+  }
+
+  // Verify current password
+  const isCurrentPasswordCorrect =
+    await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+  if (!isCurrentPasswordCorrect) {
+    throw new Error("Current password is incorrect");
+  }
+
+  // Prevent using the same password
+  const isSamePassword = await bcrypt.compare(
+    newPassword,
+    user.password
+  );
+
+  if (isSamePassword) {
+    throw new Error(
+      "New password must be different from current password"
+    );
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(
+    newPassword,
+    10
+  );
+
+  user.password = hashedPassword;
+
+  await user.save();
+
+  return {
+    message: "Password changed successfully",
+  };
+};
+
+// ==========================
+// REQUEST EMAIL CHANGE
+// ==========================
+
+export const requestEmailChange = async (
+  userId,
+  currentPassword,
+  newEmail
+) => {
+  const normalizedEmail = newEmail
+    ?.trim()
+    .toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new Error("New email is required");
+  }
+
+  // Basic email validation
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(normalizedEmail)) {
+    throw new Error("Please enter a valid email address");
+  }
+
+  // Find current user and include password fields
+  const user = await User.findById(userId).select(
+    "+password"
+  );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.isBlocked) {
+    throw new Error("Your account has been blocked");
+  }
+
+  // Google accounts do not have a local password
+  if (!user.password) {
+    throw new Error(
+      "Google accounts cannot change email using a password. Please continue with Google login."
+    );
+  }
+
+  // Verify current password
+  const isPasswordCorrect =
+    await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+  if (!isPasswordCorrect) {
+    throw new Error("Current password is incorrect");
+  }
+
+  // Prevent using the current email
+  if (normalizedEmail === user.email) {
+    throw new Error(
+      "New email must be different from your current email"
+    );
+  }
+
+  // Check whether another user already uses this email
+  const existingUser = await User.findOne({
+    email: normalizedEmail,
+    _id: { $ne: userId },
+  });
+
+  if (existingUser) {
+    throw new Error(
+      "An account already exists with this email"
+    );
+  }
+
+  // Generate OTP
+  const otp = generateOTP();
+
+  // OTP expires in 10 minutes
+  const otpExpires = new Date(
+    Date.now() + 10 * 60 * 1000
+  );
+
+  // Save pending email and OTP
+  user.pendingEmail = normalizedEmail;
+  user.emailChangeOtp = otp;
+  user.emailChangeOtpExpires = otpExpires;
+
+  await user.save();
+
+  // Send OTP to the new email
+  await sendEmailChangeOtpEmail(
+    normalizedEmail,
+    otp
+  );
+
+  return {
+    message:
+      "Email change OTP sent to your new email address",
+  };
+};
+
+// ==========================
+// VERIFY EMAIL CHANGE OTP
+// ==========================
+
+export const verifyEmailChangeOtp = async (
+  userId,
+  otp
+) => {
+  const user = await User.findById(userId).select(
+    "+emailChangeOtp +emailChangeOtpExpires"
+  );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.isBlocked) {
+    throw new Error("Your account has been blocked");
+  }
+
+  if (!user.pendingEmail) {
+    throw new Error(
+      "No email change request found"
+    );
+  }
+
+  if (!user.emailChangeOtp) {
+    throw new Error(
+      "Email change OTP not found"
+    );
+  }
+
+  if (user.emailChangeOtp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  if (
+    !user.emailChangeOtpExpires ||
+    user.emailChangeOtpExpires < new Date()
+  ) {
+    throw new Error("OTP has expired");
+  }
+
+  // Check again that the new email is still available
+  const existingUser = await User.findOne({
+    email: user.pendingEmail,
+    _id: { $ne: userId },
+  });
+
+  if (existingUser) {
+    throw new Error(
+      "An account already exists with this email"
+    );
+  }
+
+  // Apply the new email
+  user.email = user.pendingEmail;
+
+  // The new email has now been verified
+  user.isVerified = true;
+
+  // Clear temporary email-change fields
+  user.pendingEmail = null;
+  user.emailChangeOtp = null;
+  user.emailChangeOtpExpires = null;
+
+  await user.save();
+
+  return user;
 };

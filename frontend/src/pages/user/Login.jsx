@@ -98,7 +98,7 @@ const Login = () => {
         response
       );
 
-      navigate("/");
+      navigate("/home", { replace: true });
     } catch (error) {
       console.error(
         "LOGIN ERROR:",
@@ -177,7 +177,7 @@ const Login = () => {
       );
 
       // Redirect to home
-      navigate("/");
+      navigate("/home", { replace: true });
     } catch (error) {
       console.error(
         "GOOGLE LOGIN ERROR:",

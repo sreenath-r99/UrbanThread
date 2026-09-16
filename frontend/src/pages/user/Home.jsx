@@ -1,562 +1,502 @@
-import { Link } from "react-router-dom";
+import { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+import { AuthContext } from "../../context/AuthContext";
 
 import heroImage from "../../assets/images/hero.jpg";
 
 import shirtImage from "../../assets/images/Shirt.jpg";
-
-import tshirtsImage from "../../assets/images/tshirts.jpg";
-
-import jacketsImage from "../../assets/images/jackets.jpg";
-
+import tshirtImage from "../../assets/images/tshirts.jpg";
+import jacketImage from "../../assets/images/jackets.jpg";
 import jeansImage from "../../assets/images/jeans.jpg";
+import hoodieImage from "../../assets/images/hoodies.jpg";
 
-import hoodiesImage from "../../assets/images/hoodies.jpg";
+const Home = ({ isLandingPage = false }) => {
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-const Home = () => {
-  // =====================================================
-  // IMAGE CONFIGURATION
-  // Change only these URLs when you want new images
-  // =====================================================
+  /*
+   * Do not treat a stored token alone as a valid session.
+   * AuthContext validates the token through the profile API.
+   */
+  const isLoggedIn = !loading && !!user;
 
+  /*
+   * All shopping-related pages are protected.
+   * Logged-out users are sent to Login.
+   */
+  const handleProtectedNavigation = (path) => {
+    if (loading) {
+      return;
+    }
 
-  const categories = [
-    {
-      id: 1,
-      name: "Shirts",
-      subtitle: "The Foundation",
-      image: shirtImage,
-      className: "md:row-span-2",
-    },
+    // Every shopping action from the public landing page
+    // must first send the visitor to the login page.
+    if (isLandingPage) {
+      navigate("/login");
+      return;
+    }
 
-    {
-      id: 2,
-      name: "T-Shirts",
-      subtitle: "",
-      image: tshirtsImage,
-      className: "",
-    },
-
-    {
-      id: 3,
-      name: "Jackets",
-      subtitle: "",
-      image: jacketsImage,
-      className: "",
-    },
-
-    {
-      id: 4,
-      name: "Jeans",
-      subtitle: "",
-      image: jeansImage,
-      className: "",
-    },
-
-    {
-      id: 5,
-      name: "Hoodies",
-      subtitle: "",
-      image: hoodiesImage,
-      className: "",
-    },
-  ];
+    // Shopping actions from authenticated home require a valid session.
+    if (isLoggedIn) {
+      navigate(path);
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#090a0c] text-white">
-      {/* =====================================================
-          NAVBAR
-      ===================================================== */}
+    <div className="min-h-screen bg-[#111111] text-white">
+      {/* =========================
+    NAVBAR
+========================= */}
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0c0f]/95 backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-6 md:px-12">
-          {/* LOGO */}
+<header className="absolute left-0 right-0 top-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-sm">
+  <div className="mx-auto flex h-20 max-w-[1500px] items-center justify-between px-6 md:px-10 lg:px-16">
+    {/* LOGO */}
 
-          <Link
-            to="/"
-            className="font-serif text-2xl font-semibold tracking-tight text-white md:text-3xl"
-          >
-            UrbanThread
-          </Link>
+    <Link
+      to={isLandingPage ? "/" : "/home"}
+      className="font-serif text-xl tracking-[0.18em] text-[#e8e3dc] transition hover:text-white"
+    >
+      URBAN THREAD
+    </Link>
 
-          {/* NAVIGATION */}
+    {/* NAVIGATION LINKS */}
 
-          <nav className="hidden items-center gap-10 text-sm text-white/80 md:flex">
-            <Link
-              to="/"
-              className="border-b border-white pb-2 text-white"
-            >
-              Home
-            </Link>
+    <nav className="hidden items-center gap-10 md:flex">
+      {/* HOME */}
 
-            <Link
-              to="/shop"
-              className="transition hover:text-white"
-            >
-              Shop
-            </Link>
+      <Link
+        to={isLandingPage ? "/" : "/home"}
+        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+      >
+        Home
+      </Link>
 
-            <Link
-              to="/categories"
-              className="transition hover:text-white"
-            >
-              Categories
-            </Link>
-          </nav>
+      {/* SHOP */}
 
-          {/* NAV ICONS */}
+      <button
+        type="button"
+        onClick={() => handleProtectedNavigation("/shop")}
+        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+      >
+        Shop
+      </button>
 
-          <div className="flex items-center gap-5 text-lg text-white/90">
-            <button
-              type="button"
-              aria-label="Search"
-              className="transition hover:text-white/60"
-            >
-              ⌕
-            </button>
+      {/* CATEGORIES */}
 
-            <button
-              type="button"
-              aria-label="Wishlist"
-              className="transition hover:text-white/60"
-            >
-              ♡
-            </button>
+      <button
+        type="button"
+        onClick={() => handleProtectedNavigation("/categories")}
+        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+      >
+        Categories
+      </button>
+    </nav>
 
-            <button
-              type="button"
-              aria-label="Cart"
-              className="relative transition hover:text-white/60"
-            >
-              🛒
+    {/* RIGHT NAVBAR ACTIONS */}
 
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-black">
-                0
-              </span>
-            </button>
+    {isLandingPage ? (
+      <button
+        type="button"
+        onClick={() => navigate("/login")}
+        className="border border-white/50 px-5 py-2.5 text-[10px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
+      >
+        Sign In
+      </button>
+    ) : (
+      <div className="flex items-center gap-5 text-lg text-white/90">
+        {/* SEARCH */}
 
-            <Link
-              to="/login"
-              aria-label="Profile"
-              className="transition hover:text-white/60"
-            >
-              ◎
-            </Link>
-          </div>
-        </div>
-      </header>
+        <button
+          type="button"
+          aria-label="Search"
+          title="Search"
+          onClick={() => handleProtectedNavigation("/shop")}
+          className="transition hover:text-white/60"
+        >
+          ⌕
+        </button>
 
-      {/* =====================================================
+        {/* WISHLIST */}
+
+        <Link
+          to="/wishlist"
+          aria-label="Wishlist"
+          title="Wishlist"
+          className="transition hover:text-white/60"
+        >
+          ♡
+        </Link>
+
+        {/* CART */}
+
+        <Link
+          to="/cart"
+          aria-label="Cart"
+          title="Cart"
+          className="relative transition hover:text-white/60"
+        >
+          🛒
+
+          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-black">
+            0
+          </span>
+        </Link>
+
+        {/* PROFILE */}
+
+        <Link
+          to="/profile"
+          aria-label="Profile"
+          title="Profile"
+          className="transition hover:text-white/60"
+        >
+          ◎
+        </Link>
+      </div>
+    )}
+  </div>
+</header>
+
+      {/* =========================
           HERO SECTION
-      ===================================================== */}
+      ========================= */}
 
-      <section className="relative overflow-hidden">
-        <div className="relative min-h-[650px] md:min-h-[760px]">
-          {/* HERO IMAGE */}
+      <section className="relative flex min-h-screen items-center overflow-hidden">
+        <img
+          src={heroImage}
+          alt="Urban Thread fashion collection"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
 
-          <img
-            src={heroImage}
-            alt="UrbanThread fashion collection"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
+        <div className="absolute inset-0 bg-black/55" />
 
-          {/* DARK OVERLAY */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/20" />
 
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/10" />
+        <div className="relative z-10 mx-auto w-full max-w-[1500px] px-6 pt-20 md:px-10 lg:px-16">
+          <div className="max-w-2xl">
+            <p className="mb-6 text-[11px] uppercase tracking-[0.35em] text-white/70">
+              Modern essentials
+            </p>
 
-          {/* HERO CONTENT */}
+            <h1 className="font-serif text-5xl leading-[1.05] text-[#f0ece6] sm:text-6xl md:text-7xl lg:text-8xl">
+              Define your
+              <br />
+              everyday style.
+            </h1>
 
-          <div className="relative z-10 mx-auto flex min-h-[650px] max-w-[1440px] items-center px-6 md:min-h-[760px] md:px-12">
-            <div className="max-w-[600px]">
-              <p className="mb-5 text-xs font-medium tracking-[0.35em] text-white/70">
-                NEW COLLECTION
-              </p>
+            <p className="mt-7 max-w-md text-sm leading-7 text-white/65 md:text-base">
+              Discover carefully selected clothing designed for
+              confidence, comfort, and effortless everyday expression.
+            </p>
 
-              <h1 className="font-serif text-5xl leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl">
-                Elevate Your
-                <br />
-                Everyday Style
-              </h1>
-
-              <p className="mt-6 max-w-md text-base leading-7 text-white/75 md:text-lg">
-                Discover premium shirts designed for confidence,
-                comfort, and effortless style.
-              </p>
-
-              <Link
-                to="/shop"
-                className="mt-8 inline-flex items-center gap-3 bg-white px-7 py-4 text-sm font-medium text-black transition hover:bg-white/80"
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => handleProtectedNavigation("/shop")}
+                className="border border-white bg-white px-8 py-4 text-[11px] uppercase tracking-[0.2em] text-black transition hover:bg-transparent hover:text-white"
               >
                 Shop Now
-                <span>→</span>
-              </Link>
+              </button>
 
-              {/* SLIDER LINES */}
-
-              <div className="mt-16 flex gap-3">
-                <span className="h-[2px] w-8 bg-white" />
-
-                <span className="h-[2px] w-8 bg-white/30" />
-
-                <span className="h-[2px] w-8 bg-white/30" />
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  handleProtectedNavigation("/categories")
+                }
+                className="border border-white/40 px-8 py-4 text-[11px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
+              >
+                Explore Categories
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* RIGHT SIDE NUMBERS */}
+        <div className="absolute bottom-8 left-6 z-10 flex items-center gap-4 md:left-10 lg:left-16">
+          <span className="h-px w-12 bg-white/50" />
 
-          <div className="absolute right-8 top-1/2 hidden -translate-y-1/2 flex-col items-center gap-5 text-sm text-white/60 md:flex">
-            <span className="border-b border-white pb-2 text-white">
-              01
-            </span>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-white/60">
+            Scroll to explore
+          </span>
+        </div>
+      </section>
 
-            <span>02</span>
+      {/* =========================
+          INTRODUCTION SECTION
+      ========================= */}
 
-            <span>03</span>
+      <section className="border-b border-white/10 bg-[#151515] px-6 py-24 md:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-[1500px] gap-12 md:grid-cols-[1fr_1fr] md:items-end">
+          <div>
+            <p className="mb-5 text-[11px] uppercase tracking-[0.3em] text-white/45">
+              The Urban Thread philosophy
+            </p>
+
+            <h2 className="max-w-xl font-serif text-4xl leading-tight text-[#e8e3dc] md:text-5xl">
+              Clothing that feels
+              <br />
+              distinctly yours.
+            </h2>
           </div>
 
-          {/* RIGHT TEXT */}
-
-          <div className="absolute bottom-12 right-12 hidden text-right md:block">
-            <div className="mb-3 ml-auto h-px w-10 bg-white/40" />
-
-            <p className="text-sm leading-6 text-white/70">
-              Style
-              <br />
-              Lives Here
+          <div>
+            <p className="max-w-lg text-sm leading-8 text-white/55">
+              Urban Thread brings together timeless silhouettes, modern
+              details, and versatile pieces made for the rhythm of
+              everyday life. Our collections are designed to help you
+              build a wardrobe that feels personal, refined, and
+              effortless.
             </p>
           </div>
         </div>
       </section>
 
-      {/* =====================================================
+      {/* =========================
           OFFER SECTION
-      ===================================================== */}
+      ========================= */}
 
-      <section className="relative z-20 mx-auto -mt-10 max-w-[1320px] px-6 md:px-12">
-        <div className="grid border border-white/10 bg-[#111216] md:grid-cols-[2fr_1.1fr]">
-          {/* LEFT */}
+      <section className="border-b border-white/10 bg-[#111111] px-6 py-20 md:px-10 lg:px-16">
+        <div className="mx-auto flex max-w-[1500px] flex-col items-start justify-between gap-8 border border-white/10 bg-[#1a1a1a] p-8 md:flex-row md:items-center md:p-12">
+          <div>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-white/45">
+              Welcome offer
+            </p>
 
-          <div className="p-8 md:p-10">
-            <h2 className="font-serif text-2xl text-white md:text-3xl">
-              ₹300 OFF Your Next Purchase
+            <h2 className="font-serif text-3xl text-[#e8e3dc] md:text-4xl">
+              Find your next everyday essential.
             </h2>
 
-            <p className="mt-3 text-sm text-white/60">
-              A welcome back gift just for you. Valid on all premium styles.
+            <p className="mt-4 max-w-xl text-sm leading-7 text-white/50">
+              Explore our latest collection and discover pieces that
+              work across every season.
             </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleProtectedNavigation("/shop")}
+            className="shrink-0 border border-white/40 px-8 py-4 text-[11px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
+          >
+            View Collection
+          </button>
+        </div>
+      </section>
+
+      {/* =========================
+          CATEGORY SECTION
+      ========================= */}
+
+      <section className="bg-[#151515] px-6 py-24 md:px-10 lg:px-16">
+        <div className="mx-auto max-w-[1500px]">
+          <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <p className="mb-4 text-[11px] uppercase tracking-[0.3em] text-white/45">
+                Shop by category
+              </p>
+
+              <h2 className="font-serif text-4xl text-[#e8e3dc] md:text-5xl">
+                Explore the collection
+              </h2>
+            </div>
 
             <button
               type="button"
-              className="mt-6 bg-white/10 px-6 py-3 text-xs tracking-[0.15em] text-white transition hover:bg-white hover:text-black"
+              onClick={() =>
+                handleProtectedNavigation("/categories")
+              }
+              className="w-fit border-b border-white/40 pb-2 text-[11px] uppercase tracking-[0.2em] text-white/65 transition hover:border-white hover:text-white"
             >
-              WELCOME300
+              View all categories
             </button>
           </div>
 
-          {/* RIGHT */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            {/* SHIRTS */}
 
-          <div className="border-t border-white/10 p-8 md:border-l md:border-t-0 md:p-10">
-            <p className="font-serif text-2xl leading-8 text-white/70">
-              Premium
-              <br />
-              Style. Better
-              <br />
-              Everyday.
+            <button
+              type="button"
+              onClick={() =>
+                handleProtectedNavigation("/categories/shirts")
+              }
+              className="group text-left"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
+                <img
+                  src={shirtImage}
+                  alt="Shirts"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/20 transition group-hover:bg-black/5" />
+              </div>
+
+              <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-white/70 transition group-hover:text-white">
+                Shirts
+              </p>
+            </button>
+
+            {/* T-SHIRTS */}
+
+            <button
+              type="button"
+              onClick={() =>
+                handleProtectedNavigation("/categories/t-shirts")
+              }
+              className="group text-left"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
+                <img
+                  src={tshirtImage}
+                  alt="T-Shirts"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/20 transition group-hover:bg-black/5" />
+              </div>
+
+              <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-white/70 transition group-hover:text-white">
+                T-Shirts
+              </p>
+            </button>
+
+            {/* JACKETS */}
+
+            <button
+              type="button"
+              onClick={() =>
+                handleProtectedNavigation("/categories/jackets")
+              }
+              className="group text-left"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
+                <img
+                  src={jacketImage}
+                  alt="Jackets"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/20 transition group-hover:bg-black/5" />
+              </div>
+
+              <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-white/70 transition group-hover:text-white">
+                Jackets
+              </p>
+            </button>
+
+            {/* JEANS */}
+
+            <button
+              type="button"
+              onClick={() =>
+                handleProtectedNavigation("/categories/jeans")
+              }
+              className="group text-left"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
+                <img
+                  src={jeansImage}
+                  alt="Jeans"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/20 transition group-hover:bg-black/5" />
+              </div>
+
+              <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-white/70 transition group-hover:text-white">
+                Jeans
+              </p>
+            </button>
+
+            {/* HOODIES */}
+
+            <button
+              type="button"
+              onClick={() =>
+                handleProtectedNavigation("/categories/hoodies")
+              }
+              className="group col-span-2 text-left md:col-span-1"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
+                <img
+                  src={hoodieImage}
+                  alt="Hoodies"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/20 transition group-hover:bg-black/5" />
+              </div>
+
+              <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-white/70 transition group-hover:text-white">
+                Hoodies
+              </p>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================
+          FEATURES SECTION
+      ========================= */}
+
+      <section className="border-t border-white/10 bg-[#111111] px-6 py-20 md:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-[1500px] gap-10 md:grid-cols-3">
+          <div className="border-t border-white/15 pt-6">
+            <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-white/70">
+              Curated quality
+            </p>
+
+            <p className="text-sm leading-7 text-white/45">
+              Thoughtfully selected pieces that balance quality,
+              comfort, and modern design.
+            </p>
+          </div>
+
+          <div className="border-t border-white/15 pt-6">
+            <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-white/70">
+              Everyday versatility
+            </p>
+
+            <p className="text-sm leading-7 text-white/45">
+              Build outfits that move naturally from casual days to
+              special occasions.
+            </p>
+          </div>
+
+          <div className="border-t border-white/15 pt-6">
+            <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-white/70">
+              Secure experience
+            </p>
+
+            <p className="text-sm leading-7 text-white/45">
+              Enjoy a simple shopping experience with protected
+              accounts and reliable order management.
             </p>
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          CURATED CATEGORIES
-      ===================================================== */}
-
-      <section className="mx-auto max-w-[1440px] px-6 py-20 md:px-12">
-        {/* TITLE */}
-
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="font-serif text-3xl text-white md:text-5xl">
-            Curated Categories
-          </h2>
-
-          <Link
-            to="/categories"
-            className="text-xs tracking-[0.2em] text-white/70 transition hover:text-white"
-          >
-            VIEW ALL →
-          </Link>
-        </div>
-
-        {/* CATEGORY GRID */}
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* SHIRTS LARGE */}
-
-          <CategoryCard
-            category={categories[0]}
-            large
-          />
-
-          {/* MIDDLE */}
-
-          <div className="grid gap-4">
-            <CategoryCard category={categories[1]} />
-
-            <CategoryCard category={categories[3]} />
-          </div>
-
-          {/* RIGHT */}
-
-          <div className="grid gap-4">
-            <CategoryCard category={categories[2]} />
-
-            <CategoryCard category={categories[4]} />
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================================
-          FEATURES
-      ===================================================== */}
-
-      <section className="border-y border-white/10 bg-[#101114]">
-        <div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-12 md:grid-cols-2 md:px-12 lg:grid-cols-4">
-          <Feature
-            icon="▣"
-            title="Free Shipping"
-            description="On orders over ₹999"
-          />
-
-          <Feature
-            icon="↻"
-            title="Easy Returns"
-            description="Hassle-free within 7 days"
-          />
-
-          <Feature
-            icon="♢"
-            title="Secure Payment"
-            description="100% safe & encrypted"
-          />
-
-          <Feature
-            icon="◉"
-            title="24/7 Support"
-            description="We're here to help"
-          />
-        </div>
-      </section>
-
-      {/* =====================================================
+      {/* =========================
           FOOTER
-      ===================================================== */}
+      ========================= */}
 
-      <footer className="bg-[#0b0c0f]">
-        <div className="mx-auto grid max-w-[1440px] gap-12 px-6 py-16 md:grid-cols-2 md:px-12 lg:grid-cols-4">
-          {/* BRAND */}
+      <footer className="border-t border-white/10 bg-[#0d0d0d] px-6 py-10 md:px-10 lg:px-16">
+        <div className="mx-auto flex max-w-[1500px] flex-col justify-between gap-6 md:flex-row md:items-center">
+          <Link
+            to="/"
+            className="font-serif text-lg tracking-[0.15em] text-[#e8e3dc]"
+          >
+            URBAN THREAD
+          </Link>
 
-          <div>
-            <h2 className="font-serif text-3xl text-white">
-              UrbanThread
-            </h2>
-
-            <p className="mt-5 max-w-xs text-sm leading-6 text-white/55">
-              Elevating everyday essentials through meticulous design and
-              premium craftsmanship.
-            </p>
-
-            {/* SOCIAL ICONS */}
-
-            <div className="mt-6 flex gap-5 text-sm text-white/70">
-              <a
-                href="#instagram"
-                className="transition hover:text-white"
-              >
-                ◎
-              </a>
-
-              <a
-                href="#facebook"
-                className="transition hover:text-white"
-              >
-                f
-              </a>
-
-              <a
-                href="#youtube"
-                className="transition hover:text-white"
-              >
-                ▶
-              </a>
-
-              <a
-                href="#pinterest"
-                className="transition hover:text-white"
-              >
-                P
-              </a>
-            </div>
-          </div>
-
-          {/* EXPLORE */}
-
-          <div>
-            <h3 className="text-xs tracking-[0.2em] text-white/80">
-              EXPLORE
-            </h3>
-
-            <div className="mt-5 flex flex-col gap-3">
-              <Link
-                to="/about"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                About Us
-              </Link>
-
-              <Link
-                to="/sustainability"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                Sustainability
-              </Link>
-            </div>
-          </div>
-
-          {/* SUPPORT */}
-
-          <div>
-            <h3 className="text-xs tracking-[0.2em] text-white/80">
-              SUPPORT
-            </h3>
-
-            <div className="mt-5 flex flex-col gap-3">
-              <Link
-                to="/shipping"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                Shipping
-              </Link>
-
-              <Link
-                to="/returns"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                Returns
-              </Link>
-            </div>
-          </div>
-
-          {/* LEGAL */}
-
-          <div>
-            <h3 className="text-xs tracking-[0.2em] text-white/80">
-              LEGAL
-            </h3>
-
-            <div className="mt-5 flex flex-col gap-3">
-              <Link
-                to="/privacy-policy"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                Privacy Policy
-              </Link>
-
-              <Link
-                to="/terms"
-                className="text-sm text-white/50 transition hover:text-white"
-              >
-                Terms of Service
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* COPYRIGHT */}
-
-        <div className="border-t border-white/10 py-6 text-center text-xs text-white/40">
-          © 2026 UrbanThread. All rights reserved.
+          <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">
+            © {new Date().getFullYear()} Urban Thread. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
   );
 };
-
-
-// =====================================================
-// CATEGORY CARD COMPONENT
-// =====================================================
-
-const CategoryCard = ({ category, large = false }) => {
-  return (
-    <Link
-      to={`/shop?category=${category.name.toLowerCase()}`}
-      className={`group relative block overflow-hidden border border-white/10 ${
-        large ? "min-h-[520px]" : "min-h-[250px]"
-      }`}
-    >
-      {/* IMAGE */}
-
-      <img
-        src={category.image}
-        alt={category.name}
-        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
-      />
-
-      {/* OVERLAY */}
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
-
-      {/* CONTENT */}
-
-      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between p-5">
-        <div>
-          <h3
-            className={`font-serif text-white ${
-              large ? "text-3xl" : "text-xl"
-            }`}
-          >
-            {category.name}
-          </h3>
-
-          {category.subtitle && (
-            <p className="mt-1 text-sm text-white/70">
-              {category.subtitle}
-            </p>
-          )}
-        </div>
-
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-lg text-white backdrop-blur transition group-hover:bg-white group-hover:text-black">
-          →
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-
-// =====================================================
-// FEATURE COMPONENT
-// =====================================================
-
-const Feature = ({ icon, title, description }) => {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex h-12 w-12 items-center justify-center text-2xl text-white/80">
-        {icon}
-      </div>
-
-      <div>
-        <h3 className="text-sm font-medium text-white">
-          {title}
-        </h3>
-
-        <p className="mt-1 text-xs text-white/50">
-          {description}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 
 export default Home;

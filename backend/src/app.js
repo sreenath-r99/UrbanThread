@@ -2,6 +2,8 @@ import authRoutes from "./routes/authRoutes.js";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import addressRoutes from "./routes/addressRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
@@ -24,5 +26,9 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/addresses", addressRoutes);
+
+app.use("/api/admin", adminRoutes);
 
 export default app;
