@@ -23,24 +23,28 @@ import upload from "../middleware/uploadMiddleware.js";
 const router = express.Router();
 
 // ==========================
-// AUTH ROUTES
+// PUBLIC AUTH ROUTES
 // ==========================
 
+// Register user
 router.post(
   "/register",
   register
 );
 
+// Verify registration OTP
 router.post(
   "/verify-otp",
   verifyOtp
 );
 
+// User login
 router.post(
   "/login",
   login
 );
 
+// Google authentication
 router.post(
   "/google",
   googleAuth
@@ -50,12 +54,14 @@ router.post(
 // PROTECTED USER ROUTES
 // ==========================
 
+// Get user profile
 router.get(
   "/profile",
   protect,
   getProfile
 );
 
+// Update user profile with optional profile image
 router.put(
   "/profile",
   protect,
@@ -63,6 +69,7 @@ router.put(
   updateProfile
 );
 
+// Change password
 router.put(
   "/change-password",
   protect,
@@ -73,14 +80,14 @@ router.put(
 // CHANGE EMAIL ROUTES
 // ==========================
 
-// Request an OTP for changing the email
+// Request OTP for changing email
 router.post(
   "/request-email-change",
   protect,
   requestChangeEmail
 );
 
-// Verify the OTP and update the email
+// Verify OTP and update email
 router.post(
   "/verify-email-change",
   protect,
@@ -91,16 +98,19 @@ router.post(
 // PASSWORD RESET ROUTES
 // ==========================
 
+// Request forgot-password OTP
 router.post(
   "/forgot-password",
   forgotPassword
 );
 
+// Verify forgot-password OTP
 router.post(
   "/verify-reset-otp",
   verifyResetOtp
 );
 
+// Reset password
 router.post(
   "/reset-password",
   resetPassword
@@ -110,6 +120,7 @@ router.post(
 // RESEND REGISTRATION OTP
 // ==========================
 
+// Resend registration OTP
 router.post(
   "/resend-otp",
   resendOtp

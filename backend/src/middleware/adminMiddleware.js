@@ -9,6 +9,7 @@ export const protectAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
+    // Check whether the Authorization header exists
     if (
       !authHeader ||
       !authHeader.startsWith("Bearer ")
@@ -19,13 +20,16 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    // Extract token from "Bearer <token>"
     const token = authHeader.split(" ")[1];
 
+    // Verify JWT token
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET
     );
 
+    // Validate admin-specific token payload
     if (
       !decoded.adminId ||
       decoded.accountType !== "admin"
@@ -36,6 +40,7 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    // Find the admin using the adminId stored in the token
     const admin = await Admin.findById(
       decoded.adminId
     ).select("-password");
@@ -47,6 +52,7 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    // Check whether the admin account is blocked
     if (admin.isBlocked) {
       return res.status(403).json({
         success: false,
@@ -54,10 +60,14 @@ export const protectAdmin = async (req, res, next) => {
       });
     }
 
+    // Attach admin details to the request
     req.admin = admin;
 
+    // Continue to the controller
     next();
   } catch (error) {
+    console.error("Admin authentication error:", error.message);
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired admin token",

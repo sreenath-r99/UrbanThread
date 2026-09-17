@@ -4,6 +4,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import subcategoryRoutes from "./routes/subcategoryRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
 
@@ -30,5 +33,17 @@ app.use("/api/auth", authRoutes);
 app.use("/api/addresses", addressRoutes);
 
 app.use("/api/admin", adminRoutes);
+
+app.use("/api/admin/categories", categoryRoutes);
+
+app.use(
+  "/api/admin/subcategories",
+  subcategoryRoutes
+);
+
+app.use(
+  "/api/admin/products",
+  productRoutes
+);
 
 export default app;

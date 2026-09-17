@@ -1,53 +1,79 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+// ==========================
+// USER AUTHENTICATION
+// ==========================
+
 export const protect = async (req, res, next) => {
   try {
-    // Get authorization header
     const authHeader = req.headers.authorization;
 
-    // Check whether token exists
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Check whether the Authorization header exists
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ")
+    ) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized. Token not found",
+        message: "Not authorized. User token not found",
       });
     }
 
-    // Extract token
+    // Extract token from "Bearer <token>"
     const token = authHeader.split(" ")[1];
 
     // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    // Find user using token data
-    const user = await User.findById(decoded.userId).select("-password");
+    /*
+      Support the possible user ID names used in the JWT.
+      Your login service should preferably use userId.
+    */
+    const userId =
+      decoded.userId ||
+      decoded.id ||
+      decoded._id;
 
-    // Check whether user exists
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid user token",
+      });
+    }
+
+    // Find the user from the database
+    const user = await User.findById(userId).select("-password");
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User not found",
+        message: "User account not found",
       });
     }
 
-    // Check whether user is blocked
+    // Check whether the user account is blocked
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been blocked",
+        message: "This user account has been blocked",
       });
     }
 
-    // Attach user to request
+    // Attach the authenticated user to the request
     req.user = user;
 
-    // Continue to next controller
+    // Continue to the controller
     next();
   } catch (error) {
+    console.error("User authentication error:", error.message);
+
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired token",
+      message: "Invalid or expired user token",
     });
   }
 };

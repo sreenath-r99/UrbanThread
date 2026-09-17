@@ -24,6 +24,17 @@ import Addresses from "../pages/user/Addresses";
 import AddAddress from "../pages/user/AddAddress";
 import EditAddress from "../pages/user/EditAddress";
 
+import Categories from "../pages/admin/Categories";
+import AddCategory from "../pages/admin/AddCategory";
+import EditCategory from "../pages/admin/EditCategory";
+
+import Subcategories from "../pages/admin/Subcategories";
+import AddSubcategory from "../pages/admin/AddSubcategory";
+import EditSubcategory from "../pages/admin/EditSubcategory";
+
+import Products from "../pages/admin/Products.jsx";
+import AdminLayout from "../components/admin/AdminLayout.jsx";
+
 // ==========================
 // USER ROUTE PROTECTION
 // ==========================
@@ -158,6 +169,39 @@ const AppRoutes = () => {
           element={<AdminDashboard />}
         />
       </Route>
+
+      <Route path="/admin/categories" element={<Categories />} />
+<Route path="/admin/categories/add" element={<AddCategory />} />
+<Route
+  path="/admin/categories/edit/:categoryId"
+  element={<EditCategory />}
+/>
+
+<Route
+  path="/admin/subcategories"
+  element={<Subcategories />}
+/>
+
+<Route
+  path="/admin/subcategories/add"
+  element={<AddSubcategory />}
+/>
+
+<Route
+  path="/admin/subcategories/edit/:subcategoryId"
+  element={<EditSubcategory />}
+/>
+
+<Route
+  path="/admin/products"
+  element={
+    <AdminProtectedRoute>
+      <AdminLayout>
+        <Products />
+      </AdminLayout>
+    </AdminProtectedRoute>
+  }
+/>
 
       {/* ==========================
           FALLBACK ROUTE
