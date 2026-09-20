@@ -159,49 +159,61 @@ const AppRoutes = () => {
         element={<AdminLogin />}
       />
 
-      {/* ==========================
-          ADMIN PROTECTED ROUTES
-      ========================== */}
+{/* ==========================
+    ADMIN PROTECTED ROUTES
+========================== */}
 
-      <Route element={<AdminProtectedRoute />}>
-        <Route
-          path="/admin/dashboard"
-          element={<AdminDashboard />}
-        />
-      </Route>
+<Route element={<AdminProtectedRoute />}>
 
-      <Route path="/admin/categories" element={<Categories />} />
-<Route path="/admin/categories/add" element={<AddCategory />} />
-<Route
-  path="/admin/categories/edit/:categoryId"
-  element={<EditCategory />}
-/>
+  {/* Dashboard */}
+  <Route
+    path="/admin/dashboard"
+    element={<AdminDashboard />}
+  />
 
-<Route
-  path="/admin/subcategories"
-  element={<Subcategories />}
-/>
+  {/* Categories */}
+  <Route
+    path="/admin/categories"
+    element={<Categories />}
+  />
 
-<Route
-  path="/admin/subcategories/add"
-  element={<AddSubcategory />}
-/>
+  <Route
+    path="/admin/categories/add"
+    element={<AddCategory />}
+  />
 
-<Route
-  path="/admin/subcategories/edit/:subcategoryId"
-  element={<EditSubcategory />}
-/>
+  <Route
+    path="/admin/categories/edit/:categoryId"
+    element={<EditCategory />}
+  />
 
-<Route
-  path="/admin/products"
-  element={
-    <AdminProtectedRoute>
+  {/* Subcategories */}
+  <Route
+    path="/admin/subcategories"
+    element={<Subcategories />}
+  />
+
+  <Route
+    path="/admin/subcategories/add"
+    element={<AddSubcategory />}
+  />
+
+  <Route
+    path="/admin/subcategories/edit/:subcategoryId"
+    element={<EditSubcategory />}
+  />
+
+  {/* Products */}
+  <Route
+    path="/admin/products"
+    element={
       <AdminLayout>
         <Products />
       </AdminLayout>
-    </AdminProtectedRoute>
-  }
-/>
+    }
+  />
+
+</Route>
 
       {/* ==========================
           FALLBACK ROUTE

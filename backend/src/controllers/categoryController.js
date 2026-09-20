@@ -1,32 +1,72 @@
 import * as categoryService from "../services/categoryService.js";
 
+/*
+|--------------------------------------------------------------------------
+| Get Categories
+|--------------------------------------------------------------------------
+*/
+
 const getCategories = async (req, res) => {
   try {
-    const { search = "", includeInactive = "true" } = req.query;
+    const {
+      search = "",
+      includeInactive = "true",
+      page = "1",
+      limit = "10",
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
-    const categories = await categoryService.getAllCategories({
-      search,
-      includeInactive: includeInactive === "true",
-    });
+    const result =
+      await categoryService.getAllCategories({
+        search,
+        includeInactive:
+          includeInactive === "true",
+
+        page: Number(page),
+        limit: Number(limit),
+
+        sortBy,
+        sortOrder,
+      });
 
     res.status(200).json({
       success: true,
       message: "Categories fetched successfully",
-      categories,
+
+      categories: result.categories,
+
+      pagination: result.pagination,
     });
   } catch (error) {
+    console.error(
+      "Get categories error:",
+      error
+    );
+
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch categories",
+      message:
+        error.message ||
+        "Failed to fetch categories",
     });
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| Get Single Category
+|--------------------------------------------------------------------------
+*/
 
 const getCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    const category = await categoryService.getCategoryById(categoryId);
+    const category =
+      await categoryService.getCategoryById(
+        categoryId
+      );
 
     res.status(200).json({
       success: true,
@@ -34,16 +74,33 @@ const getCategory = async (req, res) => {
       category,
     });
   } catch (error) {
-    res.status(404).json({
+    const statusCode =
+      error.message === "Category not found"
+        ? 404
+        : 400;
+
+    res.status(statusCode).json({
       success: false,
-      message: error.message || "Category not found",
+      message:
+        error.message ||
+        "Category not found",
     });
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| Create Category
+|--------------------------------------------------------------------------
+*/
+
 const createCategory = async (req, res) => {
   try {
-    const { name, description, image } = req.body;
+    const {
+      name,
+      description,
+      image,
+    } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -52,11 +109,12 @@ const createCategory = async (req, res) => {
       });
     }
 
-    const category = await categoryService.createCategory({
-      name,
-      description,
-      image,
-    });
+    const category =
+      await categoryService.createCategory({
+        name,
+        description,
+        image,
+      });
 
     res.status(201).json({
       success: true,
@@ -64,26 +122,47 @@ const createCategory = async (req, res) => {
       category,
     });
   } catch (error) {
-    const statusCode = error.message.includes("already exists") ? 409 : 400;
+    const statusCode =
+      error.message.includes("already exists")
+        ? 409
+        : 400;
 
     res.status(statusCode).json({
       success: false,
-      message: error.message || "Failed to create category",
+      message:
+        error.message ||
+        "Failed to create category",
     });
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| Update Category
+|--------------------------------------------------------------------------
+*/
+
 const updateCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { name, description, image, isActive } = req.body;
 
-    const category = await categoryService.updateCategory(categoryId, {
+    const {
       name,
       description,
       image,
       isActive,
-    });
+    } = req.body;
+
+    const category =
+      await categoryService.updateCategory(
+        categoryId,
+        {
+          name,
+          description,
+          image,
+          isActive,
+        }
+      );
 
     res.status(200).json({
       success: true,
@@ -91,52 +170,91 @@ const updateCategory = async (req, res) => {
       category,
     });
   } catch (error) {
-    const statusCode = error.message === "Category not found" ? 404 : 400;
+    let statusCode = 400;
+
+    if (
+      error.message === "Category not found"
+    ) {
+      statusCode = 404;
+    }
 
     res.status(statusCode).json({
       success: false,
-      message: error.message || "Failed to update category",
+      message:
+        error.message ||
+        "Failed to update category",
     });
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| Delete Category
+|--------------------------------------------------------------------------
+*/
 
 const deleteCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    await categoryService.deleteCategory(categoryId);
+    await categoryService.deleteCategory(
+      categoryId
+    );
 
     res.status(200).json({
       success: true,
       message: "Category deleted successfully",
     });
   } catch (error) {
-    const statusCode = error.message === "Category not found" ? 404 : 400;
+    const statusCode =
+      error.message === "Category not found"
+        ? 404
+        : 400;
 
     res.status(statusCode).json({
       success: false,
-      message: error.message || "Failed to delete category",
+      message:
+        error.message ||
+        "Failed to delete category",
     });
   }
 };
 
-const toggleCategoryStatus = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| Toggle Category Status
+|--------------------------------------------------------------------------
+*/
+
+const toggleCategoryStatus = async (
+  req,
+  res
+) => {
   try {
     const { categoryId } = req.params;
 
-    const category = await categoryService.toggleCategoryStatus(categoryId);
+    const category =
+      await categoryService.toggleCategoryStatus(
+        categoryId
+      );
 
     res.status(200).json({
       success: true,
-      message: "Category status updated successfully",
+      message:
+        "Category status updated successfully",
       category,
     });
   } catch (error) {
-    const statusCode = error.message === "Category not found" ? 404 : 400;
+    const statusCode =
+      error.message === "Category not found"
+        ? 404
+        : 400;
 
     res.status(statusCode).json({
       success: false,
-      message: error.message || "Failed to update category status",
+      message:
+        error.message ||
+        "Failed to update category status",
     });
   }
 };

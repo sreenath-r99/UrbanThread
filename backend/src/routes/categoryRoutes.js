@@ -13,28 +13,48 @@ import { protectAdmin } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-// All category routes require admin authentication
+/*
+|--------------------------------------------------------------------------
+| Admin Authentication
+|--------------------------------------------------------------------------
+*/
+
 router.use(protectAdmin);
 
-// Get all categories
+/*
+|--------------------------------------------------------------------------
+| Category Routes
+|--------------------------------------------------------------------------
+*/
+
+// Get categories
+// GET /api/admin/categories
 router.get("/", getCategories);
 
-// Get one category
+// Get single category
+// GET /api/admin/categories/:categoryId
 router.get("/:categoryId", getCategory);
 
 // Create category
+// POST /api/admin/categories
 router.post("/", createCategory);
 
 // Update category
+// PUT /api/admin/categories/:categoryId
 router.put("/:categoryId", updateCategory);
 
-// Toggle active/inactive status
+// Toggle active/inactive
+// PATCH /api/admin/categories/:categoryId/toggle-status
 router.patch(
   "/:categoryId/toggle-status",
   toggleCategoryStatus
 );
 
-// Soft delete category
-router.delete("/:categoryId", deleteCategory);
+// Soft delete
+// DELETE /api/admin/categories/:categoryId
+router.delete(
+  "/:categoryId",
+  deleteCategory
+);
 
 export default router;

@@ -38,6 +38,16 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
+categorySchema.index({
+  isDeleted: 1,
+  createdAt: -1,
+});
+
+categorySchema.index({
+  isDeleted: 1,
+  isActive: 1,
+});
+
 const Category = mongoose.model("Category", categorySchema);
 
 export default Category;

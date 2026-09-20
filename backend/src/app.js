@@ -7,6 +7,8 @@ import adminRoutes from "./routes/adminRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import productImageRoutes from "./routes/productImageRoutes.js";
+
 
 const app = express();
 
@@ -44,6 +46,11 @@ app.use(
 app.use(
   "/api/admin/products",
   productRoutes
+);
+
+app.use(
+  "/api/admin/product-images",
+  productImageRoutes
 );
 
 export default app;

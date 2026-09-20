@@ -1,25 +1,141 @@
+import mongoose from "mongoose";
 import Category from "../models/Category.js";
 
-const getAllCategories = async ({ search = "", includeInactive = true } = {}) => {
+/*
+|--------------------------------------------------------------------------
+| Get All Categories
+|--------------------------------------------------------------------------
+| Supports:
+| - Search
+| - Pagination
+| - Sorting
+| - Include inactive categories
+|--------------------------------------------------------------------------
+*/
+
+const getAllCategories = async ({
+  search = "",
+  includeInactive = true,
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt",
+  sortOrder = "desc",
+} = {}) => {
   const filter = {
     isDeleted: false,
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Active / Inactive filter
+  |--------------------------------------------------------------------------
+  */
 
   if (!includeInactive) {
     filter.isActive = true;
   }
 
-  if (search.trim()) {
+  /*
+  |--------------------------------------------------------------------------
+  | Search
+  |--------------------------------------------------------------------------
+  */
+
+  const trimmedSearch = search.trim();
+
+  if (trimmedSearch) {
     filter.name = {
-      $regex: search.trim(),
+      $regex: trimmedSearch,
       $options: "i",
     };
   }
 
-  return await Category.find(filter).sort({ createdAt: -1 });
+  /*
+  |--------------------------------------------------------------------------
+  | Pagination
+  |--------------------------------------------------------------------------
+  */
+
+  const currentPage = Math.max(Number(page) || 1, 1);
+
+  const itemsPerPage = Math.min(
+    Math.max(Number(limit) || 10, 1),
+    100
+  );
+
+  const skip = (currentPage - 1) * itemsPerPage;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Sorting
+  |--------------------------------------------------------------------------
+  */
+
+  const allowedSortFields = [
+    "createdAt",
+    "updatedAt",
+    "name",
+  ];
+
+  const safeSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : "createdAt";
+
+  const safeSortOrder = sortOrder === "asc" ? 1 : -1;
+
+  const sort = {
+    [safeSortBy]: safeSortOrder,
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Fetch categories + total count
+  |--------------------------------------------------------------------------
+  */
+
+  const [categories, totalCategories] = await Promise.all([
+    Category.find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(itemsPerPage),
+
+    Category.countDocuments(filter),
+  ]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Pagination calculations
+  |--------------------------------------------------------------------------
+  */
+
+  const totalPages = Math.ceil(
+    totalCategories / itemsPerPage
+  );
+
+  return {
+    categories,
+    pagination: {
+      currentPage,
+      itemsPerPage,
+      totalItems: totalCategories,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPreviousPage: currentPage > 1,
+    },
+  };
 };
 
+/*
+|--------------------------------------------------------------------------
+| Get Single Category
+|--------------------------------------------------------------------------
+*/
+
 const getCategoryById = async (categoryId) => {
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    throw new Error("Invalid category ID");
+  }
+
   const category = await Category.findOne({
     _id: categoryId,
     isDeleted: false,
@@ -32,9 +148,21 @@ const getCategoryById = async (categoryId) => {
   return category;
 };
 
-const createCategory = async ({ name, description, image }) => {
+/*
+|--------------------------------------------------------------------------
+| Create Category
+|--------------------------------------------------------------------------
+*/
+
+const createCategory = async ({
+  name,
+  description,
+  image,
+}) => {
+  const trimmedName = name.trim();
+
   const existingCategory = await Category.findOne({
-    name: name.trim(),
+    name: trimmedName,
     isDeleted: false,
   });
 
@@ -43,7 +171,7 @@ const createCategory = async ({ name, description, image }) => {
   }
 
   const category = await Category.create({
-    name: name.trim(),
+    name: trimmedName,
     description: description?.trim() || "",
     image: image || "",
   });
@@ -51,10 +179,25 @@ const createCategory = async ({ name, description, image }) => {
   return category;
 };
 
+/*
+|--------------------------------------------------------------------------
+| Update Category
+|--------------------------------------------------------------------------
+*/
+
 const updateCategory = async (
   categoryId,
-  { name, description, image, isActive }
+  {
+    name,
+    description,
+    image,
+    isActive,
+  }
 ) => {
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    throw new Error("Invalid category ID");
+  }
+
   const category = await Category.findOne({
     _id: categoryId,
     isDeleted: false,
@@ -64,30 +207,65 @@ const updateCategory = async (
     throw new Error("Category not found");
   }
 
-  if (name && name.trim().toLowerCase() !== category.name.toLowerCase()) {
-    const duplicateCategory = await Category.findOne({
-      name: name.trim(),
-      isDeleted: false,
-      _id: { $ne: categoryId },
-    });
+  /*
+  |--------------------------------------------------------------------------
+  | Name
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    name !== undefined &&
+    name.trim().toLowerCase() !==
+      category.name.toLowerCase()
+  ) {
+    const trimmedName = name.trim();
+
+    const duplicateCategory =
+      await Category.findOne({
+        name: trimmedName,
+        isDeleted: false,
+        _id: {
+          $ne: categoryId,
+        },
+      });
 
     if (duplicateCategory) {
-      throw new Error("Another category with this name already exists");
+      throw new Error(
+        "Another category with this name already exists"
+      );
     }
 
-    category.name = name.trim();
+    category.name = trimmedName;
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Description
+  |--------------------------------------------------------------------------
+  */
 
   if (description !== undefined) {
     category.description = description.trim();
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Image
+  |--------------------------------------------------------------------------
+  */
+
   if (image !== undefined) {
     category.image = image;
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Active status
+  |--------------------------------------------------------------------------
+  */
+
   if (isActive !== undefined) {
-    category.isActive = isActive;
+    category.isActive = Boolean(isActive);
   }
 
   await category.save();
@@ -95,7 +273,17 @@ const updateCategory = async (
   return category;
 };
 
+/*
+|--------------------------------------------------------------------------
+| Soft Delete Category
+|--------------------------------------------------------------------------
+*/
+
 const deleteCategory = async (categoryId) => {
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    throw new Error("Invalid category ID");
+  }
+
   const category = await Category.findOne({
     _id: categoryId,
     isDeleted: false,
@@ -113,7 +301,17 @@ const deleteCategory = async (categoryId) => {
   return category;
 };
 
+/*
+|--------------------------------------------------------------------------
+| Toggle Category Status
+|--------------------------------------------------------------------------
+*/
+
 const toggleCategoryStatus = async (categoryId) => {
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    throw new Error("Invalid category ID");
+  }
+
   const category = await Category.findOne({
     _id: categoryId,
     isDeleted: false,

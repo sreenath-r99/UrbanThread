@@ -1,18 +1,36 @@
 import multer from "multer";
 
-// Store the uploaded image temporarily in memory.
-// It will be sent directly to Cloudinary.
-const storage = multer.memoryStorage();
+/*
+|--------------------------------------------------------------------------
+| MEMORY STORAGE
+|--------------------------------------------------------------------------
+*/
 
-// Allow only supported image formats.
-const fileFilter = (req, file, cb) => {
+const storage =
+  multer.memoryStorage();
+
+/*
+|--------------------------------------------------------------------------
+| IMAGE TYPE VALIDATION
+|--------------------------------------------------------------------------
+*/
+
+const fileFilter = (
+  req,
+  file,
+  cb
+) => {
   const allowedMimeTypes = [
     "image/jpeg",
     "image/png",
     "image/webp",
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  if (
+    allowedMimeTypes.includes(
+      file.mimetype
+    )
+  ) {
     cb(null, true);
   } else {
     cb(
@@ -24,13 +42,68 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| PROFILE IMAGE UPLOAD
+|--------------------------------------------------------------------------
+|
+| Maximum: 2 MB
+| One image
+|
+*/
+
+export const uploadProfile =
+  multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize:
+        2 * 1024 * 1024,
+      files: 1,
+    },
+  });
+
+/*
+|--------------------------------------------------------------------------
+| PRODUCT IMAGE UPLOAD
+|--------------------------------------------------------------------------
+|
+| Maximum: 5 MB each
+| Maximum: 5 images
+|
+*/
+
+export const uploadProductImages =
+  multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize:
+        5 * 1024 * 1024,
+      files: 5,
+    },
+  });
+
+/*
+|--------------------------------------------------------------------------
+| DEFAULT EXPORT
+|--------------------------------------------------------------------------
+|
+| Keep this so any existing code using:
+|
+| import upload from "./uploadMiddleware.js"
+|
+| continues to work.
+|
+*/
+
 const upload = multer({
   storage,
   fileFilter,
-
   limits: {
-    // Maximum image size: 2 MB
-    fileSize: 2 * 1024 * 1024,
+    fileSize:
+      2 * 1024 * 1024,
+    files: 1,
   },
 });
 

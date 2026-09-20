@@ -49,9 +49,8 @@ subcategorySchema.index(
   }
 );
 
-const Subcategory = mongoose.model(
-  "Subcategory",
-  subcategorySchema
-);
+const Subcategory =
+  mongoose.models.Subcategory ||
+  mongoose.model("Subcategory", subcategorySchema);
 
 export default Subcategory;

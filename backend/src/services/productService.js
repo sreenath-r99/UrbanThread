@@ -1,48 +1,201 @@
+import mongoose from "mongoose";
+
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import Subcategory from "../models/SubCategory.js";
 
-// ==========================
-// GET ALL PRODUCTS
-// ==========================
+const ALLOWED_SIZES = ["S", "M", "L", "XL", "XXL"];
 
-export const getAllProducts = async ({
+/*
+|--------------------------------------------------------------------------
+| SIZE VALIDATION
+|--------------------------------------------------------------------------
+*/
+
+const validateSizes = (sizes) => {
+  if (!Array.isArray(sizes) || sizes.length === 0) {
+    throw new Error(
+      "At least one product size is required"
+    );
+  }
+
+  const selectedSizes = new Set();
+
+  const validatedSizes = sizes.map((item) => {
+    if (!item || !item.size) {
+      throw new Error(
+        "Product size is required"
+      );
+    }
+
+    const size = String(item.size)
+      .trim()
+      .toUpperCase();
+
+    if (!ALLOWED_SIZES.includes(size)) {
+      throw new Error(
+        `Invalid size: ${size}. Allowed sizes are S, M, L, XL, XXL`
+      );
+    }
+
+    if (selectedSizes.has(size)) {
+      throw new Error(
+        `Duplicate size is not allowed: ${size}`
+      );
+    }
+
+    selectedSizes.add(size);
+
+    const sizeStock = Number(item.stock);
+
+    if (
+      item.stock === undefined ||
+      item.stock === null ||
+      item.stock === "" ||
+      !Number.isInteger(sizeStock) ||
+      sizeStock < 0
+    ) {
+      throw new Error(
+        `Invalid stock for size ${size}`
+      );
+    }
+
+    return {
+      size,
+      stock: sizeStock,
+    };
+  });
+
+  return validatedSizes;
+};
+
+/*
+|--------------------------------------------------------------------------
+| TOTAL STOCK
+|--------------------------------------------------------------------------
+*/
+
+const calculateTotalStock = (sizes) => {
+  return sizes.reduce(
+    (total, item) => total + item.stock,
+    0
+  );
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL PRODUCTS
+|--------------------------------------------------------------------------
+*/
+
+const getAllProducts = async ({
   search = "",
   categoryId = "",
   subcategoryId = "",
+  includeInactive = true,
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt",
+  sortOrder = "desc",
 } = {}) => {
-  const query = {
+  const filter = {
     isDeleted: false,
   };
 
+  if (!includeInactive) {
+    filter.isActive = true;
+  }
+
   if (search.trim()) {
-    query.name = {
+    filter.name = {
       $regex: search.trim(),
       $options: "i",
     };
   }
 
-  if (categoryId) {
-    query.category = categoryId;
+  if (
+    categoryId &&
+    mongoose.Types.ObjectId.isValid(categoryId)
+  ) {
+    filter.category = categoryId;
   }
 
-  if (subcategoryId) {
-    query.subcategory = subcategoryId;
+  if (
+    subcategoryId &&
+    mongoose.Types.ObjectId.isValid(subcategoryId)
+  ) {
+    filter.subcategory = subcategoryId;
   }
 
-  const products = await Product.find(query)
-    .populate("category", "name")
-    .populate("subcategory", "name")
-    .sort({ createdAt: -1 });
+  const allowedSortFields = [
+    "createdAt",
+    "updatedAt",
+    "name",
+    "price",
+    "stock",
+  ];
 
-  return products;
+  const safeSortBy =
+    allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+
+  const safeSortOrder =
+    sortOrder === "asc" ? 1 : -1;
+
+  const safePage = Math.max(
+    Number(page) || 1,
+    1
+  );
+
+  const safeLimit = Math.min(
+    Math.max(Number(limit) || 10, 1),
+    100
+  );
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [products, totalProducts] =
+    await Promise.all([
+      Product.find(filter)
+        .populate("category", "name")
+        .populate("subcategory", "name")
+        .sort({
+          [safeSortBy]: safeSortOrder,
+        })
+        .skip(skip)
+        .limit(safeLimit),
+
+      Product.countDocuments(filter),
+    ]);
+
+  return {
+    products,
+
+    pagination: {
+      currentPage: safePage,
+      totalPages: Math.ceil(
+        totalProducts / safeLimit
+      ),
+      totalProducts,
+      limit: safeLimit,
+    },
+  };
 };
 
-// ==========================
-// GET SINGLE PRODUCT
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE PRODUCT
+|--------------------------------------------------------------------------
+*/
 
-export const getProductById = async (productId) => {
+const getProductById = async (productId) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(productId)
+  ) {
+    throw new Error("Invalid product ID");
+  }
+
   const product = await Product.findOne({
     _id: productId,
     isDeleted: false,
@@ -57,11 +210,19 @@ export const getProductById = async (productId) => {
   return product;
 };
 
-// ==========================
-// VALIDATE CATEGORY
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| VALIDATE CATEGORY
+|--------------------------------------------------------------------------
+*/
 
 const validateCategory = async (categoryId) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(categoryId)
+  ) {
+    throw new Error("Invalid category");
+  }
+
   const category = await Category.findOne({
     _id: categoryId,
     isDeleted: false,
@@ -69,20 +230,32 @@ const validateCategory = async (categoryId) => {
   });
 
   if (!category) {
-    throw new Error("Selected category not found or inactive");
+    throw new Error(
+      "Category not found or inactive"
+    );
   }
 
   return category;
 };
 
-// ==========================
-// VALIDATE SUBCATEGORY
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| VALIDATE SUBCATEGORY
+|--------------------------------------------------------------------------
+*/
 
 const validateSubcategory = async (
   subcategoryId,
   categoryId
 ) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      subcategoryId
+    )
+  ) {
+    throw new Error("Invalid subcategory");
+  }
+
   const subcategory = await Subcategory.findOne({
     _id: subcategoryId,
     category: categoryId,
@@ -92,132 +265,199 @@ const validateSubcategory = async (
 
   if (!subcategory) {
     throw new Error(
-      "Selected subcategory does not belong to the selected category"
+      "Subcategory not found, inactive, or does not belong to selected category"
     );
   }
 
   return subcategory;
 };
 
-// ==========================
-// VALIDATE PRICE
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| VALIDATE PRICE
+|--------------------------------------------------------------------------
+*/
 
-const validatePrices = (price, discountPrice) => {
-  if (price === undefined || price === null || price === "") {
-    throw new Error("Product price is required");
-  }
+const validatePrices = (
+  price,
+  discountPrice
+) => {
+  const numericPrice = Number(price);
 
-  if (Number(price) < 0) {
-    throw new Error("Product price cannot be negative");
+  if (
+    !Number.isFinite(numericPrice) ||
+    numericPrice < 0
+  ) {
+    throw new Error(
+      "Price must be a valid non-negative number"
+    );
   }
 
   if (
-    discountPrice !== undefined &&
     discountPrice !== null &&
+    discountPrice !== undefined &&
     discountPrice !== ""
   ) {
-    if (Number(discountPrice) < 0) {
-      throw new Error("Discount price cannot be negative");
+    const numericDiscountPrice =
+      Number(discountPrice);
+
+    if (
+      !Number.isFinite(
+        numericDiscountPrice
+      ) ||
+      numericDiscountPrice < 0
+    ) {
+      throw new Error(
+        "Discount price must be a valid non-negative number"
+      );
     }
 
-    if (Number(discountPrice) > Number(price)) {
+    if (
+      numericDiscountPrice >= numericPrice
+    ) {
       throw new Error(
-        "Discount price cannot be greater than regular price"
+        "Discount price must be less than the original price"
       );
     }
   }
 };
 
-// ==========================
-// CREATE PRODUCT
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| CREATE PRODUCT
+|--------------------------------------------------------------------------
+*/
 
-export const createProduct = async (productData) => {
-  const {
-    name,
-    description,
-    category,
-    subcategory,
-    images = [],
-    price,
-    discountPrice,
-    stock = 0,
-    isActive = true,
-  } = productData;
-
-  if (!name || !name.trim()) {
-    throw new Error("Product name is required");
+const createProduct = async ({
+  name,
+  description,
+  category,
+  subcategory,
+  images,
+  price,
+  discountPrice,
+  sizes,
+  isActive = true,
+}) => {
+  if (!name?.trim()) {
+    throw new Error(
+      "Product name is required"
+    );
   }
 
-  if (!description || !description.trim()) {
-    throw new Error("Product description is required");
+  if (!description?.trim()) {
+    throw new Error(
+      "Product description is required"
+    );
   }
 
   if (!category) {
-    throw new Error("Category is required");
+    throw new Error(
+      "Category is required"
+    );
   }
 
   if (!subcategory) {
-    throw new Error("Subcategory is required");
+    throw new Error(
+      "Subcategory is required"
+    );
   }
 
-  if (!Array.isArray(images) || images.length === 0) {
-    throw new Error("At least one product image is required");
-  }
+if (
+  !images ||
+  !Array.isArray(images) ||
+  images.length < 3
+) {
+  throw new Error(
+    "At least 3 product images are required"
+  );
+}
+
+if (images.length > 5) {
+  throw new Error(
+    "Maximum 5 product images are allowed"
+  );
+}
 
   await validateCategory(category);
-  await validateSubcategory(subcategory, category);
 
-  validatePrices(price, discountPrice);
+  await validateSubcategory(
+    subcategory,
+    category
+  );
 
-  if (Number(stock) < 0) {
-    throw new Error("Stock cannot be negative");
-  }
+  validatePrices(
+    price,
+    discountPrice
+  );
 
-  const existingProduct = await Product.findOne({
-    name: {
-      $regex: `^${name.trim()}$`,
-      $options: "i",
-    },
-    isDeleted: false,
-  });
+  const validatedSizes =
+    validateSizes(sizes);
+
+  const totalStock =
+    calculateTotalStock(
+      validatedSizes
+    );
+
+  const existingProduct =
+    await Product.findOne({
+      name: name.trim(),
+      isDeleted: false,
+    });
 
   if (existingProduct) {
-    throw new Error("A product with this name already exists");
+    throw new Error(
+      "Product already exists"
+    );
   }
 
-  const product = await Product.create({
-    name: name.trim(),
-    description: description.trim(),
-    category,
-    subcategory,
-    images,
-    price: Number(price),
-    discountPrice:
-      discountPrice === "" ||
-      discountPrice === undefined ||
-      discountPrice === null
-        ? null
-        : Number(discountPrice),
-    stock: Number(stock),
-    isActive,
-  });
+  const product =
+    await Product.create({
+      name: name.trim(),
 
-  return await Product.findById(product._id)
+      description:
+        description.trim(),
+
+      category,
+
+      subcategory,
+
+      images,
+
+      price,
+
+      discountPrice:
+        discountPrice === "" ||
+        discountPrice === undefined
+          ? null
+          : Number(discountPrice),
+
+      sizes: validatedSizes,
+
+      stock: totalStock,
+
+      isActive,
+    });
+
+  return await Product.findById(
+    product._id
+  )
     .populate("category", "name")
-    .populate("subcategory", "name");
+    .populate(
+      "subcategory",
+      "name"
+    );
 };
 
-// ==========================
-// UPDATE PRODUCT
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| UPDATE PRODUCT
+|--------------------------------------------------------------------------
+*/
 
-export const updateProduct = async (
+const updateProduct = async (
   productId,
-  productData
-) => {
-  const {
+  {
     name,
     description,
     category,
@@ -225,125 +465,240 @@ export const updateProduct = async (
     images,
     price,
     discountPrice,
-    stock,
+    sizes,
     isActive,
-  } = productData;
+  }
+) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      productId
+    )
+  ) {
+    throw new Error(
+      "Invalid product ID"
+    );
+  }
 
-  const product = await Product.findOne({
-    _id: productId,
-    isDeleted: false,
-  });
+  const product =
+    await Product.findOne({
+      _id: productId,
+      isDeleted: false,
+    });
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(
+      "Product not found"
+    );
   }
 
-  if (!name || !name.trim()) {
-    throw new Error("Product name is required");
+  if (!name?.trim()) {
+    throw new Error(
+      "Product name is required"
+    );
   }
 
-  if (!description || !description.trim()) {
-    throw new Error("Product description is required");
+  if (!description?.trim()) {
+    throw new Error(
+      "Product description is required"
+    );
   }
 
   if (!category) {
-    throw new Error("Category is required");
+    throw new Error(
+      "Category is required"
+    );
   }
 
   if (!subcategory) {
-    throw new Error("Subcategory is required");
+    throw new Error(
+      "Subcategory is required"
+    );
   }
 
-  if (!Array.isArray(images) || images.length === 0) {
-    throw new Error("At least one product image is required");
-  }
+if (
+  !images ||
+  !Array.isArray(images) ||
+  images.length < 3
+) {
+  throw new Error(
+    "At least 3 product images are required"
+  );
+}
+
+if (images.length > 5) {
+  throw new Error(
+    "Maximum 5 product images are allowed"
+  );
+}
 
   await validateCategory(category);
-  await validateSubcategory(subcategory, category);
 
-  validatePrices(price, discountPrice);
+  await validateSubcategory(
+    subcategory,
+    category
+  );
 
-  if (Number(stock) < 0) {
-    throw new Error("Stock cannot be negative");
-  }
+  validatePrices(
+    price,
+    discountPrice
+  );
 
-  const duplicateProduct = await Product.findOne({
-    _id: { $ne: productId },
-    name: {
-      $regex: `^${name.trim()}$`,
-      $options: "i",
-    },
-    isDeleted: false,
-  });
+  const validatedSizes =
+    validateSizes(sizes);
+
+  const totalStock =
+    calculateTotalStock(
+      validatedSizes
+    );
+
+  const duplicateProduct =
+    await Product.findOne({
+      name: name.trim(),
+      isDeleted: false,
+      _id: {
+        $ne: productId,
+      },
+    });
 
   if (duplicateProduct) {
-    throw new Error("A product with this name already exists");
+    throw new Error(
+      "Another product with this name already exists"
+    );
   }
 
-  product.name = name.trim();
-  product.description = description.trim();
-  product.category = category;
-  product.subcategory = subcategory;
-  product.images = images;
-  product.price = Number(price);
+  product.name =
+    name.trim();
+
+  product.description =
+    description.trim();
+
+  product.category =
+    category;
+
+  product.subcategory =
+    subcategory;
+
+  product.images =
+    images;
+
+  product.price =
+    Number(price);
+
   product.discountPrice =
     discountPrice === "" ||
-    discountPrice === undefined ||
-    discountPrice === null
+    discountPrice === undefined
       ? null
       : Number(discountPrice);
-  product.stock = Number(stock);
 
-  if (typeof isActive === "boolean") {
-    product.isActive = isActive;
+  product.sizes =
+    validatedSizes;
+
+  product.stock =
+    totalStock;
+
+  if (
+    isActive !== undefined
+  ) {
+    product.isActive =
+      isActive;
   }
 
   await product.save();
 
-  return await Product.findById(product._id)
+  return await Product.findById(
+    product._id
+  )
     .populate("category", "name")
-    .populate("subcategory", "name");
+    .populate(
+      "subcategory",
+      "name"
+    );
 };
 
-// ==========================
-// TOGGLE PRODUCT STATUS
-// ==========================
+/*
+|--------------------------------------------------------------------------
+| TOGGLE PRODUCT STATUS
+|--------------------------------------------------------------------------
+*/
 
-export const toggleProductStatus = async (productId) => {
-  const product = await Product.findOne({
-    _id: productId,
-    isDeleted: false,
-  });
+const toggleProductStatus =
+  async (productId) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        productId
+      )
+    ) {
+      throw new Error(
+        "Invalid product ID"
+      );
+    }
 
-  if (!product) {
-    throw new Error("Product not found");
-  }
+    const product =
+      await Product.findOne({
+        _id: productId,
+        isDeleted: false,
+      });
 
-  product.isActive = !product.isActive;
+    if (!product) {
+      throw new Error(
+        "Product not found"
+      );
+    }
 
-  await product.save();
+    product.isActive =
+      !product.isActive;
 
-  return product;
-};
+    await product.save();
 
-// ==========================
-// SOFT DELETE PRODUCT
-// ==========================
+    return product;
+  };
 
-export const deleteProduct = async (productId) => {
-  const product = await Product.findOne({
-    _id: productId,
-    isDeleted: false,
-  });
+/*
+|--------------------------------------------------------------------------
+| DELETE PRODUCT
+|--------------------------------------------------------------------------
+*/
 
-  if (!product) {
-    throw new Error("Product not found");
-  }
+const deleteProduct =
+  async (productId) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        productId
+      )
+    ) {
+      throw new Error(
+        "Invalid product ID"
+      );
+    }
 
-  product.isDeleted = true;
-  product.isActive = false;
+    const product =
+      await Product.findOne({
+        _id: productId,
+        isDeleted: false,
+      });
 
-  await product.save();
+    if (!product) {
+      throw new Error(
+        "Product not found"
+      );
+    }
 
-  return product;
+    product.isDeleted =
+      true;
+
+    product.isActive =
+      false;
+
+    await product.save();
+
+    return product;
+  };
+
+export {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  toggleProductStatus,
+  deleteProduct,
 };

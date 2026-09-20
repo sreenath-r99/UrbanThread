@@ -14,7 +14,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Product description is required"],
       trim: true,
-      maxlength: [3000, "Product description cannot exceed 3000 characters"],
+      maxlength: [
+        3000,
+        "Product description cannot exceed 3000 characters",
+      ],
     },
 
     category: {
@@ -29,24 +32,19 @@ const productSchema = new mongoose.Schema(
       required: [true, "Subcategory is required"],
     },
 
-    images: {
-      type: [
-        {
-          url: {
-            type: String,
-            required: true,
-          },
-          publicId: {
-            type: String,
-            default: "",
-          },
+    images: [
+      {
+        url: {
+          type: String,
+          required: true,
         },
-      ],
-      validate: {
-        validator: (images) => images.length > 0,
-        message: "At least one product image is required",
+
+        publicId: {
+          type: String,
+          default: "",
+        },
       },
-    },
+    ],
 
     price: {
       type: Number,
@@ -60,6 +58,29 @@ const productSchema = new mongoose.Schema(
       min: [0, "Discount price cannot be negative"],
     },
 
+    // Size-wise stock
+    sizes: [
+      {
+        size: {
+          type: String,
+          enum: {
+            values: ["S", "M", "L", "XL", "XXL"],
+            message:
+              "Size must be S, M, L, XL, or XXL",
+          },
+          required: true,
+        },
+
+        stock: {
+          type: Number,
+          required: true,
+          min: [0, "Size stock cannot be negative"],
+          default: 0,
+        },
+      },
+    ],
+
+    // Total stock = sum of all size stocks
     stock: {
       type: Number,
       required: [true, "Stock is required"],
@@ -82,15 +103,17 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Product name should be unique among non-deleted products
 productSchema.index({
   name: 1,
   isDeleted: 1,
 });
 
-const Product = mongoose.model(
-  "Product",
-  productSchema
-);
+productSchema.index({
+  category: 1,
+  subcategory: 1,
+  isDeleted: 1,
+});
+
+const Product = mongoose.model("Product", productSchema);
 
 export default Product;
