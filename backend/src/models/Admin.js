@@ -36,6 +36,20 @@ const adminSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // ==========================
+    // PASSWORD RESET
+    // ==========================
+
+    passwordResetOtpHash: {
+      type: String,
+      default: null,
+    },
+
+    passwordResetOtpExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

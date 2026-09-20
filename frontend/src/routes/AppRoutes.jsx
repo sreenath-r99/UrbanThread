@@ -1,4 +1,4 @@
-import { Navigate, Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route, Outlet } from "react-router-dom";
 
 // ==========================
 // USER PAGES
@@ -24,42 +24,59 @@ import Addresses from "../pages/user/Addresses";
 import AddAddress from "../pages/user/AddAddress";
 import EditAddress from "../pages/user/EditAddress";
 
-import Categories from "../pages/admin/Categories";
-import AddCategory from "../pages/admin/AddCategory";
-import EditCategory from "../pages/admin/EditCategory";
-
-import Subcategories from "../pages/admin/Subcategories";
-import AddSubcategory from "../pages/admin/AddSubcategory";
-import EditSubcategory from "../pages/admin/EditSubcategory";
-
-import Products from "../pages/admin/Products.jsx";
-import AdminLayout from "../components/admin/AdminLayout.jsx";
-
-// ==========================
-// USER ROUTE PROTECTION
-// ==========================
-
-import ProtectedRoute from "./ProtectedRoute";
-
 // ==========================
 // ADMIN PAGES
 // ==========================
 
+// Admin Authentication
 import AdminLogin from "../pages/admin/AdminLogin";
+import AdminForgotPassword from "../pages/admin/AdminForgotPassword";
+import AdminVerifyResetOtp from "../pages/admin/AdminVerifyResetOtp";
+import AdminResetPassword from "../pages/admin/AdminResetPassword";
+
+// Admin Dashboard
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
+// Categories
+import Categories from "../pages/admin/Categories";
+import AddCategory from "../pages/admin/AddCategory";
+import EditCategory from "../pages/admin/EditCategory";
+
+// Subcategories
+import Subcategories from "../pages/admin/Subcategories";
+import AddSubcategory from "../pages/admin/AddSubcategory";
+import EditSubcategory from "../pages/admin/EditSubcategory";
+
+// Products
+import Products from "../pages/admin/Products";
+
+// Users
+import Users from "../pages/admin/Users";
+
 // ==========================
-// ADMIN ROUTE PROTECTION
+// ADMIN COMPONENTS
 // ==========================
 
+import AdminLayout from "../components/admin/AdminLayout";
+
+// ==========================
+// ROUTE PROTECTION
+// ==========================
+
+import ProtectedRoute from "./ProtectedRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
+
+// ==========================
+// APP ROUTES
+// ==========================
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* ==========================
+
+      {/* =====================================================
           USER PUBLIC AUTH ROUTES
-      ========================== */}
+      ===================================================== */}
 
       <Route
         path="/register"
@@ -76,9 +93,9 @@ const AppRoutes = () => {
         element={<Login />}
       />
 
-      {/* ==========================
+      {/* =====================================================
           USER PASSWORD RESET ROUTES
-      ========================== */}
+      ===================================================== */}
 
       <Route
         path="/forgot-password"
@@ -95,20 +112,21 @@ const AppRoutes = () => {
         element={<CreateNewPassword />}
       />
 
-      {/* ==========================
+      {/* =====================================================
           USER LANDING PAGE
-      ========================== */}
+      ===================================================== */}
 
       <Route
         path="/"
         element={<Landing />}
       />
 
-      {/* ==========================
+      {/* =====================================================
           USER PROTECTED ROUTES
-      ========================== */}
+      ===================================================== */}
 
       <Route element={<ProtectedRoute />}>
+
         <Route
           path="/home"
           element={<Home />}
@@ -148,81 +166,145 @@ const AppRoutes = () => {
           path="/addresses/edit/:addressId"
           element={<EditAddress />}
         />
+
       </Route>
 
-      {/* ==========================
-          ADMIN PUBLIC ROUTES
-      ========================== */}
+      {/* =====================================================
+          ADMIN PUBLIC AUTH ROUTES
+
+          These routes do NOT require AdminProtectedRoute.
+      ===================================================== */}
 
       <Route
         path="/admin/login"
         element={<AdminLogin />}
       />
 
-{/* ==========================
-    ADMIN PROTECTED ROUTES
-========================== */}
+      <Route
+        path="/admin/forgot-password"
+        element={<AdminForgotPassword />}
+      />
 
-<Route element={<AdminProtectedRoute />}>
+      <Route
+        path="/admin/verify-reset-otp"
+        element={<AdminVerifyResetOtp />}
+      />
 
-  {/* Dashboard */}
-  <Route
-    path="/admin/dashboard"
-    element={<AdminDashboard />}
-  />
+      <Route
+        path="/admin/reset-password"
+        element={<AdminResetPassword />}
+      />
 
-  {/* Categories */}
-  <Route
-    path="/admin/categories"
-    element={<Categories />}
-  />
+      {/* =====================================================
+          ADMIN PROTECTED ROUTES
+      ===================================================== */}
 
-  <Route
-    path="/admin/categories/add"
-    element={<AddCategory />}
-  />
+      <Route element={<AdminProtectedRoute />}>
 
-  <Route
-    path="/admin/categories/edit/:categoryId"
-    element={<EditCategory />}
-  />
+        {/* =================================================
+            ONE SHARED ADMIN LAYOUT
 
-  {/* Subcategories */}
-  <Route
-    path="/admin/subcategories"
-    element={<Subcategories />}
-  />
+            IMPORTANT:
+            Admin pages themselves should NOT render
+            <AdminLayout> again.
 
-  <Route
-    path="/admin/subcategories/add"
-    element={<AddSubcategory />}
-  />
+            This layout provides:
+            - AdminSidebar
+            - 256px left spacing
+            - common admin background
+        ================================================= */}
 
-  <Route
-    path="/admin/subcategories/edit/:subcategoryId"
-    element={<EditSubcategory />}
-  />
+        <Route
+          element={
+            <AdminLayout>
+              <Outlet />
+            </AdminLayout>
+          }
+        >
 
-  {/* Products */}
-  <Route
-    path="/admin/products"
-    element={
-      <AdminLayout>
-        <Products />
-      </AdminLayout>
-    }
-  />
+          {/* ===============================================
+              ADMIN DASHBOARD
+          =============================================== */}
 
-</Route>
+          <Route
+            path="/admin/dashboard"
+            element={<AdminDashboard />}
+          />
 
-      {/* ==========================
+          {/* ===============================================
+              CATEGORY MANAGEMENT
+          =============================================== */}
+
+          <Route
+            path="/admin/categories"
+            element={<Categories />}
+          />
+
+          <Route
+            path="/admin/categories/add"
+            element={<AddCategory />}
+          />
+
+          <Route
+            path="/admin/categories/edit/:categoryId"
+            element={<EditCategory />}
+          />
+
+          {/* ===============================================
+              SUBCATEGORY MANAGEMENT
+          =============================================== */}
+
+          <Route
+            path="/admin/subcategories"
+            element={<Subcategories />}
+          />
+
+          <Route
+            path="/admin/subcategories/add"
+            element={<AddSubcategory />}
+          />
+
+          <Route
+            path="/admin/subcategories/edit/:subcategoryId"
+            element={<EditSubcategory />}
+          />
+
+          {/* ===============================================
+              PRODUCT MANAGEMENT
+          =============================================== */}
+
+          <Route
+            path="/admin/products"
+            element={<Products />}
+          />
+
+          {/* ===============================================
+              USER MANAGEMENT
+          =============================================== */}
+
+          <Route
+            path="/admin/users"
+            element={<Users />}
+          />
+
+        </Route>
+
+      </Route>
+
+      {/* =====================================================
           FALLBACK ROUTE
-      ========================== */}
+      ===================================================== */}
 
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
+
     </Routes>
   );
 };

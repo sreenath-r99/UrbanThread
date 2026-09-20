@@ -48,12 +48,14 @@ const AdminLogin = () => {
     const email = formData.email.trim();
     const password = formData.password;
 
+    // Email validation
     if (!email) {
       newErrors.email = "Admin email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Enter a valid email address";
     }
 
+    // Password validation
     if (!password) {
       newErrors.password = "Password is required";
     }
@@ -106,6 +108,7 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <div className="grid min-h-screen lg:grid-cols-2">
+
         {/* ==========================
             LEFT IMAGE SECTION
         ========================== */}
@@ -134,6 +137,7 @@ const AdminLogin = () => {
         ========================== */}
 
         <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
+
           {/* Decorative dots */}
 
           <div className="absolute right-8 top-8 flex gap-2">
@@ -143,7 +147,9 @@ const AdminLogin = () => {
           </div>
 
           <div className="w-full max-w-md">
+
             <div className="border border-[#292929] bg-[#1b1b1b] px-7 py-8 shadow-2xl sm:px-10 sm:py-10">
+
               {/* Portal badge */}
 
               <div className="mb-7 flex justify-center">
@@ -176,7 +182,10 @@ const AdminLogin = () => {
                 onSubmit={handleSubmit}
                 className="space-y-6"
               >
-                {/* Email */}
+
+                {/* ==========================
+                    EMAIL
+                ========================== */}
 
                 <div>
                   <label
@@ -187,6 +196,7 @@ const AdminLogin = () => {
                   </label>
 
                   <div className="flex items-center border border-[#303030] bg-[#1b1b1b] transition focus-within:border-neutral-500">
+
                     <span className="pl-3 text-neutral-500">
                       ✉
                     </span>
@@ -201,6 +211,7 @@ const AdminLogin = () => {
                       autoComplete="email"
                       className="w-full bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-neutral-600"
                     />
+
                   </div>
 
                   {errors.email && (
@@ -210,7 +221,9 @@ const AdminLogin = () => {
                   )}
                 </div>
 
-                {/* Password */}
+                {/* ==========================
+                    PASSWORD
+                ========================== */}
 
                 <div>
                   <label
@@ -221,6 +234,7 @@ const AdminLogin = () => {
                   </label>
 
                   <div className="flex items-center border border-[#303030] bg-[#1b1b1b] transition focus-within:border-neutral-500">
+
                     <span className="pl-3 text-neutral-500">
                       🔒
                     </span>
@@ -252,6 +266,7 @@ const AdminLogin = () => {
                     >
                       {showPassword ? "◉" : "◌"}
                     </button>
+
                   </div>
 
                   {errors.password && (
@@ -261,7 +276,9 @@ const AdminLogin = () => {
                   )}
                 </div>
 
-                {/* Forgot password */}
+                {/* ==========================
+                    FORGOT PASSWORD
+                ========================== */}
 
                 <div className="text-center">
                   <Link
@@ -272,26 +289,37 @@ const AdminLogin = () => {
                   </Link>
                 </div>
 
-                {/* Submit button */}
+                {/* ==========================
+                    SUBMIT BUTTON
+                ========================== */}
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full bg-[#e8e5e0] py-3 text-xs font-semibold tracking-[0.18em] text-[#171717] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
+                  {isSubmitting
+                    ? "SIGNING IN..."
+                    : "SIGN IN"}
                 </button>
 
-                {/* Secure access */}
+                {/* ==========================
+                    SECURE ACCESS
+                ========================== */}
 
                 <div className="flex items-center justify-center gap-2 pt-1 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
                   <span>🔒</span>
                   <span>Secure Admin Access</span>
                 </div>
+
               </form>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
     </div>
   );
