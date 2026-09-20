@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   getSubcategories,
+  getPublicSubcategories,
   getSingleSubcategory,
   addSubcategory,
   editSubcategory,
@@ -13,8 +14,47 @@ import { protectAdmin } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-// All subcategory routes require admin authentication
+/*
+|--------------------------------------------------------------------------
+| PUBLIC SUBCATEGORY ROUTES
+|--------------------------------------------------------------------------
+|
+| These routes are accessible without admin authentication.
+|
+*/
+
+// GET /api/admin/subcategories/store
+//
+// Optional:
+// ?categoryId=<categoryId>
+//
+// Examples:
+//
+// /api/admin/subcategories/store
+//
+// /api/admin/subcategories/store?categoryId=<categoryId>
+//
+router.get(
+  "/store",
+  getPublicSubcategories
+);
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN AUTHENTICATION
+|--------------------------------------------------------------------------
+|
+| Everything below this point requires admin authentication.
+|
+*/
+
 router.use(protectAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN SUBCATEGORY ROUTES
+|--------------------------------------------------------------------------
+*/
 
 // GET /api/admin/subcategories
 router.get(

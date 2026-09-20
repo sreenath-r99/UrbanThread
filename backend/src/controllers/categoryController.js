@@ -32,7 +32,8 @@ const getCategories = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Categories fetched successfully",
+      message:
+        "Categories fetched successfully",
 
       categories: result.categories,
 
@@ -55,6 +56,45 @@ const getCategories = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
+| Get Public Categories
+|--------------------------------------------------------------------------
+|
+| Used by the User Side / Shop page.
+|--------------------------------------------------------------------------
+*/
+
+const getPublicCategories = async (
+  req,
+  res
+) => {
+  try {
+    const categories =
+      await categoryService.getPublicCategories();
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Public categories fetched successfully",
+
+      categories,
+    });
+  } catch (error) {
+    console.error(
+      "Get public categories error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to fetch public categories",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
 | Get Single Category
 |--------------------------------------------------------------------------
 */
@@ -70,12 +110,14 @@ const getCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Category fetched successfully",
+      message:
+        "Category fetched successfully",
       category,
     });
   } catch (error) {
     const statusCode =
-      error.message === "Category not found"
+      error.message ===
+      "Category not found"
         ? 404
         : 400;
 
@@ -105,7 +147,8 @@ const createCategory = async (req, res) => {
     if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Category name is required",
+        message:
+          "Category name is required",
       });
     }
 
@@ -118,12 +161,15 @@ const createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Category created successfully",
+      message:
+        "Category created successfully",
       category,
     });
   } catch (error) {
     const statusCode =
-      error.message.includes("already exists")
+      error.message.includes(
+        "already exists"
+      )
         ? 409
         : 400;
 
@@ -166,14 +212,16 @@ const updateCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Category updated successfully",
+      message:
+        "Category updated successfully",
       category,
     });
   } catch (error) {
     let statusCode = 400;
 
     if (
-      error.message === "Category not found"
+      error.message ===
+      "Category not found"
     ) {
       statusCode = 404;
     }
@@ -203,11 +251,13 @@ const deleteCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Category deleted successfully",
+      message:
+        "Category deleted successfully",
     });
   } catch (error) {
     const statusCode =
-      error.message === "Category not found"
+      error.message ===
+      "Category not found"
         ? 404
         : 400;
 
@@ -246,7 +296,8 @@ const toggleCategoryStatus = async (
     });
   } catch (error) {
     const statusCode =
-      error.message === "Category not found"
+      error.message ===
+      "Category not found"
         ? 404
         : 400;
 
@@ -261,6 +312,7 @@ const toggleCategoryStatus = async (
 
 export {
   getCategories,
+  getPublicCategories,
   getCategory,
   createCategory,
   updateCategory,

@@ -56,7 +56,10 @@ const getAllCategories = async ({
   |--------------------------------------------------------------------------
   */
 
-  const currentPage = Math.max(Number(page) || 1, 1);
+  const currentPage = Math.max(
+    Number(page) || 1,
+    1
+  );
 
   const itemsPerPage = Math.min(
     Math.max(Number(limit) || 10, 1),
@@ -81,7 +84,8 @@ const getAllCategories = async ({
     ? sortBy
     : "createdAt";
 
-  const safeSortOrder = sortOrder === "asc" ? 1 : -1;
+  const safeSortOrder =
+    sortOrder === "asc" ? 1 : -1;
 
   const sort = {
     [safeSortBy]: safeSortOrder,
@@ -93,14 +97,15 @@ const getAllCategories = async ({
   |--------------------------------------------------------------------------
   */
 
-  const [categories, totalCategories] = await Promise.all([
-    Category.find(filter)
-      .sort(sort)
-      .skip(skip)
-      .limit(itemsPerPage),
+  const [categories, totalCategories] =
+    await Promise.all([
+      Category.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(itemsPerPage),
 
-    Category.countDocuments(filter),
-  ]);
+      Category.countDocuments(filter),
+    ]);
 
   /*
   |--------------------------------------------------------------------------
@@ -114,15 +119,45 @@ const getAllCategories = async ({
 
   return {
     categories,
+
     pagination: {
       currentPage,
       itemsPerPage,
       totalItems: totalCategories,
       totalPages,
-      hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1,
+      hasNextPage:
+        currentPage < totalPages,
+      hasPreviousPage:
+        currentPage > 1,
     },
   };
+};
+
+/*
+|--------------------------------------------------------------------------
+| Get Public Categories
+|--------------------------------------------------------------------------
+|
+| Used by the User Side / Shop page.
+|
+| Only:
+| - Non-deleted categories
+| - Active categories
+|
+| No admin authentication is required.
+|--------------------------------------------------------------------------
+*/
+
+const getPublicCategories = async () => {
+  const categories = await Category.find({
+    isDeleted: false,
+    isActive: true,
+  })
+    .select("_id name image")
+    .sort({ name: 1 })
+    .lean();
+
+  return categories;
 };
 
 /*
@@ -132,7 +167,11 @@ const getAllCategories = async ({
 */
 
 const getCategoryById = async (categoryId) => {
-  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      categoryId
+    )
+  ) {
     throw new Error("Invalid category ID");
   }
 
@@ -161,18 +200,22 @@ const createCategory = async ({
 }) => {
   const trimmedName = name.trim();
 
-  const existingCategory = await Category.findOne({
-    name: trimmedName,
-    isDeleted: false,
-  });
+  const existingCategory =
+    await Category.findOne({
+      name: trimmedName,
+      isDeleted: false,
+    });
 
   if (existingCategory) {
-    throw new Error("Category already exists");
+    throw new Error(
+      "Category already exists"
+    );
   }
 
   const category = await Category.create({
     name: trimmedName,
-    description: description?.trim() || "",
+    description:
+      description?.trim() || "",
     image: image || "",
   });
 
@@ -194,8 +237,14 @@ const updateCategory = async (
     isActive,
   }
 ) => {
-  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-    throw new Error("Invalid category ID");
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      categoryId
+    )
+  ) {
+    throw new Error(
+      "Invalid category ID"
+    );
   }
 
   const category = await Category.findOne({
@@ -204,7 +253,9 @@ const updateCategory = async (
   });
 
   if (!category) {
-    throw new Error("Category not found");
+    throw new Error(
+      "Category not found"
+    );
   }
 
   /*
@@ -245,7 +296,8 @@ const updateCategory = async (
   */
 
   if (description !== undefined) {
-    category.description = description.trim();
+    category.description =
+      description.trim();
   }
 
   /*
@@ -265,7 +317,8 @@ const updateCategory = async (
   */
 
   if (isActive !== undefined) {
-    category.isActive = Boolean(isActive);
+    category.isActive =
+      Boolean(isActive);
   }
 
   await category.save();
@@ -279,9 +332,17 @@ const updateCategory = async (
 |--------------------------------------------------------------------------
 */
 
-const deleteCategory = async (categoryId) => {
-  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-    throw new Error("Invalid category ID");
+const deleteCategory = async (
+  categoryId
+) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      categoryId
+    )
+  ) {
+    throw new Error(
+      "Invalid category ID"
+    );
   }
 
   const category = await Category.findOne({
@@ -290,7 +351,9 @@ const deleteCategory = async (categoryId) => {
   });
 
   if (!category) {
-    throw new Error("Category not found");
+    throw new Error(
+      "Category not found"
+    );
   }
 
   category.isDeleted = true;
@@ -307,9 +370,17 @@ const deleteCategory = async (categoryId) => {
 |--------------------------------------------------------------------------
 */
 
-const toggleCategoryStatus = async (categoryId) => {
-  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-    throw new Error("Invalid category ID");
+const toggleCategoryStatus = async (
+  categoryId
+) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      categoryId
+    )
+  ) {
+    throw new Error(
+      "Invalid category ID"
+    );
   }
 
   const category = await Category.findOne({
@@ -318,10 +389,13 @@ const toggleCategoryStatus = async (categoryId) => {
   });
 
   if (!category) {
-    throw new Error("Category not found");
+    throw new Error(
+      "Category not found"
+    );
   }
 
-  category.isActive = !category.isActive;
+  category.isActive =
+    !category.isActive;
 
   await category.save();
 
@@ -330,6 +404,7 @@ const toggleCategoryStatus = async (categoryId) => {
 
 export {
   getAllCategories,
+  getPublicCategories,
   getCategoryById,
   createCategory,
   updateCategory,

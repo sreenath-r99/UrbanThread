@@ -1,4 +1,9 @@
-import { Navigate, Routes, Route, Outlet } from "react-router-dom";
+import {
+  Navigate,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
 
 // ==========================
 // USER PAGES
@@ -23,6 +28,9 @@ import ChangeEmail from "../pages/user/ChangeEmail";
 import Addresses from "../pages/user/Addresses";
 import AddAddress from "../pages/user/AddAddress";
 import EditAddress from "../pages/user/EditAddress";
+
+// User Shop
+import Shop from "../pages/user/Shop";
 
 // ==========================
 // ADMIN PAGES
@@ -127,10 +135,27 @@ const AppRoutes = () => {
 
       <Route element={<ProtectedRoute />}>
 
+        {/* ==========================
+            USER HOME
+        ========================== */}
+
         <Route
           path="/home"
           element={<Home />}
         />
+
+        {/* ==========================
+            USER SHOP
+        ========================== */}
+
+        <Route
+          path="/shop"
+          element={<Shop />}
+        />
+
+        {/* ==========================
+            USER PROFILE
+        ========================== */}
 
         <Route
           path="/profile"
@@ -151,6 +176,10 @@ const AppRoutes = () => {
           path="/profile/change-email"
           element={<ChangeEmail />}
         />
+
+        {/* ==========================
+            USER ADDRESSES
+        ========================== */}
 
         <Route
           path="/addresses"
@@ -211,7 +240,7 @@ const AppRoutes = () => {
             This layout provides:
             - AdminSidebar
             - 256px left spacing
-            - common admin background
+            - Common admin background
         ================================================= */}
 
         <Route

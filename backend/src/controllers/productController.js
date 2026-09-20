@@ -167,8 +167,57 @@ const removeProduct = async (req, res) => {
   }
 };
 
+const getPublicProducts = async (req, res) => {
+  try {
+    const {
+      search = "",
+      categoryId = "",
+      subcategoryId = "",
+      minPrice = "",
+      maxPrice = "",
+      page = 1,
+      limit = 12,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const result =
+      await productService.getPublicProducts({
+        search,
+        categoryId,
+        subcategoryId,
+        minPrice,
+        maxPrice,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      });
+
+    res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      products: result.products,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error(
+      "Get public products error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to fetch products",
+    });
+  }
+};
+
 export {
   getProducts,
+  getPublicProducts,
   getSingleProduct,
   addProduct,
   editProduct,

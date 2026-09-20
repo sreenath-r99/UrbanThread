@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   getProducts,
+  getPublicProducts,
   getSingleProduct,
   addProduct,
   editProduct,
@@ -12,6 +13,26 @@ import {
 import { protectAdmin } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC USER PRODUCT ROUTES
+|--------------------------------------------------------------------------
+|
+| These routes are accessible to normal users.
+|
+*/
+
+router.get("/store", getPublicProducts);
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN PRODUCT ROUTES
+|--------------------------------------------------------------------------
+|
+| Everything below this point requires admin authentication.
+|
+*/
 
 router.use(protectAdmin);
 

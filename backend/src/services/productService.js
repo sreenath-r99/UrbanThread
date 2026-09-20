@@ -694,9 +694,178 @@ const deleteProduct =
     return product;
   };
 
+  /*
+|--------------------------------------------------------------------------
+| GET PUBLIC PRODUCTS
+|--------------------------------------------------------------------------
+*/
+
+const getPublicProducts = async ({
+  search = "",
+  categoryId = "",
+  subcategoryId = "",
+  minPrice = "",
+  maxPrice = "",
+  page = 1,
+  limit = 12,
+  sortBy = "createdAt",
+  sortOrder = "desc",
+} = {}) => {
+  const filter = {
+    isDeleted: false,
+    isActive: true,
+  };
+
+  // ==========================================
+  // SEARCH
+  // ==========================================
+
+  if (search.trim()) {
+    filter.name = {
+      $regex: search.trim(),
+      $options: "i",
+    };
+  }
+
+  // ==========================================
+  // CATEGORY FILTER
+  // ==========================================
+
+  if (
+    categoryId &&
+    mongoose.Types.ObjectId.isValid(categoryId)
+  ) {
+    filter.category = categoryId;
+  }
+
+  // ==========================================
+  // SUBCATEGORY FILTER
+  // ==========================================
+
+  if (
+    subcategoryId &&
+    mongoose.Types.ObjectId.isValid(subcategoryId)
+  ) {
+    filter.subcategory = subcategoryId;
+  }
+
+  // ==========================================
+  // PRICE RANGE FILTER
+  // ==========================================
+
+  const hasMinPrice =
+    minPrice !== "" &&
+    minPrice !== undefined &&
+    minPrice !== null;
+
+  const hasMaxPrice =
+    maxPrice !== "" &&
+    maxPrice !== undefined &&
+    maxPrice !== null;
+
+  if (hasMinPrice || hasMaxPrice) {
+    const priceFilter = {};
+
+    if (hasMinPrice) {
+      const numericMinPrice = Number(minPrice);
+
+      if (
+        Number.isFinite(numericMinPrice) &&
+        numericMinPrice >= 0
+      ) {
+        priceFilter.$gte = numericMinPrice;
+      }
+    }
+
+    if (hasMaxPrice) {
+      const numericMaxPrice = Number(maxPrice);
+
+      if (
+        Number.isFinite(numericMaxPrice) &&
+        numericMaxPrice >= 0
+      ) {
+        priceFilter.$lte = numericMaxPrice;
+      }
+    }
+
+    if (Object.keys(priceFilter).length > 0) {
+      filter.price = priceFilter;
+    }
+  }
+
+  // ==========================================
+  // SORTING
+  // ==========================================
+
+  const allowedSortFields = [
+    "createdAt",
+    "name",
+    "price",
+  ];
+
+  const safeSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : "createdAt";
+
+  const safeSortOrder =
+    sortOrder === "asc" ? 1 : -1;
+
+  // ==========================================
+  // PAGINATION
+  // ==========================================
+
+  const safePage = Math.max(
+    Number(page) || 1,
+    1
+  );
+
+  const safeLimit = Math.min(
+    Math.max(Number(limit) || 12, 1),
+    50
+  );
+
+  const skip = (safePage - 1) * safeLimit;
+
+  // ==========================================
+  // DATABASE QUERY
+  // ==========================================
+
+  const [products, totalProducts] =
+    await Promise.all([
+      Product.find(filter)
+        .populate("category", "name")
+        .populate("subcategory", "name")
+        .sort({
+          [safeSortBy]: safeSortOrder,
+        })
+        .skip(skip)
+        .limit(safeLimit)
+        .lean(),
+
+      Product.countDocuments(filter),
+    ]);
+
+  return {
+    products,
+
+    pagination: {
+      currentPage: safePage,
+
+      totalPages: Math.ceil(
+        totalProducts / safeLimit
+      ),
+
+      totalProducts,
+
+      limit: safeLimit,
+    },
+  };
+};
+
 export {
   getAllProducts,
   getProductById,
+  getPublicProducts,
   createProduct,
   updateProduct,
   toggleProductStatus,
