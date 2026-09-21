@@ -14,18 +14,14 @@ const ALLOWED_SIZES = ["S", "M", "L", "XL", "XXL"];
 
 const validateSizes = (sizes) => {
   if (!Array.isArray(sizes) || sizes.length === 0) {
-    throw new Error(
-      "At least one product size is required"
-    );
+    throw new Error("At least one product size is required");
   }
 
   const selectedSizes = new Set();
 
   const validatedSizes = sizes.map((item) => {
     if (!item || !item.size) {
-      throw new Error(
-        "Product size is required"
-      );
+      throw new Error("Product size is required");
     }
 
     const size = String(item.size)
@@ -39,9 +35,7 @@ const validateSizes = (sizes) => {
     }
 
     if (selectedSizes.has(size)) {
-      throw new Error(
-        `Duplicate size is not allowed: ${size}`
-      );
+      throw new Error(`Duplicate size is not allowed: ${size}`);
     }
 
     selectedSizes.add(size);
@@ -55,9 +49,7 @@ const validateSizes = (sizes) => {
       !Number.isInteger(sizeStock) ||
       sizeStock < 0
     ) {
-      throw new Error(
-        `Invalid stock for size ${size}`
-      );
+      throw new Error(`Invalid stock for size ${size}`);
     }
 
     return {
@@ -84,7 +76,7 @@ const calculateTotalStock = (sizes) => {
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL PRODUCTS
+| GET ALL PRODUCTS - ADMIN
 |--------------------------------------------------------------------------
 */
 
@@ -135,10 +127,9 @@ const getAllProducts = async ({
     "stock",
   ];
 
-  const safeSortBy =
-    allowedSortFields.includes(sortBy)
-      ? sortBy
-      : "createdAt";
+  const safeSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : "createdAt";
 
   const safeSortOrder =
     sortOrder === "asc" ? 1 : -1;
@@ -185,7 +176,7 @@ const getAllProducts = async ({
 
 /*
 |--------------------------------------------------------------------------
-| GET SINGLE PRODUCT
+| GET SINGLE PRODUCT - ADMIN
 |--------------------------------------------------------------------------
 */
 
@@ -205,6 +196,41 @@ const getProductById = async (productId) => {
 
   if (!product) {
     throw new Error("Product not found");
+  }
+
+  return product;
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE PUBLIC PRODUCT - USER
+|--------------------------------------------------------------------------
+|
+| Only active and non-deleted products can be viewed
+| by normal users.
+|
+*/
+
+const getPublicProductById = async (productId) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(productId)
+  ) {
+    throw new Error("Invalid product ID");
+  }
+
+  const product = await Product.findOne({
+    _id: productId,
+    isDeleted: false,
+    isActive: true,
+  })
+    .populate("category", "name")
+    .populate("subcategory", "name")
+    .lean();
+
+  if (!product) {
+    throw new Error(
+      "Product is unavailable or no longer exists"
+    );
   }
 
   return product;
@@ -363,21 +389,21 @@ const createProduct = async ({
     );
   }
 
-if (
-  !images ||
-  !Array.isArray(images) ||
-  images.length < 3
-) {
-  throw new Error(
-    "At least 3 product images are required"
-  );
-}
+  if (
+    !images ||
+    !Array.isArray(images) ||
+    images.length < 3
+  ) {
+    throw new Error(
+      "At least 3 product images are required"
+    );
+  }
 
-if (images.length > 5) {
-  throw new Error(
-    "Maximum 5 product images are allowed"
-  );
-}
+  if (images.length > 5) {
+    throw new Error(
+      "Maximum 5 product images are allowed"
+    );
+  }
 
   await validateCategory(category);
 
@@ -515,21 +541,21 @@ const updateProduct = async (
     );
   }
 
-if (
-  !images ||
-  !Array.isArray(images) ||
-  images.length < 3
-) {
-  throw new Error(
-    "At least 3 product images are required"
-  );
-}
+  if (
+    !images ||
+    !Array.isArray(images) ||
+    images.length < 3
+  ) {
+    throw new Error(
+      "At least 3 product images are required"
+    );
+  }
 
-if (images.length > 5) {
-  throw new Error(
-    "Maximum 5 product images are allowed"
-  );
-}
+  if (images.length > 5) {
+    throw new Error(
+      "Maximum 5 product images are allowed"
+    );
+  }
 
   await validateCategory(category);
 
@@ -694,7 +720,7 @@ const deleteProduct =
     return product;
   };
 
-  /*
+/*
 |--------------------------------------------------------------------------
 | GET PUBLIC PRODUCTS
 |--------------------------------------------------------------------------
@@ -716,9 +742,11 @@ const getPublicProducts = async ({
     isActive: true,
   };
 
-  // ==========================================
-  // SEARCH
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | SEARCH
+  |--------------------------------------------------------------------------
+  */
 
   if (search.trim()) {
     filter.name = {
@@ -727,9 +755,11 @@ const getPublicProducts = async ({
     };
   }
 
-  // ==========================================
-  // CATEGORY FILTER
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | CATEGORY FILTER
+  |--------------------------------------------------------------------------
+  */
 
   if (
     categoryId &&
@@ -738,9 +768,11 @@ const getPublicProducts = async ({
     filter.category = categoryId;
   }
 
-  // ==========================================
-  // SUBCATEGORY FILTER
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | SUBCATEGORY FILTER
+  |--------------------------------------------------------------------------
+  */
 
   if (
     subcategoryId &&
@@ -749,9 +781,11 @@ const getPublicProducts = async ({
     filter.subcategory = subcategoryId;
   }
 
-  // ==========================================
-  // PRICE RANGE FILTER
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | PRICE RANGE FILTER
+  |--------------------------------------------------------------------------
+  */
 
   const hasMinPrice =
     minPrice !== "" &&
@@ -767,35 +801,47 @@ const getPublicProducts = async ({
     const priceFilter = {};
 
     if (hasMinPrice) {
-      const numericMinPrice = Number(minPrice);
+      const numericMinPrice =
+        Number(minPrice);
 
       if (
-        Number.isFinite(numericMinPrice) &&
+        Number.isFinite(
+          numericMinPrice
+        ) &&
         numericMinPrice >= 0
       ) {
-        priceFilter.$gte = numericMinPrice;
+        priceFilter.$gte =
+          numericMinPrice;
       }
     }
 
     if (hasMaxPrice) {
-      const numericMaxPrice = Number(maxPrice);
+      const numericMaxPrice =
+        Number(maxPrice);
 
       if (
-        Number.isFinite(numericMaxPrice) &&
+        Number.isFinite(
+          numericMaxPrice
+        ) &&
         numericMaxPrice >= 0
       ) {
-        priceFilter.$lte = numericMaxPrice;
+        priceFilter.$lte =
+          numericMaxPrice;
       }
     }
 
-    if (Object.keys(priceFilter).length > 0) {
+    if (
+      Object.keys(priceFilter).length > 0
+    ) {
       filter.price = priceFilter;
     }
   }
 
-  // ==========================================
-  // SORTING
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | SORTING
+  |--------------------------------------------------------------------------
+  */
 
   const allowedSortFields = [
     "createdAt",
@@ -803,16 +849,19 @@ const getPublicProducts = async ({
     "price",
   ];
 
-  const safeSortBy = allowedSortFields.includes(sortBy)
-    ? sortBy
-    : "createdAt";
+  const safeSortBy =
+    allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
 
   const safeSortOrder =
     sortOrder === "asc" ? 1 : -1;
 
-  // ==========================================
-  // PAGINATION
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | PAGINATION
+  |--------------------------------------------------------------------------
+  */
 
   const safePage = Math.max(
     Number(page) || 1,
@@ -824,11 +873,14 @@ const getPublicProducts = async ({
     50
   );
 
-  const skip = (safePage - 1) * safeLimit;
+  const skip =
+    (safePage - 1) * safeLimit;
 
-  // ==========================================
-  // DATABASE QUERY
-  // ==========================================
+  /*
+  |--------------------------------------------------------------------------
+  | DATABASE QUERY
+  |--------------------------------------------------------------------------
+  */
 
   const [products, totalProducts] =
     await Promise.all([
@@ -862,9 +914,16 @@ const getPublicProducts = async ({
   };
 };
 
+/*
+|--------------------------------------------------------------------------
+| EXPORTS
+|--------------------------------------------------------------------------
+*/
+
 export {
   getAllProducts,
   getProductById,
+  getPublicProductById,
   getPublicProducts,
   createProduct,
   updateProduct,

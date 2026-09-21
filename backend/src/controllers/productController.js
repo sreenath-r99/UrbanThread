@@ -1,5 +1,11 @@
 import * as productService from "../services/productService.js";
 
+/*
+|--------------------------------------------------------------------------
+| GET PRODUCTS - ADMIN
+|--------------------------------------------------------------------------
+*/
+
 const getProducts = async (req, res) => {
   try {
     const {
@@ -13,20 +19,23 @@ const getProducts = async (req, res) => {
       sortOrder = "desc",
     } = req.query;
 
-    const result = await productService.getAllProducts({
-      search,
-      categoryId,
-      subcategoryId,
-      includeInactive: includeInactive === "true",
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    });
+    const result =
+      await productService.getAllProducts({
+        search,
+        categoryId,
+        subcategoryId,
+        includeInactive:
+          includeInactive === "true",
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      });
 
     res.status(200).json({
       success: true,
-      message: "Products fetched successfully",
+      message:
+        "Products fetched successfully",
       products: result.products,
       pagination: result.pagination,
     });
@@ -34,60 +43,140 @@ const getProducts = async (req, res) => {
     res.status(500).json({
       success: false,
       message:
-        error.message || "Failed to fetch products",
+        error.message ||
+        "Failed to fetch products",
     });
   }
 };
 
-const getSingleProduct = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE PRODUCT - ADMIN
+|--------------------------------------------------------------------------
+*/
+
+const getSingleProduct = async (
+  req,
+  res
+) => {
   try {
     const { productId } = req.params;
 
     const product =
-      await productService.getProductById(productId);
+      await productService.getProductById(
+        productId
+      );
 
     res.status(200).json({
       success: true,
-      message: "Product fetched successfully",
+      message:
+        "Product fetched successfully",
       product,
     });
   } catch (error) {
     const statusCode =
-      error.message === "Product not found" ? 404 : 400;
+      error.message === "Product not found"
+        ? 404
+        : 400;
 
     res.status(statusCode).json({
       success: false,
       message:
-        error.message || "Failed to fetch product",
+        error.message ||
+        "Failed to fetch product",
     });
   }
 };
 
-const addProduct = async (req, res) => {
-  try {
-    const product =
-      await productService.createProduct(req.body);
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE PRODUCT - PUBLIC USER
+|--------------------------------------------------------------------------
+*/
 
-    res.status(201).json({
+const getPublicProductById = async (
+  req,
+  res
+) => {
+  try {
+    const { productId } = req.params;
+
+    const product =
+      await productService.getPublicProductById(
+        productId
+      );
+
+    res.status(200).json({
       success: true,
-      message: "Product created successfully",
+      message:
+        "Product fetched successfully",
       product,
     });
   } catch (error) {
     const statusCode =
-      error.message.includes("already exists")
+      error.message ===
+        "Product is unavailable or no longer exists"
+        ? 404
+        : 400;
+
+    res.status(statusCode).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to fetch product",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| CREATE PRODUCT - ADMIN
+|--------------------------------------------------------------------------
+*/
+
+const addProduct = async (
+  req,
+  res
+) => {
+  try {
+    const product =
+      await productService.createProduct(
+        req.body
+      );
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Product created successfully",
+      product,
+    });
+  } catch (error) {
+    const statusCode =
+      error.message.includes(
+        "already exists"
+      )
         ? 409
         : 400;
 
     res.status(statusCode).json({
       success: false,
       message:
-        error.message || "Failed to create product",
+        error.message ||
+        "Failed to create product",
     });
   }
 };
 
-const editProduct = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| UPDATE PRODUCT - ADMIN
+|--------------------------------------------------------------------------
+*/
+
+const editProduct = async (
+  req,
+  res
+) => {
   try {
     const { productId } = req.params;
 
@@ -99,26 +188,40 @@ const editProduct = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Product updated successfully",
+      message:
+        "Product updated successfully",
       product,
     });
   } catch (error) {
     const statusCode =
-      error.message === "Product not found"
+      error.message ===
+      "Product not found"
         ? 404
-        : error.message.includes("already exists")
+        : error.message.includes(
+            "already exists"
+          )
         ? 409
         : 400;
 
     res.status(statusCode).json({
       success: false,
       message:
-        error.message || "Failed to update product",
+        error.message ||
+        "Failed to update product",
     });
   }
 };
 
-const toggleStatus = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| TOGGLE PRODUCT STATUS - ADMIN
+|--------------------------------------------------------------------------
+*/
+
+const toggleStatus = async (
+  req,
+  res
+) => {
   try {
     const { productId } = req.params;
 
@@ -129,12 +232,16 @@ const toggleStatus = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Product status updated successfully",
+      message:
+        "Product status updated successfully",
       product,
     });
   } catch (error) {
     const statusCode =
-      error.message === "Product not found" ? 404 : 400;
+      error.message ===
+      "Product not found"
+        ? 404
+        : 400;
 
     res.status(statusCode).json({
       success: false,
@@ -145,29 +252,54 @@ const toggleStatus = async (req, res) => {
   }
 };
 
-const removeProduct = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| DELETE PRODUCT - ADMIN
+|--------------------------------------------------------------------------
+*/
+
+const removeProduct = async (
+  req,
+  res
+) => {
   try {
     const { productId } = req.params;
 
-    await productService.deleteProduct(productId);
+    await productService.deleteProduct(
+      productId
+    );
 
     res.status(200).json({
       success: true,
-      message: "Product deleted successfully",
+      message:
+        "Product deleted successfully",
     });
   } catch (error) {
     const statusCode =
-      error.message === "Product not found" ? 404 : 400;
+      error.message ===
+      "Product not found"
+        ? 404
+        : 400;
 
     res.status(statusCode).json({
       success: false,
       message:
-        error.message || "Failed to delete product",
+        error.message ||
+        "Failed to delete product",
     });
   }
 };
 
-const getPublicProducts = async (req, res) => {
+/*
+|--------------------------------------------------------------------------
+| GET PUBLIC PRODUCTS - USER SHOP
+|--------------------------------------------------------------------------
+*/
+
+const getPublicProducts = async (
+  req,
+  res
+) => {
   try {
     const {
       search = "",
@@ -196,7 +328,8 @@ const getPublicProducts = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Products fetched successfully",
+      message:
+        "Products fetched successfully",
       products: result.products,
       pagination: result.pagination,
     });
@@ -215,9 +348,16 @@ const getPublicProducts = async (req, res) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| EXPORTS
+|--------------------------------------------------------------------------
+*/
+
 export {
   getProducts,
   getPublicProducts,
+  getPublicProductById,
   getSingleProduct,
   addProduct,
   editProduct,

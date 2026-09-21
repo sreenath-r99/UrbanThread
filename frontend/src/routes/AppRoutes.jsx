@@ -29,62 +29,42 @@ import Addresses from "../pages/user/Addresses";
 import AddAddress from "../pages/user/AddAddress";
 import EditAddress from "../pages/user/EditAddress";
 
-// User Shop
 import Shop from "../pages/user/Shop";
+import ProductDetails from "../pages/user/ProductDetails";
+import Cart from "../pages/user/Cart";
 
 // ==========================
 // ADMIN PAGES
 // ==========================
 
-// Admin Authentication
 import AdminLogin from "../pages/admin/AdminLogin";
 import AdminForgotPassword from "../pages/admin/AdminForgotPassword";
 import AdminVerifyResetOtp from "../pages/admin/AdminVerifyResetOtp";
 import AdminResetPassword from "../pages/admin/AdminResetPassword";
-
-// Admin Dashboard
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
-// Categories
 import Categories from "../pages/admin/Categories";
 import AddCategory from "../pages/admin/AddCategory";
 import EditCategory from "../pages/admin/EditCategory";
 
-// Subcategories
 import Subcategories from "../pages/admin/Subcategories";
 import AddSubcategory from "../pages/admin/AddSubcategory";
 import EditSubcategory from "../pages/admin/EditSubcategory";
 
-// Products
 import Products from "../pages/admin/Products";
-
-// Users
 import Users from "../pages/admin/Users";
 
-// ==========================
-// ADMIN COMPONENTS
-// ==========================
-
 import AdminLayout from "../components/admin/AdminLayout";
-
-// ==========================
-// ROUTE PROTECTION
-// ==========================
 
 import ProtectedRoute from "./ProtectedRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 
-// ==========================
-// APP ROUTES
-// ==========================
-
 const AppRoutes = () => {
   return (
     <Routes>
-
-      {/* =====================================================
-          USER PUBLIC AUTH ROUTES
-      ===================================================== */}
+      {/* ============================================================ */}
+      {/* PUBLIC USER AUTH ROUTES */}
+      {/* ============================================================ */}
 
       <Route
         path="/register"
@@ -101,10 +81,6 @@ const AppRoutes = () => {
         element={<Login />}
       />
 
-      {/* =====================================================
-          USER PASSWORD RESET ROUTES
-      ===================================================== */}
-
       <Route
         path="/forgot-password"
         element={<ForgotPassword />}
@@ -120,42 +96,45 @@ const AppRoutes = () => {
         element={<CreateNewPassword />}
       />
 
-      {/* =====================================================
-          USER LANDING PAGE
-      ===================================================== */}
-
       <Route
         path="/"
         element={<Landing />}
       />
 
-      {/* =====================================================
-          USER PROTECTED ROUTES
-      ===================================================== */}
+      {/* ============================================================ */}
+      {/* PROTECTED USER ROUTES */}
+      {/* ============================================================ */}
 
       <Route element={<ProtectedRoute />}>
-
-        {/* ==========================
-            USER HOME
-        ========================== */}
+        {/* HOME */}
 
         <Route
           path="/home"
           element={<Home />}
         />
 
-        {/* ==========================
-            USER SHOP
-        ========================== */}
+        {/* SHOP */}
 
         <Route
           path="/shop"
           element={<Shop />}
         />
 
-        {/* ==========================
-            USER PROFILE
-        ========================== */}
+        {/* PRODUCT DETAILS */}
+
+        <Route
+          path="/products/:productId"
+          element={<ProductDetails />}
+        />
+
+        {/* CART */}
+
+        <Route
+          path="/cart"
+          element={<Cart />}
+        />
+
+        {/* PROFILE */}
 
         <Route
           path="/profile"
@@ -177,9 +156,7 @@ const AppRoutes = () => {
           element={<ChangeEmail />}
         />
 
-        {/* ==========================
-            USER ADDRESSES
-        ========================== */}
+        {/* ADDRESSES */}
 
         <Route
           path="/addresses"
@@ -195,14 +172,11 @@ const AppRoutes = () => {
           path="/addresses/edit/:addressId"
           element={<EditAddress />}
         />
-
       </Route>
 
-      {/* =====================================================
-          ADMIN PUBLIC AUTH ROUTES
-
-          These routes do NOT require AdminProtectedRoute.
-      ===================================================== */}
+      {/* ============================================================ */}
+      {/* ADMIN AUTH ROUTES */}
+      {/* ============================================================ */}
 
       <Route
         path="/admin/login"
@@ -224,25 +198,11 @@ const AppRoutes = () => {
         element={<AdminResetPassword />}
       />
 
-      {/* =====================================================
-          ADMIN PROTECTED ROUTES
-      ===================================================== */}
+      {/* ============================================================ */}
+      {/* PROTECTED ADMIN ROUTES */}
+      {/* ============================================================ */}
 
       <Route element={<AdminProtectedRoute />}>
-
-        {/* =================================================
-            ONE SHARED ADMIN LAYOUT
-
-            IMPORTANT:
-            Admin pages themselves should NOT render
-            <AdminLayout> again.
-
-            This layout provides:
-            - AdminSidebar
-            - 256px left spacing
-            - Common admin background
-        ================================================= */}
-
         <Route
           element={
             <AdminLayout>
@@ -250,19 +210,14 @@ const AppRoutes = () => {
             </AdminLayout>
           }
         >
-
-          {/* ===============================================
-              ADMIN DASHBOARD
-          =============================================== */}
+          {/* DASHBOARD */}
 
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
           />
 
-          {/* ===============================================
-              CATEGORY MANAGEMENT
-          =============================================== */}
+          {/* CATEGORIES */}
 
           <Route
             path="/admin/categories"
@@ -279,9 +234,7 @@ const AppRoutes = () => {
             element={<EditCategory />}
           />
 
-          {/* ===============================================
-              SUBCATEGORY MANAGEMENT
-          =============================================== */}
+          {/* SUBCATEGORIES */}
 
           <Route
             path="/admin/subcategories"
@@ -298,42 +251,30 @@ const AppRoutes = () => {
             element={<EditSubcategory />}
           />
 
-          {/* ===============================================
-              PRODUCT MANAGEMENT
-          =============================================== */}
+          {/* PRODUCTS */}
 
           <Route
             path="/admin/products"
             element={<Products />}
           />
 
-          {/* ===============================================
-              USER MANAGEMENT
-          =============================================== */}
+          {/* USERS */}
 
           <Route
             path="/admin/users"
             element={<Users />}
           />
-
         </Route>
-
       </Route>
 
-      {/* =====================================================
-          FALLBACK ROUTE
-      ===================================================== */}
+      {/* ============================================================ */}
+      {/* FALLBACK */}
+      {/* ============================================================ */}
 
       <Route
         path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
+        element={<Navigate to="/" replace />}
       />
-
     </Routes>
   );
 };
