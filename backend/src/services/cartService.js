@@ -1,7 +1,12 @@
+// backend/src/services/cartService.js
+
 import mongoose from "mongoose";
 
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
+import {
+  removeProductFromWishlist,
+} from "./wishlistService.js";
 
 const getProductPrice = (product) => {
   if (
@@ -152,6 +157,19 @@ const addToCart = async (
 
   await cart.save();
 
+  /*
+   * Requirement:
+   * When a wishlist product is successfully
+   * moved to cart, remove it from wishlist.
+   *
+   * This happens only after the cart save
+   * succeeds.
+   */
+  await removeProductFromWishlist(
+    userId,
+    product._id
+  );
+
   return getCart(userId);
 };
 
@@ -171,6 +189,8 @@ const getCart = async (userId) => {
       _id: null,
       user: userId,
       items: [],
+      itemCount: 0,
+      subtotal: 0,
     };
   }
 

@@ -1,3 +1,5 @@
+// backend/src/app.js
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -11,6 +13,7 @@ import productRoutes from "./routes/productRoutes.js";
 import productImageRoutes from "./routes/productImageRoutes.js";
 import adminUserRoutes from "./routes/adminUserRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
@@ -27,12 +30,7 @@ app.use(
     extended: true,
   })
 );
-
 app.use(cookieParser());
-
-// ==========================
-// HEALTH CHECK
-// ==========================
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -42,33 +40,14 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// ==========================
-// USER ROUTES
-// ==========================
-
-app.use(
-  "/api/auth",
-  authRoutes
-);
+app.use("/api/auth", authRoutes);
 
 app.use(
   "/api/addresses",
   addressRoutes
 );
 
-app.use(
-  "/api/cart",
-  cartRoutes
-);
-
-// ==========================
-// ADMIN ROUTES
-// ==========================
-
-app.use(
-  "/api/admin",
-  adminRoutes
-);
+app.use("/api/admin", adminRoutes);
 
 app.use(
   "/api/admin/categories",
@@ -93,6 +72,16 @@ app.use(
 app.use(
   "/api/admin/users",
   adminUserRoutes
+);
+
+app.use(
+  "/api/cart",
+  cartRoutes
+);
+
+app.use(
+  "/api/wishlist",
+  wishlistRoutes
 );
 
 export default app;

@@ -11,9 +11,7 @@ import {
   removeProduct,
 } from "../controllers/productController.js";
 
-import {
-  getRelatedProductsController,
-} from "../controllers/relatedProductController.js";
+import { getRelatedProductsController } from "../controllers/relatedProductController.js";
 
 import { protectAdmin } from "../middleware/adminMiddleware.js";
 
@@ -34,10 +32,7 @@ const router = express.Router();
 |
 */
 
-router.get(
-  "/store",
-  getPublicProducts
-);
+router.get("/store", getPublicProducts);
 
 /*
 |--------------------------------------------------------------------------
@@ -51,10 +46,7 @@ router.get(
 |
 */
 
-router.get(
-  "/store/:productId/related",
-  getRelatedProductsController
-);
+router.get("/store/:productId/related", getRelatedProductsController);
 
 /*
 |--------------------------------------------------------------------------
@@ -65,10 +57,7 @@ router.get(
 |
 */
 
-router.get(
-  "/store/:productId",
-  getPublicProductById
-);
+router.get("/store/:productId", getPublicProductById);
 
 /*
 |--------------------------------------------------------------------------
@@ -82,34 +71,16 @@ router.get(
 
 router.use(protectAdmin);
 
-router.get(
-  "/",
-  getProducts
-);
+router.get("/", getProducts);
 
-router.get(
-  "/:productId",
-  getSingleProduct
-);
+router.get("/:productId", getSingleProduct);
 
-router.post(
-  "/",
-  addProduct
-);
+router.post("/", addProduct);
 
-router.put(
-  "/:productId",
-  editProduct
-);
+router.put("/:productId", editProduct);
 
-router.patch(
-  "/:productId/toggle-status",
-  toggleStatus
-);
+router.patch("/:productId/toggle-status", toggleStatus);
 
-router.delete(
-  "/:productId",
-  removeProduct
-);
+router.delete("/:productId", removeProduct);
 
 export default router;

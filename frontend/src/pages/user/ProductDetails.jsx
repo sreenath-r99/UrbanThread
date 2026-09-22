@@ -20,6 +20,8 @@ import {
 
 import { addToCart } from "../../services/cartService";
 
+import WishlistButton from "../../components/user/WishlistButton";
+
 const ProductDetails = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -75,7 +77,7 @@ const ProductDetails = () => {
   // ============================================================
 
   const [loading, setLoading] =
-    useState(true);
+    useState(Boolean(productId));
 
   const [relatedLoading, setRelatedLoading] =
     useState(false);
@@ -162,10 +164,7 @@ const ProductDetails = () => {
     };
 
     if (productId) {
-      fetchProduct();
-    } else {
-      setError("Product not found");
-      setLoading(false);
+      void fetchProduct();
     }
 
     return () => {
@@ -299,6 +298,26 @@ const ProductDetails = () => {
   // STOCK
   // ============================================================
 
+  const totalAvailableStock =
+    useMemo(() => {
+      if (!product) {
+        return 0;
+      }
+
+      if (
+        Array.isArray(product.sizes) &&
+        product.sizes.length > 0
+      ) {
+        return product.sizes.reduce(
+          (total, item) =>
+            total + (Number(item.stock) || 0),
+          0
+        );
+      }
+
+      return Number(product.stock) || 0;
+    }, [product]);
+
   const stockStatus =
     useMemo(() => {
       if (!product) {
@@ -308,7 +327,7 @@ const ProductDetails = () => {
         };
       }
 
-      if (product.stock <= 0) {
+      if (totalAvailableStock <= 0) {
         return {
           label: "Out of stock",
           className:
@@ -316,9 +335,9 @@ const ProductDetails = () => {
         };
       }
 
-      if (product.stock <= 5) {
+      if (totalAvailableStock <= 5) {
         return {
-          label: `Only ${product.stock} left`,
+          label: `Only ${totalAvailableStock} left`,
           className:
             "text-amber-400",
         };
@@ -329,10 +348,10 @@ const ProductDetails = () => {
         className:
           "text-emerald-400",
       };
-    }, [product]);
+    }, [product, totalAvailableStock]);
 
   const isOutOfStock =
-    product?.stock <= 0;
+    totalAvailableStock <= 0;
 
   // ============================================================
   // SIZE STOCK
@@ -351,7 +370,7 @@ const ProductDetails = () => {
   const maximumQuantity =
     selectedSizeStock !== null
       ? selectedSizeStock
-      : product?.stock || 1;
+      : totalAvailableStock || 1;
 
   const decreaseQuantity = () => {
     setQuantity((current) =>
@@ -865,9 +884,14 @@ const ProductDetails = () => {
           </nav>
 
           <div className="flex items-center gap-4 text-sm text-neutral-400">
-            <button type="button">
+            <Link
+              to="/wishlist"
+              className="transition hover:text-white"
+              aria-label="Wishlist"
+              title="Wishlist"
+            >
               ♡
-            </button>
+            </Link>
 
             <Link
               to="/cart"
@@ -1332,14 +1356,10 @@ const ProductDetails = () => {
                   : "Add to Cart"}
               </button>
 
-              <button
-                type="button"
-                disabled
-                className="flex h-12 items-center justify-center border border-[#363636] text-lg text-neutral-400"
-                aria-label="Add to wishlist"
-              >
-                ♡
-              </button>
+              <WishlistButton
+                productId={product._id}
+                className="flex h-12 items-center justify-center border border-[#363636] text-lg text-neutral-400 transition hover:border-[#666666] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
 
             {/* ================================================== */}

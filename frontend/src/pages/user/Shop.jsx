@@ -1,10 +1,11 @@
 import {
-  useCallback,
   useEffect,
   useState,
 } from "react";
 
 import { Link } from "react-router-dom";
+
+import WishlistButton from "../../components/user/WishlistButton";
 
 import {
   getShopProducts,
@@ -13,10 +14,6 @@ import {
 } from "../../services/shopService";
 
 const Shop = () => {
-  // ==========================================
-  // PRODUCTS
-  // ==========================================
-
   const [products, setProducts] =
     useState([]);
 
@@ -26,10 +23,6 @@ const Shop = () => {
   const [error, setError] =
     useState("");
 
-  // ==========================================
-  // CATEGORIES
-  // ==========================================
-
   const [categories, setCategories] =
     useState([]);
 
@@ -37,10 +30,6 @@ const Shop = () => {
     categoriesLoading,
     setCategoriesLoading,
   ] = useState(true);
-
-  // ==========================================
-  // SUBCATEGORIES
-  // ==========================================
 
   const [
     subcategories,
@@ -52,35 +41,19 @@ const Shop = () => {
     setSubcategoriesLoading,
   ] = useState(false);
 
-  // ==========================================
-  // SEARCH
-  // ==========================================
-
   const [searchInput, setSearchInput] =
     useState("");
 
   const [search, setSearch] =
     useState("");
 
-  // ==========================================
-  // CATEGORY FILTER
-  // ==========================================
-
   const [categoryId, setCategoryId] =
     useState("");
-
-  // ==========================================
-  // SUBCATEGORY FILTER
-  // ==========================================
 
   const [
     subcategoryId,
     setSubcategoryId,
   ] = useState("");
-
-  // ==========================================
-  // PRICE FILTER
-  // ==========================================
 
   const [minPrice, setMinPrice] =
     useState("");
@@ -88,16 +61,8 @@ const Shop = () => {
   const [maxPrice, setMaxPrice] =
     useState("");
 
-  // ==========================================
-  // SORTING
-  // ==========================================
-
   const [sortOption, setSortOption] =
     useState("latest");
-
-  // ==========================================
-  // PAGINATION
-  // ==========================================
 
   const [page, setPage] =
     useState(1);
@@ -110,19 +75,17 @@ const Shop = () => {
       limit: 12,
     });
 
-  // ==========================================
-  // FETCH CATEGORIES
-  // ==========================================
+  useEffect(() => {
+    let isMounted = true;
 
-  const fetchCategories =
-    useCallback(async () => {
+    const loadCategories = async () => {
       try {
-        setCategoriesLoading(
-          true
-        );
-
         const response =
           await getShopCategories();
+
+        if (!isMounted) {
+          return;
+        }
 
         setCategories(
           Array.isArray(
@@ -137,29 +100,45 @@ const Shop = () => {
           err
         );
 
-        setCategories([]);
+        if (isMounted) {
+          setCategories([]);
+        }
       } finally {
-        setCategoriesLoading(
-          false
-        );
+        if (isMounted) {
+          setCategoriesLoading(false);
+        }
       }
-    }, []);
+    };
 
-  // ==========================================
-  // FETCH SUBCATEGORIES
-  // ==========================================
+    void loadCategories();
 
-  const fetchSubcategories =
-    useCallback(async () => {
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSubcategories = async () => {
       try {
-        setSubcategoriesLoading(
-          true
-        );
+        await Promise.resolve();
+
+        if (!isMounted) {
+          return;
+        }
+
+    
+        setSubcategoriesLoading(true);
 
         const response =
           await getShopSubcategories({
             categoryId,
           });
+
+        if (!isMounted) {
+          return;
+        }
 
         setSubcategories(
           Array.isArray(
@@ -174,29 +153,39 @@ const Shop = () => {
           err
         );
 
-        setSubcategories([]);
+        if (isMounted) {
+          setSubcategories([]);
+        }
       } finally {
-        setSubcategoriesLoading(
-          false
-        );
+        if (isMounted) {
+          setSubcategoriesLoading(false);
+        }
       }
-    }, [categoryId]);
+    };
 
-  // ==========================================
-  // FETCH PRODUCTS
-  // ==========================================
+    void loadSubcategories();
 
-  const fetchProducts =
-    useCallback(async () => {
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProducts = async () => {
       try {
+        await Promise.resolve();
+
+        if (!isMounted) {
+          return;
+        }
+
         setLoading(true);
         setError("");
 
-        let sortBy =
-          "createdAt";
-
-        let sortOrder =
-          "desc";
+        let sortBy = "createdAt";
+        let sortOrder = "desc";
 
         switch (sortOption) {
           case "price-low":
@@ -239,6 +228,10 @@ const Shop = () => {
             sortOrder,
           });
 
+        if (!isMounted) {
+          return;
+        }
+
         setProducts(
           Array.isArray(
             response?.products
@@ -261,52 +254,34 @@ const Shop = () => {
           err
         );
 
-        setProducts([]);
-
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load products"
-        );
+        if (isMounted) {
+          setProducts([]);
+          setError(
+            err?.response?.data?.message ||
+              "Failed to load products"
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    }, [
-      search,
-      categoryId,
-      subcategoryId,
-      minPrice,
-      maxPrice,
-      sortOption,
-      page,
-    ]);
+    };
 
-  // ==========================================
-  // INITIAL CATEGORY LOAD
-  // ==========================================
+    void loadProducts();
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  // ==========================================
-  // SUBCATEGORY LOAD
-  // ==========================================
-
-  useEffect(() => {
-    fetchSubcategories();
-  }, [fetchSubcategories]);
-
-  // ==========================================
-  // PRODUCT LOAD
-  // ==========================================
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  // ==========================================
-  // SEARCH
-  // ==========================================
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    search,
+    categoryId,
+    subcategoryId,
+    minPrice,
+    maxPrice,
+    sortOption,
+    page,
+  ]);
 
   const handleSearchSubmit = (
     event
@@ -326,10 +301,6 @@ const Shop = () => {
     setPage(1);
   };
 
-  // ==========================================
-  // CATEGORY CHANGE
-  // ==========================================
-
   const handleCategoryChange = (
     event
   ) => {
@@ -340,19 +311,10 @@ const Shop = () => {
       selectedCategoryId
     );
 
-    // A subcategory belongs to a
-    // particular category, so clear
-    // the old subcategory whenever
-    // the category changes.
-
     setSubcategoryId("");
 
     setPage(1);
   };
-
-  // ==========================================
-  // SUBCATEGORY CHANGE
-  // ==========================================
 
   const handleSubcategoryChange = (
     event
@@ -364,10 +326,6 @@ const Shop = () => {
     setPage(1);
   };
 
-  // ==========================================
-  // MIN PRICE
-  // ==========================================
-
   const handleMinPriceChange = (
     event
   ) => {
@@ -377,10 +335,6 @@ const Shop = () => {
 
     setPage(1);
   };
-
-  // ==========================================
-  // MAX PRICE
-  // ==========================================
 
   const handleMaxPriceChange = (
     event
@@ -392,10 +346,6 @@ const Shop = () => {
     setPage(1);
   };
 
-  // ==========================================
-  // SORT
-  // ==========================================
-
   const handleSortChange = (
     event
   ) => {
@@ -405,10 +355,6 @@ const Shop = () => {
 
     setPage(1);
   };
-
-  // ==========================================
-  // CLEAR ALL FILTERS
-  // ==========================================
 
   const handleClearFilters = () => {
     setSearchInput("");
@@ -425,13 +371,9 @@ const Shop = () => {
     setPage(1);
   };
 
-  // ==========================================
-  // PAGINATION
-  // ==========================================
-
   const handlePreviousPage = () => {
     if (page > 1) {
-      setPage(
+        setPage(
         (previousPage) =>
           previousPage - 1
       );
@@ -443,16 +385,12 @@ const Shop = () => {
       page <
       pagination.totalPages
     ) {
-      setPage(
+        setPage(
         (previousPage) =>
           previousPage + 1
       );
     }
   };
-
-  // ==========================================
-  // IMAGE
-  // ==========================================
 
   const getProductImage = (
     product
@@ -472,10 +410,6 @@ const Shop = () => {
     return "";
   };
 
-  // ==========================================
-  // PRICE
-  // ==========================================
-
   const getDisplayPrice = (
     product
   ) => {
@@ -492,10 +426,6 @@ const Shop = () => {
 
     return product?.price;
   };
-
-  // ==========================================
-  // DISCOUNT
-  // ==========================================
 
   const getDiscountPercentage = (
     product
@@ -519,20 +449,10 @@ const Shop = () => {
     );
   };
 
-  // ==========================================
-  // RENDER
-  // ==========================================
-
   return (
     <div className="min-h-screen bg-[#111111] text-white">
-
-      {/* ======================================
-          HEADER
-      ====================================== */}
-
       <header className="border-b border-[#292929] bg-[#151515]">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
-
           <Link
             to="/home"
             className="font-serif text-xl tracking-wide text-white"
@@ -564,21 +484,23 @@ const Shop = () => {
           </nav>
 
           <div className="flex items-center gap-5 text-neutral-400">
-            <button
-              type="button"
+            <Link
+              to="/wishlist"
               className="transition hover:text-white"
               aria-label="Wishlist"
+              title="Wishlist"
             >
               ♡
-            </button>
+            </Link>
 
-            <button
-              type="button"
+            <Link
+              to="/cart"
               className="transition hover:text-white"
               aria-label="Cart"
+              title="Cart"
             >
               🛒
-            </button>
+            </Link>
 
             <Link
               to="/profile"
@@ -591,14 +513,7 @@ const Shop = () => {
         </div>
       </header>
 
-      {/* ======================================
-          MAIN
-      ====================================== */}
-
       <main className="mx-auto w-full max-w-[1400px] px-6 py-10 md:px-10">
-
-        {/* PAGE HEADING */}
-
         <div className="mb-10">
           <p className="mb-3 text-[10px] uppercase tracking-[0.35em] text-neutral-600">
             Collection
@@ -626,8 +541,6 @@ const Shop = () => {
             </p>
           </div>
         </div>
-
-        {/* SEARCH */}
 
         <form
           onSubmit={
@@ -670,13 +583,8 @@ const Shop = () => {
           </button>
         </form>
 
-        {/* FILTER BAR */}
-
         <div className="mb-10 border-y border-[#292929] py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-6 lg:items-end">
-
-            {/* CATEGORY */}
-
             <div className="lg:col-span-2">
               <label className="mb-2 block text-[10px] uppercase tracking-wider text-neutral-600">
                 Category
@@ -715,8 +623,6 @@ const Shop = () => {
                   )}
               </select>
             </div>
-
-            {/* SUBCATEGORY */}
 
             <div className="lg:col-span-2">
               <label className="mb-2 block text-[10px] uppercase tracking-wider text-neutral-600">
@@ -768,8 +674,6 @@ const Shop = () => {
               </select>
             </div>
 
-            {/* MIN PRICE */}
-
             <div>
               <label className="mb-2 block text-[10px] uppercase tracking-wider text-neutral-600">
                 Min Price
@@ -787,8 +691,6 @@ const Shop = () => {
               />
             </div>
 
-            {/* MAX PRICE */}
-
             <div>
               <label className="mb-2 block text-[10px] uppercase tracking-wider text-neutral-600">
                 Max Price
@@ -805,8 +707,6 @@ const Shop = () => {
                 className="w-full border border-[#292929] bg-[#181818] px-4 py-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
               />
             </div>
-
-            {/* SORT */}
 
             <div>
               <label className="mb-2 block text-[10px] uppercase tracking-wider text-neutral-600">
@@ -841,10 +741,7 @@ const Shop = () => {
                 </option>
               </select>
             </div>
-
           </div>
-
-          {/* CLEAR FILTERS */}
 
           <div className="mt-5 flex justify-end">
             <button
@@ -859,15 +756,11 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* ERROR */}
-
         {error && (
           <div className="mb-8 border border-red-900/60 bg-red-950/20 px-5 py-4 text-xs text-red-400">
             {error}
           </div>
         )}
-
-        {/* LOADING */}
 
         {loading ? (
           <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
@@ -887,9 +780,6 @@ const Shop = () => {
           </div>
         ) : products.length ===
           0 ? (
-
-          /* EMPTY */
-
           <div className="border border-[#242424] bg-[#171717] px-6 py-20 text-center">
             <h2 className="font-serif text-2xl text-white">
               No products found
@@ -910,11 +800,7 @@ const Shop = () => {
               Clear Filters
             </button>
           </div>
-
         ) : (
-
-          /* PRODUCT GRID */
-
           <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
             {products.map(
               (product) => {
@@ -934,103 +820,105 @@ const Shop = () => {
                   );
 
                 return (
-                  <Link
-                    key={
-                      product._id
-                    }
-                    to={`/products/${product._id}`}
+                  <div
+                    key={product._id}
                     className="group min-w-0"
                   >
-                    {/* IMAGE */}
-
                     <div className="relative aspect-[3/4] overflow-hidden bg-[#1a1a1a]">
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={
-                            product.name
-                          }
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-neutral-700">
-                          No Image
-                        </div>
-                      )}
-
-                      {/* DISCOUNT */}
-
-                      {discountPercentage >
-                        0 && (
-                        <span className="absolute left-3 top-3 bg-white px-2 py-1 text-[9px] font-semibold text-black">
-                          {
-                            discountPercentage
-                          }
-                          % OFF
-                        </span>
-                      )}
-
-                      {/* OUT OF STOCK */}
-
-                      {product.stock <=
-                        0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                          <span className="border border-neutral-600 bg-[#111111]/90 px-4 py-2 text-[9px] uppercase tracking-wider text-neutral-300">
-                            Out of Stock
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* PRODUCT INFO */}
-
-                    <div className="mt-4">
-                      <p className="text-xs text-neutral-500">
-                        {product
-                          .category
-                          ?.name ||
-                          "Collection"}
-                      </p>
-
-                      <h2 className="mt-1 truncate text-sm font-medium text-white">
-                        {
-                          product.name
-                        }
-                      </h2>
-
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-sm text-white">
-                          ₹
-                          {Number(
-                            displayPrice ||
-                              0
-                          ).toLocaleString(
-                            "en-IN"
-                          )}
-                        </span>
+                      <Link
+                        to={`/products/${product._id}`}
+                        className="block h-full w-full"
+                      >
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={
+                              product.name
+                            }
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-neutral-700">
+                            No Image
+                          </div>
+                        )}
 
                         {discountPercentage >
                           0 && (
-                          <span className="text-xs text-neutral-600 line-through">
+                          <span className="absolute left-3 top-3 bg-white px-2 py-1 text-[9px] font-semibold text-black">
+                            {
+                              discountPercentage
+                            }
+                            % OFF
+                          </span>
+                        )}
+
+                        {product.stock <=
+                          0 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                            <span className="border border-neutral-600 bg-[#111111]/90 px-4 py-2 text-[9px] uppercase tracking-wider text-neutral-300">
+                              Out of Stock
+                            </span>
+                          </div>
+                        )}
+                      </Link>
+
+                      <WishlistButton
+                        productId={product._id}
+                        className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center border border-white/10 bg-[#111111]/85 text-lg text-neutral-300 backdrop-blur-sm transition hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+
+                    <Link
+                      to={`/products/${product._id}`}
+                      className="block"
+                    >
+                      <div className="mt-4">
+                        <p className="text-xs text-neutral-500">
+                          {product
+                            .category
+                            ?.name ||
+                            "Collection"}
+                        </p>
+
+                        <h2 className="mt-1 truncate text-sm font-medium text-white">
+                          {
+                            product.name
+                          }
+                        </h2>
+
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-sm text-white">
                             ₹
                             {Number(
-                              product.price ||
+                              displayPrice ||
                                 0
                             ).toLocaleString(
                               "en-IN"
                             )}
                           </span>
-                        )}
+
+                          {discountPercentage >
+                            0 && (
+                            <span className="text-xs text-neutral-600 line-through">
+                              ₹
+                              {Number(
+                                product.price ||
+                                  0
+                              ).toLocaleString(
+                                "en-IN"
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 );
               }
             )}
           </div>
         )}
-
-        {/* PAGINATION */}
 
         {!loading &&
           pagination.totalProducts >
@@ -1116,13 +1004,8 @@ const Shop = () => {
           )}
       </main>
 
-      {/* ======================================
-          FOOTER
-      ====================================== */}
-
       <footer className="mt-20 border-t border-[#292929] bg-[#151515]">
         <div className="mx-auto grid max-w-[1400px] gap-10 px-6 py-12 md:grid-cols-4 md:px-10">
-
           <div className="md:col-span-2">
             <h2 className="font-serif text-xl text-white">
               UrbanThread
@@ -1198,7 +1081,6 @@ const Shop = () => {
               </span>
             </div>
           </div>
-
         </div>
       </footer>
     </div>

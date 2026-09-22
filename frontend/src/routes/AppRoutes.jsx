@@ -32,6 +32,7 @@ import EditAddress from "../pages/user/EditAddress";
 import Shop from "../pages/user/Shop";
 import ProductDetails from "../pages/user/ProductDetails";
 import Cart from "../pages/user/Cart";
+import Wishlist from "../pages/user/Wishlist";
 
 // ==========================
 // ADMIN PAGES
@@ -132,6 +133,13 @@ const AppRoutes = () => {
         <Route
           path="/cart"
           element={<Cart />}
+        />
+
+        {/* WISHLIST */}
+
+        <Route
+          path="/wishlist"
+          element={<Wishlist />}
         />
 
         {/* PROFILE */}
