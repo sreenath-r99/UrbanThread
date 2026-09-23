@@ -34,6 +34,11 @@ import ProductDetails from "../pages/user/ProductDetails";
 import Cart from "../pages/user/Cart";
 import Wishlist from "../pages/user/Wishlist";
 
+import Checkout from "../pages/user/Checkout";
+import OrderSuccess from "../pages/user/OrderSuccess";
+import Orders from "../pages/user/Orders";
+import OrderDetails from "../pages/user/OrderDetails";
+
 // ==========================
 // ADMIN PAGES
 // ==========================
@@ -106,7 +111,9 @@ const AppRoutes = () => {
       {/* PROTECTED USER ROUTES */}
       {/* ============================================================ */}
 
-      <Route element={<ProtectedRoute />}>
+      <Route
+        element={<ProtectedRoute />}
+      >
         {/* HOME */}
 
         <Route
@@ -135,11 +142,39 @@ const AppRoutes = () => {
           element={<Cart />}
         />
 
+        {/* CHECKOUT */}
+
+        <Route
+          path="/checkout"
+          element={<Checkout />}
+        />
+
         {/* WISHLIST */}
 
         <Route
           path="/wishlist"
           element={<Wishlist />}
+        />
+
+        {/* ORDERS */}
+
+        <Route
+          path="/orders"
+          element={<Orders />}
+        />
+
+        {/* ORDER DETAILS */}
+
+        <Route
+          path="/orders/:orderId"
+          element={<OrderDetails />}
+        />
+
+        {/* ORDER SUCCESS */}
+
+        <Route
+          path="/order-success/:orderId"
+          element={<OrderSuccess />}
         />
 
         {/* PROFILE */}
@@ -210,7 +245,11 @@ const AppRoutes = () => {
       {/* PROTECTED ADMIN ROUTES */}
       {/* ============================================================ */}
 
-      <Route element={<AdminProtectedRoute />}>
+      <Route
+        element={
+          <AdminProtectedRoute />
+        }
+      >
         <Route
           element={
             <AdminLayout>
@@ -281,7 +320,12 @@ const AppRoutes = () => {
 
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
     </Routes>
   );

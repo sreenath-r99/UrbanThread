@@ -14,6 +14,7 @@ import productImageRoutes from "./routes/productImageRoutes.js";
 import adminUserRoutes from "./routes/adminUserRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 const app = express();
 
@@ -25,11 +26,13 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use(
   express.urlencoded({
     extended: true,
   })
 );
+
 app.use(cookieParser());
 
 app.get("/api/health", (req, res) => {
@@ -40,14 +43,20 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api/auth", authRoutes);
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
 app.use(
   "/api/addresses",
   addressRoutes
 );
 
-app.use("/api/admin", adminRoutes);
+app.use(
+  "/api/admin",
+  adminRoutes
+);
 
 app.use(
   "/api/admin/categories",
@@ -82,6 +91,11 @@ app.use(
 app.use(
   "/api/wishlist",
   wishlistRoutes
+);
+
+app.use(
+  "/api/orders",
+  orderRoutes
 );
 
 export default app;
