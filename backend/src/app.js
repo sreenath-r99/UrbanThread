@@ -1,5 +1,3 @@
-// backend/src/app.js
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -15,6 +13,8 @@ import adminUserRoutes from "./routes/adminUserRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import adminOrderRoutes from "./routes/adminOrderRoutes.js";
+import adminInventoryRoutes from "./routes/adminInventoryRoutes.js";
 
 const app = express();
 
@@ -83,6 +83,17 @@ app.use(
   adminUserRoutes
 );
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN ORDER MANAGEMENT
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+  "/api/admin/orders",
+  adminOrderRoutes
+);
+
 app.use(
   "/api/cart",
   cartRoutes
@@ -96,6 +107,11 @@ app.use(
 app.use(
   "/api/orders",
   orderRoutes
+);
+
+app.use(
+  "/api/admin/inventory",
+  adminInventoryRoutes
 );
 
 export default app;

@@ -58,9 +58,19 @@ import AddSubcategory from "../pages/admin/AddSubcategory";
 import EditSubcategory from "../pages/admin/EditSubcategory";
 
 import Products from "../pages/admin/Products";
+import Inventory from "../pages/admin/Inventory";
 import Users from "../pages/admin/Users";
+import AdminOrders from "../pages/admin/Orders";
+
+// ==========================
+// ADMIN COMPONENTS
+// ==========================
 
 import AdminLayout from "../components/admin/AdminLayout";
+
+// ==========================
+// ROUTE PROTECTION
+// ==========================
 
 import ProtectedRoute from "./ProtectedRoute";
 import AdminProtectedRoute from "./AdminProtectedRoute";
@@ -246,10 +256,12 @@ const AppRoutes = () => {
       {/* ============================================================ */}
 
       <Route
-        element={
-          <AdminProtectedRoute />
-        }
+        element={<AdminProtectedRoute />}
       >
+        {/* ========================================================== */}
+        {/* ADMIN LAYOUT */}
+        {/* ========================================================== */}
+
         <Route
           element={
             <AdminLayout>
@@ -257,14 +269,36 @@ const AppRoutes = () => {
             </AdminLayout>
           }
         >
+          {/* ======================================================== */}
           {/* DASHBOARD */}
+          {/* ======================================================== */}
 
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
           />
 
+          {/* ======================================================== */}
+          {/* PRODUCTS */}
+          {/* ======================================================== */}
+
+          <Route
+            path="/admin/products"
+            element={<Products />}
+          />
+
+          {/* ======================================================== */}
+          {/* INVENTORY */}
+          {/* ======================================================== */}
+
+          <Route
+            path="/admin/inventory"
+            element={<Inventory />}
+          />
+
+          {/* ======================================================== */}
           {/* CATEGORIES */}
+          {/* ======================================================== */}
 
           <Route
             path="/admin/categories"
@@ -281,7 +315,9 @@ const AppRoutes = () => {
             element={<EditCategory />}
           />
 
+          {/* ======================================================== */}
           {/* SUBCATEGORIES */}
+          {/* ======================================================== */}
 
           <Route
             path="/admin/subcategories"
@@ -298,14 +334,18 @@ const AppRoutes = () => {
             element={<EditSubcategory />}
           />
 
-          {/* PRODUCTS */}
+          {/* ======================================================== */}
+          {/* ORDERS */}
+          {/* ======================================================== */}
 
           <Route
-            path="/admin/products"
-            element={<Products />}
+            path="/admin/orders"
+            element={<AdminOrders />}
           />
 
+          {/* ======================================================== */}
           {/* USERS */}
+          {/* ======================================================== */}
 
           <Route
             path="/admin/users"

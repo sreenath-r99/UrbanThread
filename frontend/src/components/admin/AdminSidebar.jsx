@@ -20,6 +20,11 @@ const AdminSidebar = () => {
       icon: "▣",
     },
     {
+  label: "Inventory",
+  icon: "▥",
+  path: "/admin/inventory",
+},
+    {
       label: "Categories",
       path: "/admin/categories",
       icon: "⌘",
