@@ -21,10 +21,7 @@ router.use(protectAdmin);
 |
 */
 
-router.get(
-  "/",
-  getAdminOrdersController
-);
+router.get("/", getAdminOrdersController);
 
 /*
 |--------------------------------------------------------------------------
@@ -35,10 +32,7 @@ router.get(
 |
 */
 
-router.get(
-  "/:orderId",
-  getAdminOrderController
-);
+router.get("/:orderId", getAdminOrderController);
 
 /*
 |--------------------------------------------------------------------------
@@ -49,9 +43,6 @@ router.get(
 |
 */
 
-router.patch(
-  "/:orderId/status",
-  updateAdminOrderStatusController
-);
+router.patch("/:orderId/status", updateAdminOrderStatusController);
 
 export default router;

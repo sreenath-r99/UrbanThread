@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL:
-    "http://localhost:5000/api/admin",
+  baseURL: "http://localhost:5000/api/admin",
 });
 
 /*
@@ -13,20 +12,15 @@ const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    const token =
-      localStorage.getItem(
-        "adminToken"
-      );
+    const token = localStorage.getItem("adminToken");
 
     if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) =>
-    Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 /*
@@ -35,35 +29,22 @@ API.interceptors.request.use(
 |--------------------------------------------------------------------------
 */
 
-export const getProducts =
-  async (options = {}) => {
-    const response =
-      await API.get("/products", {
-        params: {
-          search:
-            options.search || "",
-          categoryId:
-            options.categoryId || "",
-          subcategoryId:
-            options.subcategoryId || "",
-          includeInactive:
-            options.includeInactive ??
-            true,
-          page:
-            options.page || 1,
-          limit:
-            options.limit || 10,
-          sortBy:
-            options.sortBy ||
-            "createdAt",
-          sortOrder:
-            options.sortOrder ||
-            "desc",
-        },
-      });
+export const getProducts = async (options = {}) => {
+  const response = await API.get("/products", {
+    params: {
+      search: options.search || "",
+      categoryId: options.categoryId || "",
+      subcategoryId: options.subcategoryId || "",
+      includeInactive: options.includeInactive ?? true,
+      page: options.page || 1,
+      limit: options.limit || 10,
+      sortBy: options.sortBy || "createdAt",
+      sortOrder: options.sortOrder || "desc",
+    },
+  });
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -71,15 +52,11 @@ export const getProducts =
 |--------------------------------------------------------------------------
 */
 
-export const getProduct =
-  async (productId) => {
-    const response =
-      await API.get(
-        `/products/${productId}`
-      );
+export const getProduct = async (productId) => {
+  const response = await API.get(`/products/${productId}`);
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -87,16 +64,11 @@ export const getProduct =
 |--------------------------------------------------------------------------
 */
 
-export const createProduct =
-  async (productData) => {
-    const response =
-      await API.post(
-        "/products",
-        productData
-      );
+export const createProduct = async (productData) => {
+  const response = await API.post("/products", productData);
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -104,19 +76,11 @@ export const createProduct =
 |--------------------------------------------------------------------------
 */
 
-export const updateProduct =
-  async (
-    productId,
-    productData
-  ) => {
-    const response =
-      await API.put(
-        `/products/${productId}`,
-        productData
-      );
+export const updateProduct = async (productId, productData) => {
+  const response = await API.put(`/products/${productId}`, productData);
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -124,15 +88,11 @@ export const updateProduct =
 |--------------------------------------------------------------------------
 */
 
-export const toggleProductStatus =
-  async (productId) => {
-    const response =
-      await API.patch(
-        `/products/${productId}/toggle-status`
-      );
+export const toggleProductStatus = async (productId) => {
+  const response = await API.patch(`/products/${productId}/toggle-status`);
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -140,15 +100,11 @@ export const toggleProductStatus =
 |--------------------------------------------------------------------------
 */
 
-export const deleteProduct =
-  async (productId) => {
-    const response =
-      await API.delete(
-        `/products/${productId}`
-      );
+export const deleteProduct = async (productId) => {
+  const response = await API.delete(`/products/${productId}`);
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -156,32 +112,21 @@ export const deleteProduct =
 |--------------------------------------------------------------------------
 */
 
-export const uploadProductImages =
-  async (files) => {
-    const formData =
-      new FormData();
+export const uploadProductImages = async (files) => {
+  const formData = new FormData();
 
-    files.forEach((file) => {
-      formData.append(
-        "images",
-        file
-      );
-    });
+  files.forEach((file) => {
+    formData.append("images", file);
+  });
 
-    const response =
-      await API.post(
-        "/product-images/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
+  const response = await API.post("/product-images/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -189,17 +134,12 @@ export const uploadProductImages =
 |--------------------------------------------------------------------------
 */
 
-export const deleteProductImage =
-  async (publicId) => {
-    const response =
-      await API.delete(
-        "/product-images/delete",
-        {
-          data: {
-            publicId,
-          },
-        }
-      );
+export const deleteProductImage = async (publicId) => {
+  const response = await API.delete("/product-images/delete", {
+    data: {
+      publicId,
+    },
+  });
 
-    return response.data;
-  };
+  return response.data;
+};

@@ -20,10 +20,10 @@ const AdminSidebar = () => {
       icon: "▣",
     },
     {
-  label: "Inventory",
-  icon: "▥",
-  path: "/admin/inventory",
-},
+      label: "Inventory",
+      icon: "▥",
+      path: "/admin/inventory",
+    },
     {
       label: "Categories",
       path: "/admin/categories",
@@ -125,9 +125,7 @@ const AdminSidebar = () => {
                 <>
                   <span
                     className={`w-5 text-center text-sm ${
-                      isActive
-                        ? "text-neutral-200"
-                        : "text-neutral-600"
+                      isActive ? "text-neutral-200" : "text-neutral-600"
                     }`}
                   >
                     {item.icon}

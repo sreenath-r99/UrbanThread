@@ -14,10 +14,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Product description is required"],
       trim: true,
-      maxlength: [
-        3000,
-        "Product description cannot exceed 3000 characters",
-      ],
+      maxlength: [3000, "Product description cannot exceed 3000 characters"],
     },
 
     category: {
@@ -65,8 +62,7 @@ const productSchema = new mongoose.Schema(
           type: String,
           enum: {
             values: ["S", "M", "L", "XL", "XXL"],
-            message:
-              "Size must be S, M, L, XL, or XXL",
+            message: "Size must be S, M, L, XL, or XXL",
           },
           required: true,
         },
@@ -100,7 +96,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 productSchema.index({

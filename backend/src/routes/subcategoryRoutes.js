@@ -34,10 +34,7 @@ const router = express.Router();
 //
 // /api/admin/subcategories/store?categoryId=<categoryId>
 //
-router.get(
-  "/store",
-  getPublicSubcategories
-);
+router.get("/store", getPublicSubcategories);
 
 /*
 |--------------------------------------------------------------------------
@@ -57,39 +54,21 @@ router.use(protectAdmin);
 */
 
 // GET /api/admin/subcategories
-router.get(
-  "/",
-  getSubcategories
-);
+router.get("/", getSubcategories);
 
 // GET /api/admin/subcategories/:subcategoryId
-router.get(
-  "/:subcategoryId",
-  getSingleSubcategory
-);
+router.get("/:subcategoryId", getSingleSubcategory);
 
 // POST /api/admin/subcategories
-router.post(
-  "/",
-  addSubcategory
-);
+router.post("/", addSubcategory);
 
 // PUT /api/admin/subcategories/:subcategoryId
-router.put(
-  "/:subcategoryId",
-  editSubcategory
-);
+router.put("/:subcategoryId", editSubcategory);
 
 // PATCH /api/admin/subcategories/:subcategoryId/toggle-status
-router.patch(
-  "/:subcategoryId/toggle-status",
-  toggleStatus
-);
+router.patch("/:subcategoryId/toggle-status", toggleStatus);
 
 // DELETE /api/admin/subcategories/:subcategoryId
-router.delete(
-  "/:subcategoryId",
-  removeSubcategory
-);
+router.delete("/:subcategoryId", removeSubcategory);
 
 export default router;

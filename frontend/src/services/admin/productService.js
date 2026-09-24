@@ -26,32 +26,22 @@ export const getProducts = async (params = {}) => {
 };
 
 export const getProductById = async (productId) => {
-  const response = await axios.get(
-    `${API_URL}/${productId}`,
-    getConfig()
-  );
+  const response = await axios.get(`${API_URL}/${productId}`, getConfig());
 
   return response.data;
 };
 
 export const createProduct = async (productData) => {
-  const response = await axios.post(
-    API_URL,
-    productData,
-    getConfig()
-  );
+  const response = await axios.post(API_URL, productData, getConfig());
 
   return response.data;
 };
 
-export const updateProduct = async (
-  productId,
-  productData
-) => {
+export const updateProduct = async (productId, productData) => {
   const response = await axios.put(
     `${API_URL}/${productId}`,
     productData,
-    getConfig()
+    getConfig(),
   );
 
   return response.data;
@@ -61,17 +51,14 @@ export const toggleProductStatus = async (productId) => {
   const response = await axios.patch(
     `${API_URL}/${productId}/toggle-status`,
     {},
-    getConfig()
+    getConfig(),
   );
 
   return response.data;
 };
 
 export const deleteProduct = async (productId) => {
-  const response = await axios.delete(
-    `${API_URL}/${productId}`,
-    getConfig()
-  );
+  const response = await axios.delete(`${API_URL}/${productId}`, getConfig());
 
   return response.data;
 };

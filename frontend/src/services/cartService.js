@@ -15,10 +15,7 @@ const getAuthConfig = (token) => ({
 // ==========================
 
 export const getCart = async (token) => {
-  const response = await API.get(
-    "/cart",
-    getAuthConfig(token)
-  );
+  const response = await API.get("/cart", getAuthConfig(token));
 
   return response.data;
 };
@@ -27,12 +24,7 @@ export const getCart = async (token) => {
 // ADD TO CART
 // ==========================
 
-export const addToCart = async (
-  productId,
-  size,
-  quantity,
-  token
-) => {
+export const addToCart = async (productId, size, quantity, token) => {
   const response = await API.post(
     "/cart/items",
     {
@@ -40,7 +32,7 @@ export const addToCart = async (
       size,
       quantity,
     },
-    getAuthConfig(token)
+    getAuthConfig(token),
   );
 
   return response.data;
@@ -50,17 +42,13 @@ export const addToCart = async (
 // UPDATE CART ITEM
 // ==========================
 
-export const updateCartItem = async (
-  itemId,
-  quantity,
-  token
-) => {
+export const updateCartItem = async (itemId, quantity, token) => {
   const response = await API.patch(
     `/cart/items/${itemId}`,
     {
       quantity,
     },
-    getAuthConfig(token)
+    getAuthConfig(token),
   );
 
   return response.data;
@@ -70,13 +58,10 @@ export const updateCartItem = async (
 // REMOVE CART ITEM
 // ==========================
 
-export const removeFromCart = async (
-  itemId,
-  token
-) => {
+export const removeFromCart = async (itemId, token) => {
   const response = await API.delete(
     `/cart/items/${itemId}`,
-    getAuthConfig(token)
+    getAuthConfig(token),
   );
 
   return response.data;
@@ -87,10 +72,7 @@ export const removeFromCart = async (
 // ==========================
 
 export const clearCart = async (token) => {
-  const response = await API.delete(
-    "/cart",
-    getAuthConfig(token)
-  );
+  const response = await API.delete("/cart", getAuthConfig(token));
 
   return response.data;
 };

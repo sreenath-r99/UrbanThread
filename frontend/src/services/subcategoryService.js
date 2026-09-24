@@ -14,13 +14,10 @@ const getAdminHeaders = () => {
 
 // Get all subcategories
 export const getSubcategories = async (params = {}) => {
-  const response = await axios.get(
-    API_URL,
-    {
-      ...getAdminHeaders(),
-      params,
-    }
-  );
+  const response = await axios.get(API_URL, {
+    ...getAdminHeaders(),
+    params,
+  });
 
   return response.data;
 };
@@ -29,7 +26,7 @@ export const getSubcategories = async (params = {}) => {
 export const getSubcategoryById = async (subcategoryId) => {
   const response = await axios.get(
     `${API_URL}/${subcategoryId}`,
-    getAdminHeaders()
+    getAdminHeaders(),
   );
 
   return response.data;
@@ -40,34 +37,29 @@ export const createSubcategory = async (subcategoryData) => {
   const response = await axios.post(
     API_URL,
     subcategoryData,
-    getAdminHeaders()
+    getAdminHeaders(),
   );
 
   return response.data;
 };
 
 // Update subcategory
-export const updateSubcategory = async (
-  subcategoryId,
-  subcategoryData
-) => {
+export const updateSubcategory = async (subcategoryId, subcategoryData) => {
   const response = await axios.put(
     `${API_URL}/${subcategoryId}`,
     subcategoryData,
-    getAdminHeaders()
+    getAdminHeaders(),
   );
 
   return response.data;
 };
 
 // Toggle subcategory status
-export const toggleSubcategoryStatus = async (
-  subcategoryId
-) => {
+export const toggleSubcategoryStatus = async (subcategoryId) => {
   const response = await axios.patch(
     `${API_URL}/${subcategoryId}/toggle-status`,
     {},
-    getAdminHeaders()
+    getAdminHeaders(),
   );
 
   return response.data;
@@ -77,7 +69,7 @@ export const toggleSubcategoryStatus = async (
 export const deleteSubcategory = async (subcategoryId) => {
   const response = await axios.delete(
     `${API_URL}/${subcategoryId}`,
-    getAdminHeaders()
+    getAdminHeaders(),
   );
 
   return response.data;

@@ -26,10 +26,9 @@ export const getAllSubcategories = async ({
     query.category = categoryId;
   }
 
-  const subcategories =
-    await Subcategory.find(query)
-      .populate("category", "name")
-      .sort({ createdAt: -1 });
+  const subcategories = await Subcategory.find(query)
+    .populate("category", "name")
+    .sort({ createdAt: -1 });
 
   return subcategories;
 };
@@ -50,276 +49,209 @@ export const getAllSubcategories = async ({
 //
 // ==========================
 
-export const getPublicSubcategories =
-  async ({
-    categoryId = "",
-  } = {}) => {
-    const query = {
-      isDeleted: false,
-      isActive: true,
-    };
-
-    // Filter by selected parent category
-    if (categoryId) {
-      query.category = categoryId;
-    }
-
-    const subcategories =
-      await Subcategory.find(query)
-        .select("_id name category")
-        .populate("category", "name")
-        .sort({ name: 1 })
-        .lean();
-
-    return subcategories;
+export const getPublicSubcategories = async ({ categoryId = "" } = {}) => {
+  const query = {
+    isDeleted: false,
+    isActive: true,
   };
+
+  // Filter by selected parent category
+  if (categoryId) {
+    query.category = categoryId;
+  }
+
+  const subcategories = await Subcategory.find(query)
+    .select("_id name category")
+    .populate("category", "name")
+    .sort({ name: 1 })
+    .lean();
+
+  return subcategories;
+};
 
 // ==========================
 // GET SINGLE SUBCATEGORY
 // ==========================
 
-export const getSubcategoryById =
-  async (subcategoryId) => {
-    const subcategory =
-      await Subcategory.findOne({
-        _id: subcategoryId,
-        isDeleted: false,
-      }).populate(
-        "category",
-        "name"
-      );
+export const getSubcategoryById = async (subcategoryId) => {
+  const subcategory = await Subcategory.findOne({
+    _id: subcategoryId,
+    isDeleted: false,
+  }).populate("category", "name");
 
-    if (!subcategory) {
-      throw new Error(
-        "Subcategory not found"
-      );
-    }
+  if (!subcategory) {
+    throw new Error("Subcategory not found");
+  }
 
-    return subcategory;
-  };
+  return subcategory;
+};
 
 // ==========================
 // CREATE SUBCATEGORY
 // ==========================
 
-export const createSubcategory =
-  async (subcategoryData) => {
-    const {
-      name,
-      description = "",
-      category,
-      isActive = true,
-    } = subcategoryData;
+export const createSubcategory = async (subcategoryData) => {
+  const { name, description = "", category, isActive = true } = subcategoryData;
 
-    if (!name || !name.trim()) {
-      throw new Error(
-        "Subcategory name is required"
-      );
-    }
+  if (!name || !name.trim()) {
+    throw new Error("Subcategory name is required");
+  }
 
-    if (!category) {
-      throw new Error(
-        "Parent category is required"
-      );
-    }
+  if (!category) {
+    throw new Error("Parent category is required");
+  }
 
-    // Verify parent category
-    const parentCategory =
-      await Category.findOne({
-        _id: category,
-        isDeleted: false,
-      });
+  // Verify parent category
+  const parentCategory = await Category.findOne({
+    _id: category,
+    isDeleted: false,
+  });
 
-    if (!parentCategory) {
-      throw new Error(
-        "Parent category not found"
-      );
-    }
+  if (!parentCategory) {
+    throw new Error("Parent category not found");
+  }
 
-    // Prevent duplicate name under
-    // the same category
-    const existingSubcategory =
-      await Subcategory.findOne({
-        name: {
-          $regex: `^${name.trim()}$`,
-          $options: "i",
-        },
-        category,
-        isDeleted: false,
-      });
+  // Prevent duplicate name under
+  // the same category
+  const existingSubcategory = await Subcategory.findOne({
+    name: {
+      $regex: `^${name.trim()}$`,
+      $options: "i",
+    },
+    category,
+    isDeleted: false,
+  });
 
-    if (existingSubcategory) {
-      throw new Error(
-        "This subcategory already exists under the selected category"
-      );
-    }
-
-    const subcategory =
-      await Subcategory.create({
-        name: name.trim(),
-        description:
-          description.trim(),
-        category,
-        isActive,
-      });
-
-    return await Subcategory.findById(
-      subcategory._id
-    ).populate(
-      "category",
-      "name"
+  if (existingSubcategory) {
+    throw new Error(
+      "This subcategory already exists under the selected category",
     );
-  };
+  }
+
+  const subcategory = await Subcategory.create({
+    name: name.trim(),
+    description: description.trim(),
+    category,
+    isActive,
+  });
+
+  return await Subcategory.findById(subcategory._id).populate(
+    "category",
+    "name",
+  );
+};
 
 // ==========================
 // UPDATE SUBCATEGORY
 // ==========================
 
-export const updateSubcategory =
-  async (
-    subcategoryId,
-    subcategoryData
-  ) => {
-    const {
-      name,
-      description = "",
-      category,
-      isActive,
-    } = subcategoryData;
+export const updateSubcategory = async (subcategoryId, subcategoryData) => {
+  const { name, description = "", category, isActive } = subcategoryData;
 
-    const subcategory =
-      await Subcategory.findOne({
-        _id: subcategoryId,
-        isDeleted: false,
-      });
+  const subcategory = await Subcategory.findOne({
+    _id: subcategoryId,
+    isDeleted: false,
+  });
 
-    if (!subcategory) {
-      throw new Error(
-        "Subcategory not found"
-      );
-    }
+  if (!subcategory) {
+    throw new Error("Subcategory not found");
+  }
 
-    if (!name || !name.trim()) {
-      throw new Error(
-        "Subcategory name is required"
-      );
-    }
+  if (!name || !name.trim()) {
+    throw new Error("Subcategory name is required");
+  }
 
-    if (!category) {
-      throw new Error(
-        "Parent category is required"
-      );
-    }
+  if (!category) {
+    throw new Error("Parent category is required");
+  }
 
-    // Verify parent category
-    const parentCategory =
-      await Category.findOne({
-        _id: category,
-        isDeleted: false,
-      });
+  // Verify parent category
+  const parentCategory = await Category.findOne({
+    _id: category,
+    isDeleted: false,
+  });
 
-    if (!parentCategory) {
-      throw new Error(
-        "Parent category not found"
-      );
-    }
+  if (!parentCategory) {
+    throw new Error("Parent category not found");
+  }
 
-    // Check duplicate name,
-    // excluding current subcategory
-    const duplicateSubcategory =
-      await Subcategory.findOne({
-        _id: {
-          $ne: subcategoryId,
-        },
-        name: {
-          $regex: `^${name.trim()}$`,
-          $options: "i",
-        },
-        category,
-        isDeleted: false,
-      });
+  // Check duplicate name,
+  // excluding current subcategory
+  const duplicateSubcategory = await Subcategory.findOne({
+    _id: {
+      $ne: subcategoryId,
+    },
+    name: {
+      $regex: `^${name.trim()}$`,
+      $options: "i",
+    },
+    category,
+    isDeleted: false,
+  });
 
-    if (duplicateSubcategory) {
-      throw new Error(
-        "This subcategory already exists under the selected category"
-      );
-    }
-
-    subcategory.name =
-      name.trim();
-
-    subcategory.description =
-      description.trim();
-
-    subcategory.category =
-      category;
-
-    if (
-      typeof isActive ===
-      "boolean"
-    ) {
-      subcategory.isActive =
-        isActive;
-    }
-
-    await subcategory.save();
-
-    return await Subcategory.findById(
-      subcategory._id
-    ).populate(
-      "category",
-      "name"
+  if (duplicateSubcategory) {
+    throw new Error(
+      "This subcategory already exists under the selected category",
     );
-  };
+  }
+
+  subcategory.name = name.trim();
+
+  subcategory.description = description.trim();
+
+  subcategory.category = category;
+
+  if (typeof isActive === "boolean") {
+    subcategory.isActive = isActive;
+  }
+
+  await subcategory.save();
+
+  return await Subcategory.findById(subcategory._id).populate(
+    "category",
+    "name",
+  );
+};
 
 // ==========================
 // TOGGLE SUBCATEGORY STATUS
 // ==========================
 
-export const toggleSubcategoryStatus =
-  async (subcategoryId) => {
-    const subcategory =
-      await Subcategory.findOne({
-        _id: subcategoryId,
-        isDeleted: false,
-      });
+export const toggleSubcategoryStatus = async (subcategoryId) => {
+  const subcategory = await Subcategory.findOne({
+    _id: subcategoryId,
+    isDeleted: false,
+  });
 
-    if (!subcategory) {
-      throw new Error(
-        "Subcategory not found"
-      );
-    }
+  if (!subcategory) {
+    throw new Error("Subcategory not found");
+  }
 
-    subcategory.isActive =
-      !subcategory.isActive;
+  subcategory.isActive = !subcategory.isActive;
 
-    await subcategory.save();
+  await subcategory.save();
 
-    return subcategory;
-  };
+  return subcategory;
+};
 
 // ==========================
 // SOFT DELETE SUBCATEGORY
 // ==========================
 
-export const deleteSubcategory =
-  async (subcategoryId) => {
-    const subcategory =
-      await Subcategory.findOne({
-        _id: subcategoryId,
-        isDeleted: false,
-      });
+export const deleteSubcategory = async (subcategoryId) => {
+  const subcategory = await Subcategory.findOne({
+    _id: subcategoryId,
+    isDeleted: false,
+  });
 
-    if (!subcategory) {
-      throw new Error(
-        "Subcategory not found"
-      );
-    }
+  if (!subcategory) {
+    throw new Error("Subcategory not found");
+  }
 
-    subcategory.isDeleted = true;
-    subcategory.isActive = false;
+  subcategory.isDeleted = true;
+  subcategory.isActive = false;
 
-    await subcategory.save();
+  await subcategory.save();
 
-    return subcategory;
-  };
+  return subcategory;
+};

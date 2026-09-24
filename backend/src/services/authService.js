@@ -14,33 +14,23 @@ import {
 // GOOGLE OAUTH CLIENT
 // ==========================
 
-const googleClient = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID
-);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ==========================
 // GENERATE 6-DIGIT OTP
 // ==========================
 
 const generateOTP = () => {
-  return Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 // ==========================
 // REGISTER USER
 // ==========================
 
-export const registerUser = async (
-  name,
-  email,
-  password
-) => {
+export const registerUser = async (name, email, password) => {
   // Normalize email
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Check if user already exists
   const existingUser = await User.findOne({
@@ -51,9 +41,7 @@ export const registerUser = async (
   const otp = generateOTP();
 
   // OTP expires in 10 minutes
-  const otpExpires = new Date(
-    Date.now() + 10 * 60 * 1000
-  );
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // ==========================
   // EXISTING USER
@@ -63,16 +51,11 @@ export const registerUser = async (
     // Prevent registration if user
     // is already verified
     if (existingUser.isVerified) {
-      throw new Error(
-        "User already exists with this email"
-      );
+      throw new Error("User already exists with this email");
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(
-      password,
-      10
-    );
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update existing unverified user
     existingUser.name = name;
@@ -84,10 +67,7 @@ export const registerUser = async (
     await existingUser.save();
 
     // Send OTP email
-    await sendOtpEmail(
-      normalizedEmail,
-      otp
-    );
+    await sendOtpEmail(normalizedEmail, otp);
 
     return {
       user: existingUser,
@@ -99,10 +79,7 @@ export const registerUser = async (
   // ==========================
 
   // Hash password
-  const hashedPassword = await bcrypt.hash(
-    password,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create user
   const user = await User.create({
@@ -116,10 +93,7 @@ export const registerUser = async (
   });
 
   // Send OTP email
-  await sendOtpEmail(
-    normalizedEmail,
-    otp
-  );
+  await sendOtpEmail(normalizedEmail, otp);
 
   return {
     user,
@@ -130,13 +104,8 @@ export const registerUser = async (
 // VERIFY OTP
 // ==========================
 
-export const verifyOTP = async (
-  email,
-  otp
-) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+export const verifyOTP = async (email, otp) => {
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Find user and include OTP fields
   const user = await User.findOne({
@@ -150,9 +119,7 @@ export const verifyOTP = async (
 
   // Check already verified
   if (user.isVerified) {
-    throw new Error(
-      "User is already verified"
-    );
+    throw new Error("User is already verified");
   }
 
   // Check OTP exists
@@ -166,10 +133,7 @@ export const verifyOTP = async (
   }
 
   // Check expiry
-  if (
-    !user.otpExpires ||
-    user.otpExpires < new Date()
-  ) {
+  if (!user.otpExpires || user.otpExpires < new Date()) {
     throw new Error("OTP has expired");
   }
 
@@ -190,9 +154,7 @@ export const verifyOTP = async (
 // ==========================
 
 export const resendOTP = async (email) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Find user
   const user = await User.findOne({
@@ -206,18 +168,14 @@ export const resendOTP = async (email) => {
 
   // Check verified
   if (user.isVerified) {
-    throw new Error(
-      "User is already verified"
-    );
+    throw new Error("User is already verified");
   }
 
   // Generate new OTP
   const otp = generateOTP();
 
   // OTP expires in 10 minutes
-  const otpExpires = new Date(
-    Date.now() + 10 * 60 * 1000
-  );
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // Update OTP
   user.otp = otp;
@@ -226,14 +184,10 @@ export const resendOTP = async (email) => {
   await user.save();
 
   // Send OTP email
-  await sendOtpEmail(
-    normalizedEmail,
-    otp
-  );
+  await sendOtpEmail(normalizedEmail, otp);
 
   return {
-    message:
-      "A new OTP has been sent to your email",
+    message: "A new OTP has been sent to your email",
   };
 };
 
@@ -242,9 +196,7 @@ export const resendOTP = async (email) => {
 // ==========================
 
 export const forgotPassword = async (email) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Find user and include OTP fields
   const user = await User.findOne({
@@ -253,25 +205,19 @@ export const forgotPassword = async (email) => {
 
   // Check whether user exists
   if (!user) {
-    throw new Error(
-      "No account found with this email"
-    );
+    throw new Error("No account found with this email");
   }
 
   // Check whether account is blocked
   if (user.isBlocked) {
-    throw new Error(
-      "Your account has been blocked"
-    );
+    throw new Error("Your account has been blocked");
   }
 
   // Generate OTP
   const otp = generateOTP();
 
   // OTP expires in 10 minutes
-  const otpExpires = new Date(
-    Date.now() + 10 * 60 * 1000
-  );
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // Save OTP
   user.otp = otp;
@@ -280,14 +226,10 @@ export const forgotPassword = async (email) => {
   await user.save();
 
   // Send OTP email
-  await sendPasswordResetOtpEmail(
-    normalizedEmail,
-    otp
-  );
+  await sendPasswordResetOtpEmail(normalizedEmail, otp);
 
   return {
-    message:
-      "Password reset OTP sent to your email",
+    message: "Password reset OTP sent to your email",
   };
 };
 
@@ -295,13 +237,8 @@ export const forgotPassword = async (email) => {
 // VERIFY PASSWORD RESET OTP
 // ==========================
 
-export const verifyResetOtp = async (
-  email,
-  otp
-) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+export const verifyResetOtp = async (email, otp) => {
+  const normalizedEmail = email.trim().toLowerCase();
 
   const user = await User.findOne({
     email: normalizedEmail,
@@ -314,9 +251,7 @@ export const verifyResetOtp = async (
 
   // Check OTP
   if (!user.otp) {
-    throw new Error(
-      "No password reset OTP found"
-    );
+    throw new Error("No password reset OTP found");
   }
 
   // Check OTP value
@@ -325,10 +260,7 @@ export const verifyResetOtp = async (
   }
 
   // Check expiry
-  if (
-    !user.otpExpires ||
-    user.otpExpires < new Date()
-  ) {
+  if (!user.otpExpires || user.otpExpires < new Date()) {
     throw new Error("OTP has expired");
   }
 
@@ -341,13 +273,8 @@ export const verifyResetOtp = async (
 // LOGIN USER
 // ==========================
 
-export const loginUser = async (
-  email,
-  password
-) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+export const loginUser = async (email, password) => {
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Find user
   const user = await User.findOne({
@@ -356,50 +283,36 @@ export const loginUser = async (
 
   // Check user
   if (!user) {
-    throw new Error(
-      "Invalid email or password"
-    );
+    throw new Error("Invalid email or password");
   }
 
   // Google-only account check
   if (!user.password) {
     throw new Error(
-      "This account uses Google login. Please continue with Google."
+      "This account uses Google login. Please continue with Google.",
     );
   }
 
   // Compare password
-  const isPasswordMatch =
-    await bcrypt.compare(
-      password,
-      user.password
-    );
+  const isPasswordMatch = await bcrypt.compare(password, user.password);
 
   if (!isPasswordMatch) {
-    throw new Error(
-      "Invalid email or password"
-    );
+    throw new Error("Invalid email or password");
   }
 
   // Check blocked
   if (user.isBlocked) {
-    throw new Error(
-      "Your account has been blocked"
-    );
+    throw new Error("Your account has been blocked");
   }
 
   // Check verification
   if (!user.isVerified) {
-    throw new Error(
-      "Please verify your email before logging in"
-    );
+    throw new Error("Please verify your email before logging in");
   }
 
   // Check JWT secret
   if (!process.env.JWT_SECRET) {
-    throw new Error(
-      "JWT_SECRET is not configured"
-    );
+    throw new Error("JWT_SECRET is not configured");
   }
 
   // Generate JWT
@@ -411,7 +324,7 @@ export const loginUser = async (
     process.env.JWT_SECRET,
     {
       expiresIn: "7d",
-    }
+    },
   );
 
   return {
@@ -424,14 +337,8 @@ export const loginUser = async (
 // RESET PASSWORD
 // ==========================
 
-export const resetPassword = async (
-  email,
-  otp,
-  newPassword
-) => {
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+export const resetPassword = async (email, otp, newPassword) => {
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Find user
   const user = await User.findOne({
@@ -454,18 +361,12 @@ export const resetPassword = async (
   }
 
   // Check expiry
-  if (
-    !user.otpExpires ||
-    user.otpExpires < new Date()
-  ) {
+  if (!user.otpExpires || user.otpExpires < new Date()) {
     throw new Error("OTP has expired");
   }
 
   // Hash new password
-  const hashedPassword = await bcrypt.hash(
-    newPassword,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   // Update password
   user.password = hashedPassword;
@@ -485,60 +386,40 @@ export const resetPassword = async (
 // GOOGLE LOGIN / REGISTER
 // ==========================
 
-export const googleAuthUser = async (
-  credential
-) => {
+export const googleAuthUser = async (credential) => {
   // Check Google Client ID
   if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new Error(
-      "GOOGLE_CLIENT_ID is not configured"
-    );
+    throw new Error("GOOGLE_CLIENT_ID is not configured");
   }
 
   // Verify Google credential
-  const ticket =
-    await googleClient.verifyIdToken({
-      idToken: credential,
-      audience:
-        process.env.GOOGLE_CLIENT_ID,
-    });
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
 
   // Get Google payload
   const payload = ticket.getPayload();
 
   if (!payload) {
-    throw new Error(
-      "Invalid Google credential"
-    );
+    throw new Error("Invalid Google credential");
   }
 
   // Extract Google user details
-  const {
-    sub: googleId,
-    email,
-    name,
-    picture,
-    email_verified,
-  } = payload;
+  const { sub: googleId, email, name, picture, email_verified } = payload;
 
   // Check email
   if (!email) {
-    throw new Error(
-      "Google account email not found"
-    );
+    throw new Error("Google account email not found");
   }
 
   // Check Google email verification
   if (!email_verified) {
-    throw new Error(
-      "Google email is not verified"
-    );
+    throw new Error("Google email is not verified");
   }
 
   // Normalize email
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   // ==========================
   // FIND EXISTING USER
@@ -555,9 +436,7 @@ export const googleAuthUser = async (
   if (user) {
     // Check blocked
     if (user.isBlocked) {
-      throw new Error(
-        "Your account has been blocked"
-      );
+      throw new Error("Your account has been blocked");
     }
 
     // Link Google ID if missing
@@ -591,8 +470,7 @@ export const googleAuthUser = async (
 
       googleId,
 
-      googleImage:
-        picture || "",
+      googleImage: picture || "",
 
       authProvider: "google",
 
@@ -607,9 +485,7 @@ export const googleAuthUser = async (
   // ==========================
 
   if (!process.env.JWT_SECRET) {
-    throw new Error(
-      "JWT_SECRET is not configured"
-    );
+    throw new Error("JWT_SECRET is not configured");
   }
 
   // ==========================
@@ -624,7 +500,7 @@ export const googleAuthUser = async (
     process.env.JWT_SECRET,
     {
       expiresIn: "7d",
-    }
+    },
   );
 
   // ==========================
@@ -645,7 +521,7 @@ export const updateUserProfile = async (
   userId,
   name,
   phone,
-  profileImageUrl
+  profileImageUrl,
 ) => {
   const user = await User.findById(userId);
 
@@ -689,12 +565,10 @@ export const updateUserProfile = async (
 export const changeUserPassword = async (
   userId,
   currentPassword,
-  newPassword
+  newPassword,
 ) => {
   // Find user and include password
-  const user = await User.findById(userId).select(
-    "+password"
-  );
+  const user = await User.findById(userId).select("+password");
 
   if (!user) {
     throw new Error("User not found");
@@ -707,38 +581,29 @@ export const changeUserPassword = async (
   // Google users do not have a local password
   if (!user.password) {
     throw new Error(
-      "Google accounts cannot change password here. Please continue with Google login."
+      "Google accounts cannot change password here. Please continue with Google login.",
     );
   }
 
   // Verify current password
-  const isCurrentPasswordCorrect =
-    await bcrypt.compare(
-      currentPassword,
-      user.password
-    );
+  const isCurrentPasswordCorrect = await bcrypt.compare(
+    currentPassword,
+    user.password,
+  );
 
   if (!isCurrentPasswordCorrect) {
     throw new Error("Current password is incorrect");
   }
 
   // Prevent using the same password
-  const isSamePassword = await bcrypt.compare(
-    newPassword,
-    user.password
-  );
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
 
   if (isSamePassword) {
-    throw new Error(
-      "New password must be different from current password"
-    );
+    throw new Error("New password must be different from current password");
   }
 
   // Hash new password
-  const hashedPassword = await bcrypt.hash(
-    newPassword,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   user.password = hashedPassword;
 
@@ -753,31 +618,22 @@ export const changeUserPassword = async (
 // REQUEST EMAIL CHANGE
 // ==========================
 
-export const requestEmailChange = async (
-  userId,
-  currentPassword,
-  newEmail
-) => {
-  const normalizedEmail = newEmail
-    ?.trim()
-    .toLowerCase();
+export const requestEmailChange = async (userId, currentPassword, newEmail) => {
+  const normalizedEmail = newEmail?.trim().toLowerCase();
 
   if (!normalizedEmail) {
     throw new Error("New email is required");
   }
 
   // Basic email validation
-  const emailRegex =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(normalizedEmail)) {
     throw new Error("Please enter a valid email address");
   }
 
   // Find current user and include password fields
-  const user = await User.findById(userId).select(
-    "+password"
-  );
+  const user = await User.findById(userId).select("+password");
 
   if (!user) {
     throw new Error("User not found");
@@ -790,16 +646,15 @@ export const requestEmailChange = async (
   // Google accounts do not have a local password
   if (!user.password) {
     throw new Error(
-      "Google accounts cannot change email using a password. Please continue with Google login."
+      "Google accounts cannot change email using a password. Please continue with Google login.",
     );
   }
 
   // Verify current password
-  const isPasswordCorrect =
-    await bcrypt.compare(
-      currentPassword,
-      user.password
-    );
+  const isPasswordCorrect = await bcrypt.compare(
+    currentPassword,
+    user.password,
+  );
 
   if (!isPasswordCorrect) {
     throw new Error("Current password is incorrect");
@@ -807,9 +662,7 @@ export const requestEmailChange = async (
 
   // Prevent using the current email
   if (normalizedEmail === user.email) {
-    throw new Error(
-      "New email must be different from your current email"
-    );
+    throw new Error("New email must be different from your current email");
   }
 
   // Check whether another user already uses this email
@@ -819,18 +672,14 @@ export const requestEmailChange = async (
   });
 
   if (existingUser) {
-    throw new Error(
-      "An account already exists with this email"
-    );
+    throw new Error("An account already exists with this email");
   }
 
   // Generate OTP
   const otp = generateOTP();
 
   // OTP expires in 10 minutes
-  const otpExpires = new Date(
-    Date.now() + 10 * 60 * 1000
-  );
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   // Save pending email and OTP
   user.pendingEmail = normalizedEmail;
@@ -840,14 +689,10 @@ export const requestEmailChange = async (
   await user.save();
 
   // Send OTP to the new email
-  await sendEmailChangeOtpEmail(
-    normalizedEmail,
-    otp
-  );
+  await sendEmailChangeOtpEmail(normalizedEmail, otp);
 
   return {
-    message:
-      "Email change OTP sent to your new email address",
+    message: "Email change OTP sent to your new email address",
   };
 };
 
@@ -855,12 +700,9 @@ export const requestEmailChange = async (
 // VERIFY EMAIL CHANGE OTP
 // ==========================
 
-export const verifyEmailChangeOtp = async (
-  userId,
-  otp
-) => {
+export const verifyEmailChangeOtp = async (userId, otp) => {
   const user = await User.findById(userId).select(
-    "+emailChangeOtp +emailChangeOtpExpires"
+    "+emailChangeOtp +emailChangeOtpExpires",
   );
 
   if (!user) {
@@ -872,25 +714,18 @@ export const verifyEmailChangeOtp = async (
   }
 
   if (!user.pendingEmail) {
-    throw new Error(
-      "No email change request found"
-    );
+    throw new Error("No email change request found");
   }
 
   if (!user.emailChangeOtp) {
-    throw new Error(
-      "Email change OTP not found"
-    );
+    throw new Error("Email change OTP not found");
   }
 
   if (user.emailChangeOtp !== otp) {
     throw new Error("Invalid OTP");
   }
 
-  if (
-    !user.emailChangeOtpExpires ||
-    user.emailChangeOtpExpires < new Date()
-  ) {
+  if (!user.emailChangeOtpExpires || user.emailChangeOtpExpires < new Date()) {
     throw new Error("OTP has expired");
   }
 
@@ -901,9 +736,7 @@ export const verifyEmailChangeOtp = async (
   });
 
   if (existingUser) {
-    throw new Error(
-      "An account already exists with this email"
-    );
+    throw new Error("An account already exists with this email");
   }
 
   // Apply the new email

@@ -5,11 +5,7 @@ import { getAddresses } from "../../services/authService";
 import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
-  const {
-    user,
-    token,
-    logout,
-  } = useContext(AuthContext);
+  const { user, token, logout } = useContext(AuthContext);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,14 +34,10 @@ const Profile = () => {
 
         setAddresses(response.addresses || []);
       } catch (error) {
-        console.error(
-          "FETCH ADDRESSES ERROR:",
-          error
-        );
+        console.error("FETCH ADDRESSES ERROR:", error);
 
         setAddressError(
-          error.response?.data?.message ||
-            "Unable to load addresses"
+          error.response?.data?.message || "Unable to load addresses",
         );
       } finally {
         setAddressLoading(false);
@@ -110,34 +102,10 @@ const Profile = () => {
           strokeWidth="1.7"
           className="h-5 w-5"
         >
-          <rect
-            x="4"
-            y="4"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="4"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="4"
-            y="14"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="14"
-            width="6"
-            height="6"
-            rx="1"
-          />
+          <rect x="4" y="4" width="6" height="6" rx="1" />
+          <rect x="14" y="4" width="6" height="6" rx="1" />
+          <rect x="4" y="14" width="6" height="6" rx="1" />
+          <rect x="14" y="14" width="6" height="6" rx="1" />
         </svg>
       ),
     },
@@ -153,14 +121,8 @@ const Profile = () => {
           strokeWidth="1.7"
           className="h-5 w-5"
         >
-          <circle
-            cx="12"
-            cy="8"
-            r="3.5"
-          />
-          <path
-            d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5"
-          />
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" />
         </svg>
       ),
     },
@@ -211,11 +173,7 @@ const Profile = () => {
           className="h-5 w-5"
         >
           <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-          <circle
-            cx="12"
-            cy="10"
-            r="2.5"
-          />
+          <circle cx="12" cy="10" r="2.5" />
         </svg>
       ),
     },
@@ -242,13 +200,11 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <div className="flex min-h-screen">
-
         {/* ======================
             SIDEBAR
         ====================== */}
 
         <aside className="flex w-[245px] shrink-0 flex-col border-r border-[#333333] bg-[#181818]">
-
           {/* Brand */}
 
           <div className="border-b border-[#333333] px-7 py-7">
@@ -266,10 +222,7 @@ const Profile = () => {
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
-                  src={
-                    user.profileImage ||
-                    user.googleImage
-                  }
+                  src={user.profileImage || user.googleImage}
                   alt={user.name}
                   className="h-11 w-11 rounded-full object-cover"
                 />
@@ -295,8 +248,7 @@ const Profile = () => {
 
           <nav className="flex-1 py-4">
             {menuItems.map((item) => {
-              const isActive =
-                currentPath === item.path;
+              const isActive = currentPath === item.path;
 
               return (
                 <Link
@@ -346,7 +298,6 @@ const Profile = () => {
         ====================== */}
 
         <main className="flex-1 px-6 py-8 sm:px-10 lg:px-14">
-
           {/* Header */}
 
           <div className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-7 md:flex-row md:items-center">
@@ -356,8 +307,8 @@ const Profile = () => {
               </h1>
 
               <p className="mt-3 text-sm text-gray-500">
-                Welcome back to UrbanThread. Here is a
-                summary of your account activity.
+                Welcome back to UrbanThread. Here is a summary of your account
+                activity.
               </p>
             </div>
 
@@ -370,15 +321,11 @@ const Profile = () => {
             >
               <span
                 className={`h-2 w-2 rounded-full ${
-                  user?.isVerified
-                    ? "bg-gray-400"
-                    : "bg-yellow-600"
+                  user?.isVerified ? "bg-gray-400" : "bg-yellow-600"
                 }`}
               />
 
-              {user?.isVerified
-                ? "Verified Account"
-                : "Unverified Account"}
+              {user?.isVerified ? "Verified Account" : "Unverified Account"}
             </div>
           </div>
 
@@ -393,11 +340,9 @@ const Profile = () => {
           {/* Overview and Personal Info */}
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-
             {/* Overview Cards */}
 
             <div className="grid gap-4 sm:grid-cols-2">
-
               {/* Orders Card */}
 
               <div className="group rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]">
@@ -417,9 +362,7 @@ const Profile = () => {
                     </svg>
                   </div>
 
-                  <span className="font-serif text-3xl text-[#343434]">
-                    0
-                  </span>
+                  <span className="font-serif text-3xl text-[#343434]">0</span>
                 </div>
 
                 <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
@@ -451,9 +394,7 @@ const Profile = () => {
                     </svg>
                   </div>
 
-                  <span className="font-serif text-3xl text-[#343434]">
-                    0
-                  </span>
+                  <span className="font-serif text-3xl text-[#343434]">0</span>
                 </div>
 
                 <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
@@ -482,11 +423,7 @@ const Profile = () => {
                       className="h-5 w-5"
                     >
                       <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                      <circle
-                        cx="12"
-                        cy="10"
-                        r="2.5"
-                      />
+                      <circle cx="12" cy="10" r="2.5" />
                     </svg>
                   </div>
 
@@ -526,9 +463,7 @@ const Profile = () => {
                     </svg>
                   </div>
 
-                  <span className="font-serif text-3xl text-[#343434]">
-                    0
-                  </span>
+                  <span className="font-serif text-3xl text-[#343434]">0</span>
                 </div>
 
                 <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
@@ -552,7 +487,6 @@ const Profile = () => {
               </h3>
 
               <div className="mt-7 space-y-6">
-
                 {/* Full Name */}
 
                 <div>
@@ -584,9 +518,7 @@ const Profile = () => {
                     Phone Number
                   </p>
 
-                  <p className="mt-2 text-sm text-gray-300">
-                    {formatPhone()}
-                  </p>
+                  <p className="mt-2 text-sm text-gray-300">{formatPhone()}</p>
                 </div>
               </div>
 
@@ -604,7 +536,6 @@ const Profile = () => {
           ========================== */}
 
           <section className="mt-10 border-t border-[#292929] pt-9">
-
             {/* Address Header */}
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -623,9 +554,7 @@ const Profile = () => {
                   {addressLoading
                     ? "Loading..."
                     : `${addresses.length} ${
-                        addresses.length === 1
-                          ? "Address"
-                          : "Addresses"
+                        addresses.length === 1 ? "Address" : "Addresses"
                       }`}
                 </span>
 
@@ -652,104 +581,93 @@ const Profile = () => {
 
             {!addressLoading && addressError && (
               <div className="border border-red-900/50 bg-red-950/20 p-7">
-                <p className="text-sm text-red-400">
-                  {addressError}
-                </p>
+                <p className="text-sm text-red-400">{addressError}</p>
               </div>
             )}
 
             {/* Empty State */}
 
-            {!addressLoading &&
-              !addressError &&
-              addresses.length === 0 && (
-                <div className="border border-dashed border-[#3a3a3a] bg-[#151515] p-10 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#333333] text-gray-500">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      className="h-5 w-5"
-                    >
-                      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                      <circle
-                        cx="12"
-                        cy="10"
-                        r="2.5"
-                      />
-                    </svg>
-                  </div>
-
-                  <p className="mt-4 text-sm text-gray-400">
-                    No saved addresses yet.
-                  </p>
-
-                  <p className="mt-2 text-xs text-gray-600">
-                    Your saved delivery addresses will appear here.
-                  </p>
-
-                  <Link
-                    to="/addresses"
-                    className="mt-6 inline-block border border-[#3a3a3a] px-5 py-3 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-gray-500 hover:text-white"
+            {!addressLoading && !addressError && addresses.length === 0 && (
+              <div className="border border-dashed border-[#3a3a3a] bg-[#151515] p-10 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#333333] text-gray-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-5 w-5"
                   >
-                    Add Your First Address
-                  </Link>
+                    <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
                 </div>
-              )}
+
+                <p className="mt-4 text-sm text-gray-400">
+                  No saved addresses yet.
+                </p>
+
+                <p className="mt-2 text-xs text-gray-600">
+                  Your saved delivery addresses will appear here.
+                </p>
+
+                <Link
+                  to="/addresses"
+                  className="mt-6 inline-block border border-[#3a3a3a] px-5 py-3 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-gray-500 hover:text-white"
+                >
+                  Add Your First Address
+                </Link>
+              </div>
+            )}
 
             {/* Address Cards */}
 
-            {!addressLoading &&
-              !addressError &&
-              addresses.length > 0 && (
-                <div className="grid gap-5 md:grid-cols-2">
-                  {addresses.map((address) => (
-                    <div
-                      key={address._id}
-                      className="border border-[#2c2c2c] bg-[#1b1b1b] p-6 transition hover:border-[#454545]"
-                    >
-                      {/* Card Header */}
+            {!addressLoading && !addressError && addresses.length > 0 && (
+              <div className="grid gap-5 md:grid-cols-2">
+                {addresses.map((address) => (
+                  <div
+                    key={address._id}
+                    className="border border-[#2c2c2c] bg-[#1b1b1b] p-6 transition hover:border-[#454545]"
+                  >
+                    {/* Card Header */}
 
-                      <div className="mb-5 flex items-center justify-between gap-3">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-gray-400">
-                          {address.addressType || "Address"}
-                        </p>
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-gray-400">
+                        {address.addressType || "Address"}
+                      </p>
 
-                        {address.isDefault && (
-                          <span className="border border-[#555555] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-gray-300">
-                            Default
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Address Details */}
-
-                      <div className="space-y-2 text-sm leading-6 text-gray-400">
-                        <p className="font-medium text-white">
-                          {address.fullName}
-                        </p>
-
-                        <p>{address.phone}</p>
-
-                        <p>{address.houseName}</p>
-
-                        <p>{address.street}</p>
-
-                        <p>
-                          {address.city}, {address.state}
-                        </p>
-
-                        <p>
-                          {address.pincode},{" "}
-                          {address.country}
-                        </p>
-                      </div>
+                      {address.isDefault && (
+                        <span className="border border-[#555555] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-gray-300">
+                          Default
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    {/* Address Details */}
+
+                    <div className="space-y-2 text-sm leading-6 text-gray-400">
+                      <p className="font-medium text-white">
+                        {address.fullName}
+                      </p>
+
+                      <p>{address.phone}</p>
+
+                      <p>{address.houseName}</p>
+
+                      <p>{address.street}</p>
+
+                      <p>
+                        {address.city}, {address.state}
+                      </p>
+
+                      <p>
+                        {address.pincode}, {address.country}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </main>
       </div>

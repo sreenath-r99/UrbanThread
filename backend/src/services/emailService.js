@@ -82,9 +82,7 @@ export const sendOtpEmail = async (email, otp) => {
       `,
     });
 
-    console.log(
-      `Registration OTP email sent successfully to ${email}`
-    );
+    console.log(`Registration OTP email sent successfully to ${email}`);
   } catch (error) {
     console.error("EMAIL ERROR:", error);
 
@@ -96,10 +94,7 @@ export const sendOtpEmail = async (email, otp) => {
 // SEND PASSWORD RESET OTP
 // ==========================
 
-export const sendPasswordResetOtpEmail = async (
-  email,
-  otp
-) => {
+export const sendPasswordResetOtpEmail = async (email, otp) => {
   try {
     await transporter.sendMail({
       from: {
@@ -173,18 +168,11 @@ export const sendPasswordResetOtpEmail = async (
       `,
     });
 
-    console.log(
-      `Password reset OTP sent successfully to ${email}`
-    );
+    console.log(`Password reset OTP sent successfully to ${email}`);
   } catch (error) {
-    console.error(
-      "PASSWORD RESET EMAIL ERROR:",
-      error
-    );
+    console.error("PASSWORD RESET EMAIL ERROR:", error);
 
-    throw new Error(
-      "Failed to send password reset OTP email"
-    );
+    throw new Error("Failed to send password reset OTP email");
   }
 };
 
@@ -192,11 +180,7 @@ export const sendPasswordResetOtpEmail = async (
 // SEND ADMIN PASSWORD RESET OTP
 // ==========================
 
-export const sendAdminPasswordResetOtpEmail = async (
-  email,
-  name,
-  otp
-) => {
+export const sendAdminPasswordResetOtpEmail = async (email, name, otp) => {
   try {
     await transporter.sendMail({
       from: {
@@ -206,8 +190,7 @@ export const sendAdminPasswordResetOtpEmail = async (
 
       to: email,
 
-      subject:
-        "UrbanThread Admin Password Reset OTP",
+      subject: "UrbanThread Admin Password Reset OTP",
 
       text: `Hello ${name || "Admin"},
 
@@ -346,18 +329,11 @@ UrbanThread Admin Portal`,
       `,
     });
 
-    console.log(
-      `Admin password reset OTP sent successfully to ${email}`
-    );
+    console.log(`Admin password reset OTP sent successfully to ${email}`);
   } catch (error) {
-    console.error(
-      "ADMIN PASSWORD RESET EMAIL ERROR:",
-      error
-    );
+    console.error("ADMIN PASSWORD RESET EMAIL ERROR:", error);
 
-    throw new Error(
-      "Failed to send admin password reset OTP email"
-    );
+    throw new Error("Failed to send admin password reset OTP email");
   }
 };
 
@@ -365,10 +341,7 @@ UrbanThread Admin Portal`,
 // SEND CHANGE EMAIL OTP
 // ==========================
 
-export const sendEmailChangeOtpEmail = async (
-  email,
-  otp
-) => {
+export const sendEmailChangeOtpEmail = async (email, otp) => {
   try {
     await transporter.sendMail({
       from: {
@@ -378,8 +351,7 @@ export const sendEmailChangeOtpEmail = async (
 
       to: email,
 
-      subject:
-        "Your UrbanThread Email Change Verification Code",
+      subject: "Your UrbanThread Email Change Verification Code",
 
       html: `
         <div style="
@@ -444,17 +416,10 @@ export const sendEmailChangeOtpEmail = async (
       `,
     });
 
-    console.log(
-      `Email change OTP sent successfully to ${email}`
-    );
+    console.log(`Email change OTP sent successfully to ${email}`);
   } catch (error) {
-    console.error(
-      "EMAIL CHANGE OTP ERROR:",
-      error
-    );
+    console.error("EMAIL CHANGE OTP ERROR:", error);
 
-    throw new Error(
-      "Failed to send email change OTP"
-    );
+    throw new Error("Failed to send email change OTP");
   }
 };

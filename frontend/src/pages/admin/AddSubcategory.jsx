@@ -3,13 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
-import {
-  createSubcategory,
-} from "../../services/subcategoryService";
+import { createSubcategory } from "../../services/subcategoryService";
 
-import {
-  getCategories,
-} from "../../services/categoryService";
+import { getCategories } from "../../services/categoryService";
 
 const AddSubcategory = () => {
   const navigate = useNavigate();
@@ -24,8 +20,7 @@ const AddSubcategory = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [categoriesLoading, setCategoriesLoading] =
-    useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,15 +30,9 @@ const AddSubcategory = () => {
 
         setCategories(response.categories || []);
       } catch (error) {
-        console.error(
-          "Fetch categories error:",
-          error
-        );
+        console.error("Fetch categories error:", error);
 
-        setError(
-          error.response?.data?.message ||
-            "Failed to load categories"
-        );
+        setError(error.response?.data?.message || "Failed to load categories");
       } finally {
         setCategoriesLoading(false);
       }
@@ -53,8 +42,7 @@ const AddSubcategory = () => {
   }, []);
 
   const handleChange = (event) => {
-    const { name, value, type, checked } =
-      event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previousData) => ({
       ...previousData,
@@ -91,15 +79,9 @@ const AddSubcategory = () => {
         replace: true,
       });
     } catch (error) {
-      console.error(
-        "Create subcategory error:",
-        error
-      );
+      console.error("Create subcategory error:", error);
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to create subcategory"
-      );
+      setError(error.response?.data?.message || "Failed to create subcategory");
     } finally {
       setLoading(false);
     }
@@ -170,10 +152,7 @@ const AddSubcategory = () => {
               </option>
 
               {categories.map((category) => (
-                <option
-                  key={category._id}
-                  value={category._id}
-                >
+                <option key={category._id} value={category._id}>
                   {category.name}
                 </option>
               ))}
@@ -207,10 +186,7 @@ const AddSubcategory = () => {
               className="h-4 w-4 accent-white"
             />
 
-            <label
-              htmlFor="isActive"
-              className="text-xs text-gray-400"
-            >
+            <label htmlFor="isActive" className="text-xs text-gray-400">
               Active subcategory
             </label>
           </div>
@@ -222,16 +198,12 @@ const AddSubcategory = () => {
               disabled={loading}
               className="bg-[#f1f0ed] px-6 py-3 text-xs font-semibold tracking-wide text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading
-                ? "Creating..."
-                : "Create Subcategory"}
+              {loading ? "Creating..." : "Create Subcategory"}
             </button>
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/admin/subcategories")
-              }
+              onClick={() => navigate("/admin/subcategories")}
               className="border border-[#383838] px-6 py-3 text-xs text-gray-300 transition hover:border-gray-500 hover:text-white"
             >
               Cancel

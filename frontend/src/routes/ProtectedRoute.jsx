@@ -1,18 +1,10 @@
 import { useContext } from "react";
-import {
-  Navigate,
-  Outlet,
-  useLocation,
-} from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { AuthContext } from "../context/AuthContext";
 
 const ProtectedRoute = () => {
-  const {
-    user,
-    token,
-    loading,
-  } = useContext(AuthContext);
+  const { user, token, loading } = useContext(AuthContext);
 
   const location = useLocation();
 
@@ -21,9 +13,7 @@ const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#181818]">
-        <p className="text-sm text-neutral-400">
-          Checking session...
-        </p>
+        <p className="text-sm text-neutral-400">Checking session...</p>
       </div>
     );
   }

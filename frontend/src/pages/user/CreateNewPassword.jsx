@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { resetPassword } from "../../services/authService";
 
@@ -13,19 +10,13 @@ const CreateNewPassword = () => {
   const email = location.state?.email || "";
   const otp = location.state?.otp || "";
 
-  const [newPassword, setNewPassword] =
-    useState("");
+  const [newPassword, setNewPassword] = useState("");
 
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showNewPassword, setShowNewPassword] =
-    useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -38,34 +29,26 @@ const CreateNewPassword = () => {
 
     // Check route data
     if (!email || !otp) {
-      setError(
-        "Your reset session has expired. Please request a new OTP."
-      );
+      setError("Your reset session has expired. Please request a new OTP.");
 
       return;
     }
 
     // Password validation
     if (!newPassword || !confirmPassword) {
-      setError(
-        "Please fill in both password fields."
-      );
+      setError("Please fill in both password fields.");
 
       return;
     }
 
     if (newPassword.length < 6) {
-      setError(
-        "Password must be at least 6 characters."
-      );
+      setError("Password must be at least 6 characters.");
 
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError(
-        "Passwords do not match."
-      );
+      setError("Passwords do not match.");
 
       return;
     }
@@ -90,7 +73,7 @@ const CreateNewPassword = () => {
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to reset password. Please try again."
+          "Failed to reset password. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -139,10 +122,7 @@ const CreateNewPassword = () => {
           )}
 
           {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="mt-8"
-          >
+          <form onSubmit={handleSubmit} className="mt-8">
             {/* NEW PASSWORD */}
             <div>
               <label
@@ -155,17 +135,11 @@ const CreateNewPassword = () => {
               <div className="relative">
                 <input
                   id="newPassword"
-                  type={
-                    showNewPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showNewPassword ? "text" : "password"}
                   placeholder="Enter new password"
                   value={newPassword}
                   onChange={(event) => {
-                    setNewPassword(
-                      event.target.value
-                    );
+                    setNewPassword(event.target.value);
 
                     setError("");
                   }}
@@ -174,19 +148,11 @@ const CreateNewPassword = () => {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowNewPassword(
-                      !showNewPassword
-                    )
-                  }
+                  onClick={() => setShowNewPassword(!showNewPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   aria-label="Toggle password visibility"
                 >
-                  {showNewPassword ? (
-                    "◉"
-                  ) : (
-                    "◌"
-                  )}
+                  {showNewPassword ? "◉" : "◌"}
                 </button>
               </div>
             </div>
@@ -203,17 +169,11 @@ const CreateNewPassword = () => {
               <div className="relative">
                 <input
                   id="confirmPassword"
-                  type={
-                    showConfirmPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={(event) => {
-                    setConfirmPassword(
-                      event.target.value
-                    );
+                    setConfirmPassword(event.target.value);
 
                     setError("");
                   }}
@@ -222,19 +182,11 @@ const CreateNewPassword = () => {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowConfirmPassword(
-                      !showConfirmPassword
-                    )
-                  }
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   aria-label="Toggle confirm password visibility"
                 >
-                  {showConfirmPassword ? (
-                    "◉"
-                  ) : (
-                    "◌"
-                  )}
+                  {showConfirmPassword ? "◉" : "◌"}
                 </button>
               </div>
             </div>
@@ -245,9 +197,7 @@ const CreateNewPassword = () => {
               disabled={loading}
               className="mt-7 w-full rounded-sm bg-[#d9d5d0] py-3 text-xs font-bold tracking-[0.15em] text-[#252525] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading
-                ? "RESETTING PASSWORD..."
-                : "RESET PASSWORD"}
+              {loading ? "RESETTING PASSWORD..." : "RESET PASSWORD"}
             </button>
           </form>
         </div>

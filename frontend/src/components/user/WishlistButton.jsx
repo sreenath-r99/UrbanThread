@@ -1,9 +1,6 @@
 // frontend/src/components/user/WishlistButton.jsx
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
 import {
   addToWishlist,
@@ -20,68 +17,50 @@ const WishlistButton = ({
   showLabel = false,
   onWishlistChange,
 }) => {
-  const {
-    token,
-  } = useContext(AuthContext);
+  const { token } = useContext(AuthContext);
 
-  const [isWishlisted, setIsWishlisted] =
-    useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [checking, setChecking] =
-    useState(true);
+  const [checking, setChecking] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let mounted = true;
 
-    const loadWishlistStatus =
-      async () => {
-        if (!token || !productId) {
-          if (mounted) {
-            setChecking(false);
-          }
+    const loadWishlistStatus = async () => {
+      if (!token || !productId) {
+        if (mounted) {
+          setChecking(false);
+        }
 
+        return;
+      }
+
+      try {
+        setChecking(true);
+
+        const response = await checkWishlist(productId, token);
+
+        if (!mounted) {
           return;
         }
 
-        try {
-          setChecking(true);
+        setIsWishlisted(Boolean(response?.isWishlisted));
+      } catch (error) {
+        console.error("CHECK WISHLIST ERROR:", error);
 
-          const response =
-            await checkWishlist(
-              productId,
-              token
-            );
-
-          if (!mounted) {
-            return;
-          }
-
-          setIsWishlisted(
-            Boolean(
-              response?.isWishlisted
-            )
-          );
-        } catch (error) {
-          console.error(
-            "CHECK WISHLIST ERROR:",
-            error
-          );
-
-          if (mounted) {
-            setIsWishlisted(false);
-          }
-        } finally {
-          if (mounted) {
-            setChecking(false);
-          }
+        if (mounted) {
+          setIsWishlisted(false);
         }
-      };
+      } finally {
+        if (mounted) {
+          setChecking(false);
+        }
+      }
+    };
 
     loadWishlistStatus();
 
@@ -90,16 +69,12 @@ const WishlistButton = ({
     };
   }, [productId, token]);
 
-  const handleToggle = async (
-    event
-  ) => {
+  const handleToggle = async (event) => {
     event.preventDefault();
     event.stopPropagation();
 
     if (!token) {
-      setError(
-        "Please login to use wishlist"
-      );
+      setError("Please login to use wishlist");
 
       return;
     }
@@ -109,40 +84,22 @@ const WishlistButton = ({
       setError("");
 
       if (isWishlisted) {
-        await removeFromWishlist(
-          productId,
-          token
-        );
+        await removeFromWishlist(productId, token);
 
         setIsWishlisted(false);
 
-        onWishlistChange?.(
-          productId,
-          false
-        );
+        onWishlistChange?.(productId, false);
       } else {
-        await addToWishlist(
-          productId,
-          token
-        );
+        await addToWishlist(productId, token);
 
         setIsWishlisted(true);
 
-        onWishlistChange?.(
-          productId,
-          true
-        );
+        onWishlistChange?.(productId, true);
       }
     } catch (error) {
-      console.error(
-        "WISHLIST TOGGLE ERROR:",
-        error
-      );
+      console.error("WISHLIST TOGGLE ERROR:", error);
 
-      setError(
-        error?.response?.data?.message ||
-          "Unable to update wishlist"
-      );
+      setError(error?.response?.data?.message || "Unable to update wishlist");
     } finally {
       setLoading(false);
     }
@@ -153,35 +110,19 @@ const WishlistButton = ({
       <button
         type="button"
         onClick={handleToggle}
-        disabled={
-          loading || checking
-        }
-        aria-label={
-          isWishlisted
-            ? "Remove from wishlist"
-            : "Add to wishlist"
-        }
-        title={
-          isWishlisted
-            ? "Remove from wishlist"
-            : "Add to wishlist"
-        }
+        disabled={loading || checking}
+        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         className={
           className ||
           "flex h-11 w-11 items-center justify-center border border-[#363636] bg-[#151515]/90 text-xl text-neutral-300 backdrop-blur-sm transition hover:border-[#666666] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         }
       >
-        {loading || checking
-          ? "..."
-          : isWishlisted
-          ? "♥"
-          : "♡"}
+        {loading || checking ? "..." : isWishlisted ? "♥" : "♡"}
 
         {showLabel && (
           <span className="ml-2 text-[9px] uppercase tracking-[0.15em]">
-            {isWishlisted
-              ? "Wishlisted"
-              : "Wishlist"}
+            {isWishlisted ? "Wishlisted" : "Wishlist"}
           </span>
         )}
       </button>

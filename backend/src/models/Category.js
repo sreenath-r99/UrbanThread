@@ -35,7 +35,7 @@ const categorySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 categorySchema.index({

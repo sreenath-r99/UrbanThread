@@ -13,56 +13,41 @@ const getAuthConfig = (token) => ({
 });
 
 export const getWishlist = async (token) => {
-  const response = await API.get(
-    "/wishlist",
-    getAuthConfig(token)
-  );
+  const response = await API.get("/wishlist", getAuthConfig(token));
 
   return response.data;
 };
 
-export const checkWishlist = async (
-  productId,
-  token
-) => {
+export const checkWishlist = async (productId, token) => {
   const response = await API.get(
     `/wishlist/check/${productId}`,
-    getAuthConfig(token)
+    getAuthConfig(token),
   );
 
   return response.data;
 };
 
-export const addToWishlist = async (
-  productId,
-  token
-) => {
+export const addToWishlist = async (productId, token) => {
   const response = await API.post(
     `/wishlist/${productId}`,
     {},
-    getAuthConfig(token)
+    getAuthConfig(token),
   );
 
   return response.data;
 };
 
-export const removeFromWishlist =
-  async (productId, token) => {
-    const response = await API.delete(
-      `/wishlist/${productId}`,
-      getAuthConfig(token)
-    );
-
-    return response.data;
-  };
-
-export const clearWishlist = async (
-  token
-) => {
+export const removeFromWishlist = async (productId, token) => {
   const response = await API.delete(
-    "/wishlist",
-    getAuthConfig(token)
+    `/wishlist/${productId}`,
+    getAuthConfig(token),
   );
+
+  return response.data;
+};
+
+export const clearWishlist = async (token) => {
+  const response = await API.delete("/wishlist", getAuthConfig(token));
 
   return response.data;
 };

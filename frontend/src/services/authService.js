@@ -91,22 +91,18 @@ export const requestEmailChange = async (emailChangeData, token) => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   return response.data;
 };
 
 export const verifyEmailChange = async (otpData, token) => {
-  const response = await api.post(
-    "/auth/verify-email-change",
-    otpData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await api.post("/auth/verify-email-change", otpData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return response.data;
 };
@@ -116,10 +112,7 @@ export const verifyEmailChange = async (otpData, token) => {
 // =====================================================
 
 export const forgotPassword = async (emailData) => {
-  const response = await api.post(
-    "/auth/forgot-password",
-    emailData
-  );
+  const response = await api.post("/auth/forgot-password", emailData);
 
   return response.data;
 };
@@ -129,10 +122,7 @@ export const forgotPassword = async (emailData) => {
 // =====================================================
 
 export const resetPassword = async (resetData) => {
-  const response = await api.post(
-    "/auth/reset-password",
-    resetData
-  );
+  const response = await api.post("/auth/reset-password", resetData);
 
   return response.data;
 };
@@ -175,20 +165,12 @@ export const createAddress = async (addressData, token) => {
 };
 
 // Update address
-export const updateAddress = async (
-  addressId,
-  addressData,
-  token
-) => {
-  const response = await api.put(
-    `/addresses/${addressId}`,
-    addressData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const updateAddress = async (addressId, addressData, token) => {
+  const response = await api.put(`/addresses/${addressId}`, addressData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return response.data;
 };
@@ -213,7 +195,7 @@ export const setDefaultAddress = async (addressId, token) => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   return response.data;

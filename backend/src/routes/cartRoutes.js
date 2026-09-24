@@ -16,29 +16,14 @@ const router = express.Router();
 
 router.use(protectCart);
 
-router.get(
-  "/",
-  getCartController
-);
+router.get("/", getCartController);
 
-router.post(
-  "/items",
-  addToCartController
-);
+router.post("/items", addToCartController);
 
-router.patch(
-  "/items/:itemId",
-  updateCartItemController
-);
+router.patch("/items/:itemId", updateCartItemController);
 
-router.delete(
-  "/items/:itemId",
-  removeFromCartController
-);
+router.delete("/items/:itemId", removeFromCartController);
 
-router.delete(
-  "/",
-  clearCartController
-);
+router.delete("/", clearCartController);
 
 export default router;

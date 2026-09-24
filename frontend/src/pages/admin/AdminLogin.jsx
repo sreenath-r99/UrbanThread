@@ -95,9 +95,7 @@ const AdminLogin = () => {
       console.error("Admin login failed:", error);
 
       const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Admin login failed";
+        error.response?.data?.message || error.message || "Admin login failed";
 
       setServerError(message);
     } finally {
@@ -108,7 +106,6 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <div className="grid min-h-screen lg:grid-cols-2">
-
         {/* ==========================
             LEFT IMAGE SECTION
         ========================== */}
@@ -137,7 +134,6 @@ const AdminLogin = () => {
         ========================== */}
 
         <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
-
           {/* Decorative dots */}
 
           <div className="absolute right-8 top-8 flex gap-2">
@@ -147,9 +143,7 @@ const AdminLogin = () => {
           </div>
 
           <div className="w-full max-w-md">
-
             <div className="border border-[#292929] bg-[#1b1b1b] px-7 py-8 shadow-2xl sm:px-10 sm:py-10">
-
               {/* Portal badge */}
 
               <div className="mb-7 flex justify-center">
@@ -161,9 +155,7 @@ const AdminLogin = () => {
               {/* Heading */}
 
               <div className="mb-8 text-center">
-                <h2 className="font-serif text-3xl text-white">
-                  Welcome
-                </h2>
+                <h2 className="font-serif text-3xl text-white">Welcome</h2>
 
                 <p className="mt-3 text-sm text-neutral-400">
                   Sign in to your UrbanThread admin account
@@ -178,11 +170,7 @@ const AdminLogin = () => {
                 </div>
               )}
 
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-6"
-              >
-
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {/* ==========================
                     EMAIL
                 ========================== */}
@@ -196,10 +184,7 @@ const AdminLogin = () => {
                   </label>
 
                   <div className="flex items-center border border-[#303030] bg-[#1b1b1b] transition focus-within:border-neutral-500">
-
-                    <span className="pl-3 text-neutral-500">
-                      ✉
-                    </span>
+                    <span className="pl-3 text-neutral-500">✉</span>
 
                     <input
                       id="email"
@@ -211,13 +196,10 @@ const AdminLogin = () => {
                       autoComplete="email"
                       className="w-full bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-neutral-600"
                     />
-
                   </div>
 
                   {errors.email && (
-                    <p className="mt-2 text-xs text-red-400">
-                      {errors.email}
-                    </p>
+                    <p className="mt-2 text-xs text-red-400">{errors.email}</p>
                   )}
                 </div>
 
@@ -234,10 +216,7 @@ const AdminLogin = () => {
                   </label>
 
                   <div className="flex items-center border border-[#303030] bg-[#1b1b1b] transition focus-within:border-neutral-500">
-
-                    <span className="pl-3 text-neutral-500">
-                      🔒
-                    </span>
+                    <span className="pl-3 text-neutral-500">🔒</span>
 
                     <input
                       id="password"
@@ -253,20 +232,15 @@ const AdminLogin = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        setShowPassword(
-                          (previousValue) => !previousValue
-                        )
+                        setShowPassword((previousValue) => !previousValue)
                       }
                       className="mr-3 text-neutral-500 transition hover:text-white"
                       aria-label={
-                        showPassword
-                          ? "Hide password"
-                          : "Show password"
+                        showPassword ? "Hide password" : "Show password"
                       }
                     >
                       {showPassword ? "◉" : "◌"}
                     </button>
-
                   </div>
 
                   {errors.password && (
@@ -298,9 +272,7 @@ const AdminLogin = () => {
                   disabled={isSubmitting}
                   className="w-full bg-[#e8e5e0] py-3 text-xs font-semibold tracking-[0.18em] text-[#171717] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting
-                    ? "SIGNING IN..."
-                    : "SIGN IN"}
+                  {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
                 </button>
 
                 {/* ==========================
@@ -311,15 +283,10 @@ const AdminLogin = () => {
                   <span>🔒</span>
                   <span>Secure Admin Access</span>
                 </div>
-
               </form>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
     </div>
   );

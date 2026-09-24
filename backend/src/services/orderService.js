@@ -5,6 +5,11 @@ import Cart from "../models/Cart.js";
 import Address from "../models/Address.js";
 import Product from "../models/Product.js";
 
+import {
+  reserveCouponUsage,
+  rollbackCouponUsage,
+} from "./couponRulesService.js";
+
 const SHIPPING_CHARGE = 0;
 
 const TAX_RATE = 0;
@@ -16,12 +21,9 @@ const TAX_RATE = 0;
 */
 
 const generateOrderId = () => {
-  const timestamp =
-    Date.now().toString().slice(-8);
+  const timestamp = Date.now().toString().slice(-8);
 
-  const randomPart = Math.floor(
-    1000 + Math.random() * 9000
-  );
+  const randomPart = Math.floor(1000 + Math.random() * 9000);
 
   return `UT-${timestamp}-${randomPart}`;
 };
@@ -36,8 +38,7 @@ const getProductPrice = (product) => {
   if (
     product.discountPrice !== null &&
     product.discountPrice !== undefined &&
-    product.discountPrice <
-      product.price
+    product.discountPrice < product.price
   ) {
     return product.discountPrice;
   }
@@ -51,24 +52,12 @@ const getProductPrice = (product) => {
 |----------------------------------------------------------------------
 */
 
-const getSizeStock = (
-  product,
-  size
-) => {
-  if (
-    Array.isArray(product.sizes) &&
-    product.sizes.length > 0
-  ) {
-    const sizeEntry =
-      product.sizes.find(
-        (item) =>
-          item.size === size
-      );
+const getSizeStock = (product, size) => {
+  if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+    const sizeEntry = product.sizes.find((item) => item.size === size);
 
     if (!sizeEntry) {
-      throw new Error(
-        `Size ${size} is not available for ${product.name}`
-      );
+      throw new Error(`Size ${size} is not available for ${product.name}`);
     }
 
     return sizeEntry.stock;
@@ -83,21 +72,12 @@ const getSizeStock = (
 |----------------------------------------------------------------------
 */
 
-const getProductImage = (
-  product
-) => {
-  if (
-    !Array.isArray(
-      product.images
-    ) ||
-    product.images.length === 0
-  ) {
+const getProductImage = (product) => {
+  if (!Array.isArray(product.images) || product.images.length === 0) {
     return "";
   }
 
-  return (
-    product.images[0]?.url || ""
-  );
+  return product.images[0]?.url || "";
 };
 
 /*
@@ -106,35 +86,22 @@ const getProductImage = (
 |----------------------------------------------------------------------
 */
 
-const getValidatedAddress =
-  async (
-    userId,
-    addressId
-  ) => {
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        addressId
-      )
-    ) {
-      throw new Error(
-        "Invalid address ID"
-      );
-    }
+const getValidatedAddress = async (userId, addressId) => {
+  if (!mongoose.Types.ObjectId.isValid(addressId)) {
+    throw new Error("Invalid address ID");
+  }
 
-    const address =
-      await Address.findOne({
-        _id: addressId,
-        user: userId,
-      }).lean();
+  const address = await Address.findOne({
+    _id: addressId,
+    user: userId,
+  }).lean();
 
-    if (!address) {
-      throw new Error(
-        "Selected address was not found"
-      );
-    }
+  if (!address) {
+    throw new Error("Selected address was not found");
+  }
 
-    return address;
-  };
+  return address;
+};
 
 /*
 |----------------------------------------------------------------------
@@ -142,28 +109,21 @@ const getValidatedAddress =
 |----------------------------------------------------------------------
 */
 
-const getCartForOrder =
-  async (userId) => {
-    const cart =
-      await Cart.findOne({
-        user: userId,
-      }).populate({
-        path: "items.product",
-        select:
-          "name images price discountPrice stock sizes isActive isDeleted",
-      });
+const getCartForOrder = async (userId) => {
+  const cart = await Cart.findOne({
+    user: userId,
+  }).populate({
+    path: "items.product",
 
-    if (
-      !cart ||
-      cart.items.length === 0
-    ) {
-      throw new Error(
-        "Your cart is empty"
-      );
-    }
+    select: "name images price discountPrice stock sizes isActive isDeleted",
+  });
 
-    return cart;
-  };
+  if (!cart || cart.items.length === 0) {
+    throw new Error("Your cart is empty");
+  }
+
+  return cart;
+};
 
 /*
 |----------------------------------------------------------------------
@@ -171,369 +131,190 @@ const getCartForOrder =
 |----------------------------------------------------------------------
 */
 
-const validateAndPrepareItems =
-  (cart) => {
-    const preparedItems = [];
+const validateAndPrepareItems = (cart) => {
+  const preparedItems = [];
 
-    for (const cartItem of cart.items) {
-      const product =
-        cartItem.product;
+  for (const cartItem of cart.items) {
+    const product = cartItem.product;
 
-      if (!product) {
-        throw new Error(
-          "One of the products in your cart is no longer available"
-        );
-      }
-
-      if (
-        product.isDeleted ||
-        !product.isActive
-      ) {
-        throw new Error(
-          `${product.name} is no longer available`
-        );
-      }
-
-      const availableStock =
-        getSizeStock(
-          product,
-          cartItem.size
-        );
-
-      if (availableStock <= 0) {
-        throw new Error(
-          `${product.name} (${cartItem.size}) is out of stock`
-        );
-      }
-
-      if (
-        cartItem.quantity >
-        availableStock
-      ) {
-        throw new Error(
-          `Only ${availableStock} item${
-            availableStock === 1
-              ? ""
-              : "s"
-          } of ${product.name} (${cartItem.size}) are available`
-        );
-      }
-
-      const currentPrice =
-        getProductPrice(product);
-
-      const regularPrice =
-        Number(product.price || 0);
-
-      const itemDiscount =
-        Math.max(
-          regularPrice -
-            currentPrice,
-          0
-        );
-
-      const itemTotal =
-        currentPrice *
-        cartItem.quantity;
-
-      preparedItems.push({
-        product:
-          product._id,
-
-        productName:
-          product.name,
-
-        productImage:
-          getProductImage(product),
-
-        size:
-          cartItem.size,
-
-        quantity:
-          cartItem.quantity,
-
-        price:
-          currentPrice,
-
-        discount:
-          itemDiscount *
-          cartItem.quantity,
-
-        itemTotal,
-      });
+    if (!product) {
+      throw new Error(
+        "One of the products in your cart is no longer available",
+      );
     }
 
-    return preparedItems;
-  };
-
-/*
-|----------------------------------------------------------------------
-| ORDER TOTALS
-|----------------------------------------------------------------------
-*/
-
-const calculateOrderTotals =
-  (preparedItems) => {
-    const subtotal =
-      preparedItems.reduce(
-        (total, item) =>
-          total +
-          item.itemTotal,
-        0
-      );
-
-    const discount =
-      preparedItems.reduce(
-        (total, item) =>
-          total +
-          item.discount,
-        0
-      );
-
-    const tax = Number(
-      (
-        subtotal *
-        TAX_RATE
-      ).toFixed(2)
-    );
-
-    const totalAmount =
-      Number(
-        (
-          subtotal +
-          SHIPPING_CHARGE +
-          tax
-        ).toFixed(2)
-      );
-
-    return {
-      subtotal: Number(
-        subtotal.toFixed(2)
-      ),
-
-      discount: Number(
-        discount.toFixed(2)
-      ),
-
-      shippingCharge:
-        SHIPPING_CHARGE,
-
-      tax,
-
-      totalAmount,
-    };
-  };
-
-/*
-|----------------------------------------------------------------------
-| CHECK ACTIVE ITEM
-|----------------------------------------------------------------------
-|
-| Older orders created before itemStatus was introduced will have
-| undefined itemStatus. Those items are treated as Active.
-|
-*/
-
-const isActiveOrderItem =
-  (item) =>
-    item.itemStatus !==
-    "Cancelled";
-
-/*
-|----------------------------------------------------------------------
-| CALCULATE TOTALS FROM REMAINING ACTIVE ITEMS
-|----------------------------------------------------------------------
-*/
-
-const calculateActiveOrderTotals =
-  (order) => {
-    const activeItems =
-      order.items.filter(
-        isActiveOrderItem
-      );
-
-    if (
-      activeItems.length === 0
-    ) {
-      return {
-        subtotal: 0,
-        discount: 0,
-        shippingCharge: 0,
-        tax: 0,
-        totalAmount: 0,
-      };
+    if (product.isDeleted || !product.isActive) {
+      throw new Error(`${product.name} is no longer available`);
     }
 
-    const subtotal =
-      activeItems.reduce(
-        (total, item) =>
-          total +
-          Number(
-            item.itemTotal || 0
-          ),
-        0
-      );
+    const availableStock = getSizeStock(product, cartItem.size);
 
-    const discount =
-      activeItems.reduce(
-        (total, item) =>
-          total +
-          Number(
-            item.discount || 0
-          ),
-        0
-      );
+    if (availableStock <= 0) {
+      throw new Error(`${product.name} (${cartItem.size}) is out of stock`);
+    }
 
-    const tax = Number(
-      (
-        subtotal *
-        TAX_RATE
-      ).toFixed(2)
+    if (cartItem.quantity > availableStock) {
+      throw new Error(
+        `Only ${availableStock} item${
+          availableStock === 1 ? "" : "s"
+        } of ${product.name} (${cartItem.size}) are available`,
+      );
+    }
+
+    const price = getProductPrice(product);
+
+    const discount = Math.max(
+      Number(product.price || 0) - Number(price || 0),
+
+      0,
     );
 
-    const shippingCharge =
-      Number(
-        order.shippingCharge ||
-          0
-      );
+    const itemTotal = Number(
+      (Number(price) * Number(cartItem.quantity)).toFixed(2),
+    );
 
-    const totalAmount =
-      Number(
-        (
-          subtotal +
-          shippingCharge +
-          tax
-        ).toFixed(2)
-      );
+    preparedItems.push({
+      product: product._id,
 
-    return {
-      subtotal: Number(
-        subtotal.toFixed(2)
-      ),
+      productName: product.name,
 
-      discount: Number(
-        discount.toFixed(2)
-      ),
+      productImage: getProductImage(product),
 
-      shippingCharge,
+      size: cartItem.size,
 
-      tax,
+      quantity: cartItem.quantity,
 
-      totalAmount,
-    };
+      price: Number(price),
+
+      discount: Number(discount),
+
+      itemTotal,
+
+      itemStatus: "Active",
+
+      cancellationReason: "",
+
+      cancelledAt: null,
+    });
+  }
+
+  return preparedItems;
+};
+
+/*
+|----------------------------------------------------------------------
+| CALCULATE ORDER TOTALS
+|----------------------------------------------------------------------
+*/
+
+const calculateOrderTotals = (items) => {
+  const subtotal = items.reduce(
+    (total, item) => total + Number(item.itemTotal || 0),
+
+    0,
+  );
+
+  const discount = items.reduce(
+    (total, item) =>
+      total + Number(item.discount || 0) * Number(item.quantity || 0),
+
+    0,
+  );
+
+  const shippingCharge = SHIPPING_CHARGE;
+
+  const taxableAmount = Math.max(
+    subtotal - discount,
+
+    0,
+  );
+
+  const tax = Number((taxableAmount * TAX_RATE).toFixed(2));
+
+  const totalAmount = Number((taxableAmount + shippingCharge + tax).toFixed(2));
+
+  return {
+    subtotal: Number(subtotal.toFixed(2)),
+
+    discount: Number(discount.toFixed(2)),
+
+    shippingCharge,
+
+    tax,
+
+    totalAmount,
   };
+};
 
 /*
 |----------------------------------------------------------------------
 | REDUCE PRODUCT STOCK
 |----------------------------------------------------------------------
-|
-| This version does not use a MongoDB session.
-| It works with a standalone MongoDB server.
-|
 */
 
-const reduceProductStock =
-  async (preparedItems) => {
-    const reducedItems = [];
+const reduceProductStock = async (preparedItems) => {
+  const reducedItems = [];
 
-    try {
-      for (const item of preparedItems) {
-        const product =
-          await Product.findById(
-            item.product
-          );
+  try {
+    for (const item of preparedItems) {
+      const product = await Product.findById(item.product);
 
-        if (!product) {
-          throw new Error(
-            `${item.productName} is no longer available`
-          );
-        }
-
-        if (
-          product.isDeleted ||
-          !product.isActive
-        ) {
-          throw new Error(
-            `${product.name} is no longer available`
-          );
-        }
-
-        if (
-          Array.isArray(
-            product.sizes
-          ) &&
-          product.sizes.length > 0
-        ) {
-          const sizeEntry =
-            product.sizes.find(
-              (size) =>
-                size.size ===
-                item.size
-            );
-
-          if (!sizeEntry) {
-            throw new Error(
-              `Size ${item.size} is no longer available for ${product.name}`
-            );
-          }
-
-          if (
-            sizeEntry.stock <
-            item.quantity
-          ) {
-            throw new Error(
-              `Insufficient stock for ${product.name} (${item.size})`
-            );
-          }
-
-          sizeEntry.stock -=
-            item.quantity;
-
-          product.stock =
-            product.sizes.reduce(
-              (total, size) =>
-                total +
-                size.stock,
-              0
-            );
-        } else {
-          if (
-            product.stock <
-            item.quantity
-          ) {
-            throw new Error(
-              `Insufficient stock for ${product.name}`
-            );
-          }
-
-          product.stock -=
-            item.quantity;
-        }
-
-        await product.save();
-
-        reducedItems.push({
-          productId:
-            product._id,
-
-          size:
-            item.size,
-
-          quantity:
-            item.quantity,
-        });
+      if (!product) {
+        throw new Error(`${item.productName} is no longer available`);
       }
 
-      return reducedItems;
-    } catch (error) {
-      await restoreProductStock(
-        reducedItems
-      );
+      if (product.isDeleted || !product.isActive) {
+        throw new Error(`${product.name} is no longer available`);
+      }
 
-      throw error;
+      if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+        const sizeEntry = product.sizes.find((size) => size.size === item.size);
+
+        if (!sizeEntry) {
+          throw new Error(
+            `Size ${item.size} is no longer available for ${product.name}`,
+          );
+        }
+
+        if (sizeEntry.stock < item.quantity) {
+          throw new Error(
+            `Insufficient stock for ${product.name} (${item.size})`,
+          );
+        }
+
+        sizeEntry.stock -= item.quantity;
+
+        product.stock = product.sizes.reduce(
+          (total, size) => total + size.stock,
+
+          0,
+        );
+      } else {
+        if (product.stock < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        product.stock -= item.quantity;
+      }
+
+      await product.save();
+
+      reducedItems.push({
+        productId: product._id,
+
+        size: item.size,
+
+        quantity: item.quantity,
+      });
     }
-  };
+
+    return reducedItems;
+  } catch (error) {
+    await restoreProductStock(reducedItems);
+
+    throw error;
+  }
+};
 
 /*
 |----------------------------------------------------------------------
@@ -541,66 +322,45 @@ const reduceProductStock =
 |----------------------------------------------------------------------
 */
 
-const restoreProductStock =
-  async (items) => {
-    const restoredItems = [];
+const restoreProductStock = async (items) => {
+  const restoredItems = [];
 
-    for (const item of items) {
-      const product =
-        await Product.findById(
-          item.productId
-        );
+  for (const item of items) {
+    const product = await Product.findById(item.productId);
 
-      if (!product) {
-        continue;
-      }
-
-      if (
-        Array.isArray(
-          product.sizes
-        ) &&
-        product.sizes.length > 0
-      ) {
-        const sizeEntry =
-          product.sizes.find(
-            (size) =>
-              size.size ===
-              item.size
-          );
-
-        if (sizeEntry) {
-          sizeEntry.stock +=
-            item.quantity;
-
-          product.stock =
-            product.sizes.reduce(
-              (total, size) =>
-                total +
-                size.stock,
-              0
-            );
-        }
-      } else {
-        product.stock +=
-          item.quantity;
-      }
-
-      await product.save();
-
-      restoredItems.push({
-        productId:
-          product._id,
-
-        size:
-          item.size,
-
-        quantity:
-          item.quantity,
-      });
+    if (!product) {
+      continue;
     }
 
-    return restoredItems;
-  };
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      const sizeEntry = product.sizes.find((size) => size.size === item.size);
+
+      if (sizeEntry) {
+        sizeEntry.stock += item.quantity;
+
+        product.stock = product.sizes.reduce(
+          (total, size) => total + size.stock,
+
+          0,
+        );
+      }
+    } else {
+      product.stock += item.quantity;
+    }
+
+    await product.save();
+
+    restoredItems.push({
+      productId: product._id,
+
+      size: item.size,
+
+      quantity: item.quantity,
+    });
+  }
+
+  return restoredItems;
+};
 
 /*
 |----------------------------------------------------------------------
@@ -608,152 +368,120 @@ const restoreProductStock =
 |----------------------------------------------------------------------
 */
 
-const createOrder = async (
-  userId,
-  addressId
-) => {
-  if (
-    !mongoose.Types.ObjectId.isValid(
-      userId
-    )
-  ) {
-    throw new Error(
-      "Invalid user ID"
-    );
+const createOrder = async (userId, addressId, couponCode = "") => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
   }
 
-  const address =
-    await getValidatedAddress(
-      userId,
-      addressId
-    );
+  const address = await getValidatedAddress(userId, addressId);
 
-  const cart =
-    await getCartForOrder(
-      userId
-    );
+  const cart = await getCartForOrder(userId);
 
-  const preparedItems =
-    validateAndPrepareItems(
-      cart
-    );
+  const preparedItems = validateAndPrepareItems(cart);
 
-  const totals =
-    calculateOrderTotals(
-      preparedItems
-    );
+  const totals = calculateOrderTotals(preparedItems);
+
+  /*
+   * Reserve the selected coupon only while creating the order.
+   * The backend remains the source of truth for coupon eligibility.
+   */
+  let couponReservation = null;
+
+  if (couponCode?.trim()) {
+    couponReservation = await reserveCouponUsage(couponCode, totals.subtotal);
+  }
 
   let createdOrder = null;
 
   try {
     const orderData = {
-      orderId:
-        generateOrderId(),
+      orderId: generateOrderId(),
 
-      user:
-        userId,
+      user: userId,
 
-      items:
-        preparedItems,
+      items: preparedItems,
 
       shippingAddress: {
-        fullName:
-          address.fullName,
+        fullName: address.fullName,
 
-        phone:
-          address.phone,
+        phone: address.phone,
 
-        houseName:
-          address.houseName,
+        houseName: address.houseName,
 
-        street:
-          address.street,
+        street: address.street,
 
-        city:
-          address.city,
+        city: address.city,
 
-        state:
-          address.state,
+        state: address.state,
 
-        pincode:
-          address.pincode,
+        pincode: address.pincode,
 
-        country:
-          address.country,
+        country: address.country,
 
-        addressType:
-          address.addressType,
+        addressType: address.addressType,
       },
 
-      paymentMethod:
-        "COD",
+      paymentMethod: "COD",
 
-      paymentStatus:
-        "Pending",
+      paymentStatus: "Pending",
 
-      orderStatus:
-        "Pending",
+      orderStatus: "Pending",
 
-      subtotal:
-        totals.subtotal,
+      subtotal: totals.subtotal,
 
-      discount:
-        totals.discount,
+      discount: totals.discount,
 
-      shippingCharge:
-        totals.shippingCharge,
+      shippingCharge: totals.shippingCharge,
 
-      tax:
-        totals.tax,
+      tax: totals.tax,
 
-      totalAmount:
-        totals.totalAmount,
+      couponCode: couponReservation?.coupon?.code || "",
+
+      couponDiscount: couponReservation?.discountAmount || 0,
+
+      totalAmount: Number(
+        (totals.totalAmount - (couponReservation?.discountAmount || 0)).toFixed(
+          2,
+        ),
+      ),
     };
 
-    createdOrder =
-      await Order.create(
-        orderData
-      );
+    createdOrder = await Order.create(orderData);
 
     let reducedItems = [];
 
     try {
-      reducedItems =
-        await reduceProductStock(
-          preparedItems
-        );
+      reducedItems = await reduceProductStock(preparedItems);
 
       cart.items = [];
 
       await cart.save();
     } catch (error) {
-      if (
-        reducedItems.length > 0
-      ) {
-        await restoreProductStock(
-          reducedItems
-        );
+      if (reducedItems.length > 0) {
+        await restoreProductStock(reducedItems);
       }
 
-      await Order.findByIdAndDelete(
-        createdOrder._id
-      );
+      await Order.findByIdAndDelete(createdOrder._id);
+
+      if (couponReservation) {
+        await rollbackCouponUsage(couponReservation.coupon.code);
+
+        couponReservation = null;
+      }
 
       throw error;
     }
 
-    const finalOrder =
-      await Order.findById(
-        createdOrder._id
-      )
-        .populate(
-          "user",
-          "name email"
-        )
-        .lean();
+    const finalOrder = await Order.findById(createdOrder._id)
+      .populate("user", "name email")
+      .lean();
 
     return finalOrder;
   } catch (error) {
+    if (couponReservation && !createdOrder) {
+      await rollbackCouponUsage(couponReservation.coupon.code);
+    }
+
     throw error;
   }
 };
@@ -764,23 +492,18 @@ const createOrder = async (
 |----------------------------------------------------------------------
 */
 
-const getUserOrders = async (
-  userId,
-  search = ""
-) => {
+const getUserOrders = async (userId, search = "") => {
   const query = {
     user: userId,
   };
 
-  const trimmedSearch =
-    search.trim();
+  const trimmedSearch = search.trim();
 
   if (trimmedSearch) {
     query.$or = [
       {
         orderId: {
-          $regex:
-            trimmedSearch,
+          $regex: trimmedSearch,
 
           $options: "i",
         },
@@ -788,8 +511,7 @@ const getUserOrders = async (
 
       {
         orderStatus: {
-          $regex:
-            trimmedSearch,
+          $regex: trimmedSearch,
 
           $options: "i",
         },
@@ -810,473 +532,365 @@ const getUserOrders = async (
 |----------------------------------------------------------------------
 */
 
-const getUserOrderById =
-  async (
-    userId,
-    orderId
-  ) => {
-    let order = null;
+const getUserOrderById = async (userId, orderId) => {
+  let order = null;
 
-    if (
-      mongoose.Types.ObjectId.isValid(
-        orderId
-      )
-    ) {
-      order =
-        await Order.findOne({
-          _id: orderId,
-          user: userId,
-        }).lean();
-    }
+  if (mongoose.Types.ObjectId.isValid(orderId)) {
+    order = await Order.findOne({
+      _id: orderId,
 
-    if (!order) {
-      order =
-        await Order.findOne({
-          orderId,
-          user: userId,
-        }).lean();
-    }
+      user: userId,
+    }).lean();
+  }
 
-    if (!order) {
-      throw new Error(
-        "Order not found"
-      );
-    }
+  if (!order) {
+    order = await Order.findOne({
+      orderId,
 
-    return order;
-  };
+      user: userId,
+    }).lean();
+  }
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  return order;
+};
 
 /*
 |----------------------------------------------------------------------
-| CANCEL ENTIRE ORDER
+| CHECK ACTIVE ORDER ITEM
 |----------------------------------------------------------------------
 */
 
-const cancelUserOrder =
-  async (
-    userId,
-    orderId,
-    reason = ""
-  ) => {
-    const order =
-      await getUserOrderById(
-        userId,
-        orderId
-      );
-
-    if (
-      [
-        "Shipped",
-        "Out for Delivery",
-        "Delivered",
-        "Cancelled",
-      ].includes(
-        order.orderStatus
-      )
-    ) {
-      throw new Error(
-        "This order can no longer be cancelled"
-      );
-    }
-
-    if (
-      ![
-        "Pending",
-        "Partially Cancelled",
-      ].includes(
-        order.orderStatus
-      )
-    ) {
-      throw new Error(
-        "This order can no longer be cancelled"
-      );
-    }
-
-    const activeItems =
-      order.items.filter(
-        isActiveOrderItem
-      );
-
-    if (
-      activeItems.length === 0
-    ) {
-      throw new Error(
-        "All products in this order are already cancelled"
-      );
-    }
-
-    const itemsToRestore =
-      activeItems.map(
-        (item) => ({
-          productId:
-            item.product,
-
-          size:
-            item.size,
-
-          quantity:
-            item.quantity,
-        })
-      );
-
-    let restoredItems = [];
-
-    try {
-      restoredItems =
-        await restoreProductStock(
-          itemsToRestore
-        );
-
-      const currentOrder =
-        await Order.findOne({
-          _id: order._id,
-          user: userId,
-        });
-
-      if (!currentOrder) {
-        throw new Error(
-          "Order not found"
-        );
-      }
-
-      if (
-        ![
-          "Pending",
-          "Partially Cancelled",
-        ].includes(
-          currentOrder.orderStatus
-        )
-      ) {
-        throw new Error(
-          "This order can no longer be cancelled"
-        );
-      }
-
-      const cancellationDate =
-        new Date();
-
-      const trimmedReason =
-        reason.trim();
-
-      currentOrder.items.forEach(
-        (item) => {
-          if (
-            isActiveOrderItem(
-              item
-            )
-          ) {
-            item.itemStatus =
-              "Cancelled";
-
-            item.cancellationReason =
-              trimmedReason;
-
-            item.cancelledAt =
-              cancellationDate;
-          }
-        }
-      );
-
-      currentOrder.orderStatus =
-        "Cancelled";
-
-      currentOrder.cancellationReason =
-        trimmedReason;
-
-      currentOrder.cancelledAt =
-        cancellationDate;
-
-      currentOrder.subtotal = 0;
-
-      currentOrder.discount = 0;
-
-      currentOrder.shippingCharge = 0;
-
-      currentOrder.tax = 0;
-
-      currentOrder.totalAmount = 0;
-
-      await currentOrder.save();
-
-      return currentOrder.toObject();
-    } catch (error) {
-      if (
-        restoredItems.length > 0
-      ) {
-        /*
-         * Restore the original stock
-         * state by reducing the stock
-         * again.
-         */
-        await reduceProductStock(
-          restoredItems.map(
-            (item) => ({
-              product:
-                item.productId,
-
-              productName: "",
-
-              size:
-                item.size,
-
-              quantity:
-                item.quantity,
-            })
-          )
-        );
-      }
-
-      throw error;
-    }
-  };
+const isActiveOrderItem = (item) => {
+  return !item.itemStatus || item.itemStatus === "Active";
+};
 
 /*
 |----------------------------------------------------------------------
-| CANCEL SPECIFIC ORDER ITEM
+| CALCULATE ACTIVE ORDER TOTALS
 |----------------------------------------------------------------------
 */
 
-const cancelUserOrderItem =
-  async (
-    userId,
-    orderId,
-    itemId,
-    reason = ""
-  ) => {
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        itemId
-      )
-    ) {
-      throw new Error(
-        "Invalid order item ID"
-      );
-    }
+const calculateActiveOrderTotals = (order) => {
+  const activeItems = order.items.filter((item) => isActiveOrderItem(item));
 
-    const order =
-      await getUserOrderById(
-        userId,
-        orderId
-      );
+  const subtotal = activeItems.reduce(
+    (total, item) => total + Number(item.itemTotal || 0),
 
-    if (
-      [
-        "Shipped",
-        "Out for Delivery",
-        "Delivered",
-        "Cancelled",
-      ].includes(
-        order.orderStatus
-      )
-    ) {
-      throw new Error(
-        "This product can no longer be cancelled"
-      );
-    }
+    0,
+  );
 
-    if (
-      ![
-        "Pending",
-        "Partially Cancelled",
-      ].includes(
-        order.orderStatus
-      )
-    ) {
-      throw new Error(
-        "This product can no longer be cancelled"
-      );
-    }
+  const discount = activeItems.reduce(
+    (total, item) =>
+      total + Number(item.discount || 0) * Number(item.quantity || 0),
 
-    const orderItem =
-      order.items.find(
-        (item) =>
-          item._id.toString() ===
-          itemId
-      );
+    0,
+  );
 
-    if (!orderItem) {
-      throw new Error(
-        "Order item not found"
-      );
-    }
+  const shippingCharge = activeItems.length > 0 ? SHIPPING_CHARGE : 0;
 
-    if (
-      !isActiveOrderItem(
-        orderItem
-      )
-    ) {
-      throw new Error(
-        "This product is already cancelled"
-      );
-    }
+  const taxableAmount = Math.max(
+    subtotal - discount,
 
-    const stockItem = {
-      productId:
-        orderItem.product,
+    0,
+  );
 
-      size:
-        orderItem.size,
+  const tax = Number((taxableAmount * TAX_RATE).toFixed(2));
 
-      quantity:
-        orderItem.quantity,
-    };
+  const totalAmount = Number((taxableAmount + shippingCharge + tax).toFixed(2));
 
-    let restoredItems = [];
+  return {
+    subtotal: Number(subtotal.toFixed(2)),
 
-    try {
-      /*
-       * Restore stock only for this
-       * selected product/size.
-       */
-      restoredItems =
-        await restoreProductStock([
-          stockItem,
-        ]);
+    discount: Number(discount.toFixed(2)),
 
-      const currentOrder =
-        await Order.findOne({
-          _id: order._id,
-          user: userId,
-        });
+    shippingCharge,
 
-      if (!currentOrder) {
-        throw new Error(
-          "Order not found"
-        );
-      }
+    tax,
 
-      if (
-        ![
-          "Pending",
-          "Partially Cancelled",
-        ].includes(
-          currentOrder.orderStatus
-        )
-      ) {
-        throw new Error(
-          "This product can no longer be cancelled"
-        );
-      }
-
-      const currentItem =
-        currentOrder.items.find(
-          (item) =>
-            item._id.toString() ===
-            itemId
-        );
-
-      if (!currentItem) {
-        throw new Error(
-          "Order item not found"
-        );
-      }
-
-      if (
-        !isActiveOrderItem(
-          currentItem
-        )
-      ) {
-        throw new Error(
-          "This product is already cancelled"
-        );
-      }
-
-      const cancellationDate =
-        new Date();
-
-      const trimmedReason =
-        reason.trim();
-
-      currentItem.itemStatus =
-        "Cancelled";
-
-      currentItem.cancellationReason =
-        trimmedReason;
-
-      currentItem.cancelledAt =
-        cancellationDate;
-
-      const hasActiveItems =
-        currentOrder.items.some(
-          (item) =>
-            isActiveOrderItem(
-              item
-            )
-        );
-
-      if (hasActiveItems) {
-        currentOrder.orderStatus =
-          "Partially Cancelled";
-
-        currentOrder.cancellationReason =
-          "";
-
-        currentOrder.cancelledAt =
-          null;
-      } else {
-        currentOrder.orderStatus =
-          "Cancelled";
-
-        currentOrder.cancellationReason =
-          trimmedReason;
-
-        currentOrder.cancelledAt =
-          cancellationDate;
-      }
-
-      const totals =
-        calculateActiveOrderTotals(
-          currentOrder
-        );
-
-      currentOrder.subtotal =
-        totals.subtotal;
-
-      currentOrder.discount =
-        totals.discount;
-
-      currentOrder.shippingCharge =
-        totals.shippingCharge;
-
-      currentOrder.tax =
-        totals.tax;
-
-      currentOrder.totalAmount =
-        totals.totalAmount;
-
-      await currentOrder.save();
-
-      return currentOrder.toObject();
-    } catch (error) {
-      /*
-       * If stock was restored but
-       * updating the order failed,
-       * reduce the same stock again.
-       */
-      if (
-        restoredItems.length > 0
-      ) {
-        await reduceProductStock(
-          restoredItems.map(
-            (item) => ({
-              product:
-                item.productId,
-
-              productName: "",
-
-              size:
-                item.size,
-
-              quantity:
-                item.quantity,
-            })
-          )
-        );
-      }
-
-      throw error;
-    }
+    totalAmount,
   };
+};
+
+/*
+|----------------------------------------------------------------------
+| CANCEL USER ORDER
+|----------------------------------------------------------------------
+*/
+
+const cancelUserOrder = async (userId, orderId, reason = "") => {
+  const trimmedReason = reason.trim();
+
+  let order = null;
+
+  if (mongoose.Types.ObjectId.isValid(orderId)) {
+    order = await Order.findOne({
+      _id: orderId,
+
+      user: userId,
+    });
+  }
+
+  if (!order) {
+    order = await Order.findOne({
+      orderId,
+
+      user: userId,
+    });
+  }
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (!["Pending", "Partially Cancelled"].includes(order.orderStatus)) {
+    throw new Error("This order can no longer be cancelled");
+  }
+
+  const activeItems = order.items.filter((item) => isActiveOrderItem(item));
+
+  if (activeItems.length === 0) {
+    throw new Error("All products in this order are already cancelled");
+  }
+
+  const stockItems = activeItems.map((item) => ({
+    productId: item.product,
+
+    size: item.size,
+
+    quantity: item.quantity,
+  }));
+
+  let restoredItems = [];
+
+  try {
+    restoredItems = await restoreProductStock(stockItems);
+
+    const currentOrder = await Order.findOne({
+      _id: order._id,
+
+      user: userId,
+    });
+
+    if (!currentOrder) {
+      throw new Error("Order not found");
+    }
+
+    if (
+      !["Pending", "Partially Cancelled"].includes(currentOrder.orderStatus)
+    ) {
+      throw new Error("This order can no longer be cancelled");
+    }
+
+    const cancellationDate = new Date();
+
+    currentOrder.items.forEach((item) => {
+      if (isActiveOrderItem(item)) {
+        item.itemStatus = "Cancelled";
+
+        item.cancellationReason = trimmedReason;
+
+        item.cancelledAt = cancellationDate;
+      }
+    });
+
+    currentOrder.orderStatus = "Cancelled";
+
+    currentOrder.cancellationReason = trimmedReason;
+
+    currentOrder.cancelledAt = cancellationDate;
+
+    const totals = calculateActiveOrderTotals(currentOrder);
+
+    currentOrder.subtotal = totals.subtotal;
+
+    currentOrder.discount = totals.discount;
+
+    currentOrder.shippingCharge = totals.shippingCharge;
+
+    currentOrder.tax = totals.tax;
+
+    currentOrder.totalAmount = totals.totalAmount;
+
+    await currentOrder.save();
+
+    return currentOrder.toObject();
+  } catch (error) {
+    if (restoredItems.length > 0) {
+      await reduceProductStock(
+        restoredItems.map((item) => ({
+          product: item.productId,
+
+          productName: "",
+
+          size: item.size,
+
+          quantity: item.quantity,
+        })),
+      );
+    }
+
+    throw error;
+  }
+};
+
+/*
+|----------------------------------------------------------------------
+| CANCEL USER ORDER ITEM
+|----------------------------------------------------------------------
+*/
+
+const cancelUserOrderItem = async (userId, orderId, itemId, reason = "") => {
+  const trimmedReason = reason.trim();
+
+  let order = null;
+
+  if (mongoose.Types.ObjectId.isValid(orderId)) {
+    order = await Order.findOne({
+      _id: orderId,
+
+      user: userId,
+    });
+  }
+
+  if (!order) {
+    order = await Order.findOne({
+      orderId,
+
+      user: userId,
+    });
+  }
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (!["Pending", "Partially Cancelled"].includes(order.orderStatus)) {
+    throw new Error("This product can no longer be cancelled");
+  }
+
+  const orderItem = order.items.find((item) => item._id.toString() === itemId);
+
+  if (!orderItem) {
+    throw new Error("Order item not found");
+  }
+
+  if (!isActiveOrderItem(orderItem)) {
+    throw new Error("This product is already cancelled");
+  }
+
+  const stockItem = {
+    productId: orderItem.product,
+
+    size: orderItem.size,
+
+    quantity: orderItem.quantity,
+  };
+
+  let restoredItems = [];
+
+  try {
+    /*
+     * Restore stock only for this
+     * selected product/size.
+     */
+    restoredItems = await restoreProductStock([stockItem]);
+
+    const currentOrder = await Order.findOne({
+      _id: order._id,
+
+      user: userId,
+    });
+
+    if (!currentOrder) {
+      throw new Error("Order not found");
+    }
+
+    if (
+      !["Pending", "Partially Cancelled"].includes(currentOrder.orderStatus)
+    ) {
+      throw new Error("This product can no longer be cancelled");
+    }
+
+    const currentItem = currentOrder.items.find(
+      (item) => item._id.toString() === itemId,
+    );
+
+    if (!currentItem) {
+      throw new Error("Order item not found");
+    }
+
+    if (!isActiveOrderItem(currentItem)) {
+      throw new Error("This product is already cancelled");
+    }
+
+    const cancellationDate = new Date();
+
+    currentItem.itemStatus = "Cancelled";
+
+    currentItem.cancellationReason = trimmedReason;
+
+    currentItem.cancelledAt = cancellationDate;
+
+    const hasActiveItems = currentOrder.items.some((item) =>
+      isActiveOrderItem(item),
+    );
+
+    if (hasActiveItems) {
+      currentOrder.orderStatus = "Partially Cancelled";
+
+      currentOrder.cancellationReason = "";
+
+      currentOrder.cancelledAt = null;
+    } else {
+      currentOrder.orderStatus = "Cancelled";
+
+      currentOrder.cancellationReason = trimmedReason;
+
+      currentOrder.cancelledAt = cancellationDate;
+    }
+
+    const totals = calculateActiveOrderTotals(currentOrder);
+
+    currentOrder.subtotal = totals.subtotal;
+
+    currentOrder.discount = totals.discount;
+
+    currentOrder.shippingCharge = totals.shippingCharge;
+
+    currentOrder.tax = totals.tax;
+
+    currentOrder.totalAmount = totals.totalAmount;
+
+    await currentOrder.save();
+
+    return currentOrder.toObject();
+  } catch (error) {
+    /*
+     * If stock was restored but
+     * updating the order failed,
+     * reduce the same stock again.
+     */
+    if (restoredItems.length > 0) {
+      await reduceProductStock(
+        restoredItems.map((item) => ({
+          product: item.productId,
+
+          productName: "",
+
+          size: item.size,
+
+          quantity: item.quantity,
+        })),
+      );
+    }
+
+    throw error;
+  }
+};
 
 export {
   createOrder,

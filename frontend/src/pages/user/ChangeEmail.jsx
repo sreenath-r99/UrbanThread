@@ -11,43 +11,33 @@ import {
 const ChangeEmail = () => {
   const navigate = useNavigate();
 
-  const { user, token, setUser } =
-    useContext(AuthContext);
+  const { user, token, setUser } = useContext(AuthContext);
 
-  const [currentPassword, setCurrentPassword] =
-    useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
 
-  const [newEmail, setNewEmail] =
-    useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   const [otp, setOtp] = useState("");
 
-  const [otpSent, setOtpSent] =
-    useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
   // ==========================
   // REQUEST EMAIL CHANGE
   // ==========================
 
-  const handleRequestEmailChange = async (
-    event
-  ) => {
+  const handleRequestEmailChange = async (event) => {
     event.preventDefault();
 
     setError("");
     setSuccess("");
 
-    const trimmedEmail =
-      newEmail.trim().toLowerCase();
+    const trimmedEmail = newEmail.trim().toLowerCase();
 
     if (!currentPassword.trim()) {
       setError("Current password is required");
@@ -59,8 +49,7 @@ const ChangeEmail = () => {
       return;
     }
 
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(trimmedEmail)) {
       setError("Please enter a valid email address");
@@ -68,31 +57,27 @@ const ChangeEmail = () => {
     }
 
     if (trimmedEmail === user?.email) {
-      setError(
-        "New email must be different from your current email"
-      );
+      setError("New email must be different from your current email");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response =
-        await requestEmailChange(
-          {
-            currentPassword,
-            newEmail: trimmedEmail,
-          },
-          token
-        );
+      const response = await requestEmailChange(
+        {
+          currentPassword,
+          newEmail: trimmedEmail,
+        },
+        token,
+      );
 
       setNewEmail(trimmedEmail);
       setOtpSent(true);
       setSuccess(response.message);
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to send email change OTP"
+        error.response?.data?.message || "Failed to send email change OTP",
       );
     } finally {
       setLoading(false);
@@ -103,9 +88,7 @@ const ChangeEmail = () => {
   // VERIFY EMAIL CHANGE OTP
   // ==========================
 
-  const handleVerifyEmailChange = async (
-    event
-  ) => {
+  const handleVerifyEmailChange = async (event) => {
     event.preventDefault();
 
     setError("");
@@ -126,30 +109,26 @@ const ChangeEmail = () => {
     try {
       setLoading(true);
 
-      const response =
-        await verifyEmailChange(
-          {
-            otp: trimmedOtp,
-          },
-          token
-        );
+      const response = await verifyEmailChange(
+        {
+          otp: trimmedOtp,
+        },
+        token,
+      );
 
       // Update the user in AuthContext
       if (response.user) {
         setUser(response.user);
       }
 
-      setSuccess(
-        "Email changed successfully"
-      );
+      setSuccess("Email changed successfully");
 
       setTimeout(() => {
         navigate("/profile/edit");
       }, 1200);
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to verify email change OTP"
+        error.response?.data?.message || "Failed to verify email change OTP",
       );
     } finally {
       setLoading(false);
@@ -212,10 +191,7 @@ const ChangeEmail = () => {
             // ==========================
             // REQUEST OTP FORM
             // ==========================
-            <form
-              onSubmit={handleRequestEmailChange}
-              className="space-y-5"
-            >
+            <form onSubmit={handleRequestEmailChange} className="space-y-5">
               <div>
                 <label
                   htmlFor="currentPassword"
@@ -228,11 +204,7 @@ const ChangeEmail = () => {
                   id="currentPassword"
                   type="password"
                   value={currentPassword}
-                  onChange={(event) =>
-                    setCurrentPassword(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setCurrentPassword(event.target.value)}
                   placeholder="Enter current password"
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                   disabled={loading}
@@ -251,11 +223,7 @@ const ChangeEmail = () => {
                   id="newEmail"
                   type="email"
                   value={newEmail}
-                  onChange={(event) =>
-                    setNewEmail(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setNewEmail(event.target.value)}
                   placeholder="Enter new email address"
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                   disabled={loading}
@@ -267,25 +235,18 @@ const ChangeEmail = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
-                  ? "Sending OTP..."
-                  : "Send Verification OTP"}
+                {loading ? "Sending OTP..." : "Send Verification OTP"}
               </button>
             </form>
           ) : (
             // ==========================
             // VERIFY OTP FORM
             // ==========================
-            <form
-              onSubmit={handleVerifyEmailChange}
-              className="space-y-5"
-            >
+            <form onSubmit={handleVerifyEmailChange} className="space-y-5">
               <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
                 A verification OTP has been sent to:
                 <br />
-                <span className="font-semibold break-all">
-                  {newEmail}
-                </span>
+                <span className="font-semibold break-all">{newEmail}</span>
               </div>
 
               <div>
@@ -303,12 +264,7 @@ const ChangeEmail = () => {
                   maxLength={6}
                   value={otp}
                   onChange={(event) =>
-                    setOtp(
-                      event.target.value.replace(
-                        /\D/g,
-                        ""
-                      )
-                    )
+                    setOtp(event.target.value.replace(/\D/g, ""))
                   }
                   placeholder="Enter 6-digit OTP"
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-lg tracking-[0.4em] outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
@@ -321,9 +277,7 @@ const ChangeEmail = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
-                  ? "Verifying..."
-                  : "Verify and Change Email"}
+                {loading ? "Verifying..." : "Verify and Change Email"}
               </button>
 
               <button

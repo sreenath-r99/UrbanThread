@@ -1,22 +1,13 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useEffect, useState } from "react";
 
-import {
-  getProfile,
-  loginUser,
-} from "../services/authService";
+import { getProfile, loginUser } from "../services/authService";
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const [token, setToken] = useState(
-    localStorage.getItem("token") || null
-  );
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
 
   const [loading, setLoading] = useState(true);
 
@@ -44,17 +35,13 @@ export const AuthProvider = ({ children }) => {
         // Support both possible response structures:
         // { user: {...} }
         // or directly { ...user }
-        const authenticatedUser =
-          response?.user || response;
+        const authenticatedUser = response?.user || response;
 
         if (isMounted) {
           setUser(authenticatedUser);
         }
       } catch (error) {
-        console.error(
-          "Failed to validate session:",
-          error
-        );
+        console.error("Failed to validate session:", error);
 
         // Remove invalid or expired session data.
         localStorage.removeItem("token");
@@ -86,20 +73,12 @@ export const AuthProvider = ({ children }) => {
     const response = await loginUser(loginData);
 
     if (!response?.token || !response?.user) {
-      throw new Error(
-        "Invalid login response from server"
-      );
+      throw new Error("Invalid login response from server");
     }
 
-    localStorage.setItem(
-      "token",
-      response.token
-    );
+    localStorage.setItem("token", response.token);
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(response.user)
-    );
+    localStorage.setItem("user", JSON.stringify(response.user));
 
     setToken(response.token);
     setUser(response.user);
@@ -113,26 +92,15 @@ export const AuthProvider = ({ children }) => {
   // =========================
 
   const googleLogin = (authData) => {
-    const {
-      token: googleToken,
-      user: googleUser,
-    } = authData;
+    const { token: googleToken, user: googleUser } = authData;
 
     if (!googleToken || !googleUser) {
-      throw new Error(
-        "Invalid Google authentication data"
-      );
+      throw new Error("Invalid Google authentication data");
     }
 
-    localStorage.setItem(
-      "token",
-      googleToken
-    );
+    localStorage.setItem("token", googleToken);
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(googleUser)
-    );
+    localStorage.setItem("user", JSON.stringify(googleUser));
 
     setToken(googleToken);
     setUser(googleUser);

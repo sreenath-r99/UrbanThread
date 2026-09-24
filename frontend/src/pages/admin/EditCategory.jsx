@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import {
-  getCategory,
-  updateCategory,
-} from "../../services/categoryService";
+import { getCategory, updateCategory } from "../../services/categoryService";
 
 const EditCategory = () => {
   const { categoryId } = useParams();
@@ -35,10 +32,7 @@ const EditCategory = () => {
           isActive: category.isActive,
         });
       } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Failed to load category"
-        );
+        setError(err.response?.data?.message || "Failed to load category");
       } finally {
         setLoading(false);
       }
@@ -72,10 +66,7 @@ const EditCategory = () => {
 
       navigate("/admin/categories");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to update category"
-      );
+      setError(err.response?.data?.message || "Failed to update category");
     } finally {
       setSaving(false);
     }
@@ -99,9 +90,7 @@ const EditCategory = () => {
           ← Back to Categories
         </Link>
 
-        <h1 className="mt-5 text-3xl font-semibold">
-          Edit Category
-        </h1>
+        <h1 className="mt-5 text-3xl font-semibold">Edit Category</h1>
 
         <p className="mt-2 text-sm text-gray-400">
           Update category information.
@@ -147,9 +136,7 @@ const EditCategory = () => {
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block text-sm text-gray-300">
-            Image URL
-          </label>
+          <label className="mb-2 block text-sm text-gray-300">Image URL</label>
 
           <input
             type="url"
@@ -173,7 +160,6 @@ const EditCategory = () => {
             }
             className="h-4 w-4"
           />
-
           Category is active
         </label>
 

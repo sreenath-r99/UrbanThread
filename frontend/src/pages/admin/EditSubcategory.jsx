@@ -8,9 +8,7 @@ import {
   updateSubcategory,
 } from "../../services/subcategoryService";
 
-import {
-  getCategories,
-} from "../../services/categoryService";
+import { getCategories } from "../../services/categoryService";
 
 const EditSubcategory = () => {
   const navigate = useNavigate();
@@ -34,40 +32,25 @@ const EditSubcategory = () => {
       try {
         setLoading(true);
 
-        const [
-          subcategoryResponse,
-          categoriesResponse,
-        ] = await Promise.all([
+        const [subcategoryResponse, categoriesResponse] = await Promise.all([
           getSubcategoryById(subcategoryId),
           getCategories(),
         ]);
 
-        const subcategory =
-          subcategoryResponse.subcategory;
+        const subcategory = subcategoryResponse.subcategory;
 
         setFormData({
           name: subcategory.name || "",
           description: subcategory.description || "",
-          category:
-            subcategory.category?._id ||
-            subcategory.category ||
-            "",
+          category: subcategory.category?._id || subcategory.category || "",
           isActive: subcategory.isActive,
         });
 
-        setCategories(
-          categoriesResponse.categories || []
-        );
+        setCategories(categoriesResponse.categories || []);
       } catch (error) {
-        console.error(
-          "Fetch edit subcategory data error:",
-          error
-        );
+        console.error("Fetch edit subcategory data error:", error);
 
-        setError(
-          error.response?.data?.message ||
-            "Failed to load subcategory"
-        );
+        setError(error.response?.data?.message || "Failed to load subcategory");
       } finally {
         setLoading(false);
       }
@@ -77,8 +60,7 @@ const EditSubcategory = () => {
   }, [subcategoryId]);
 
   const handleChange = (event) => {
-    const { name, value, type, checked } =
-      event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previousData) => ({
       ...previousData,
@@ -115,15 +97,9 @@ const EditSubcategory = () => {
         replace: true,
       });
     } catch (error) {
-      console.error(
-        "Update subcategory error:",
-        error
-      );
+      console.error("Update subcategory error:", error);
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to update subcategory"
-      );
+      setError(error.response?.data?.message || "Failed to update subcategory");
     } finally {
       setSaving(false);
     }
@@ -196,15 +172,10 @@ const EditSubcategory = () => {
               onChange={handleChange}
               className="w-full border border-[#303030] bg-[#1d1d1d] px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
             >
-              <option value="">
-                Select parent category
-              </option>
+              <option value="">Select parent category</option>
 
               {categories.map((category) => (
-                <option
-                  key={category._id}
-                  value={category._id}
-                >
+                <option key={category._id} value={category._id}>
                   {category.name}
                 </option>
               ))}
@@ -238,10 +209,7 @@ const EditSubcategory = () => {
               className="h-4 w-4 accent-white"
             />
 
-            <label
-              htmlFor="isActive"
-              className="text-xs text-gray-400"
-            >
+            <label htmlFor="isActive" className="text-xs text-gray-400">
               Active subcategory
             </label>
           </div>
@@ -253,16 +221,12 @@ const EditSubcategory = () => {
               disabled={saving}
               className="bg-[#f1f0ed] px-6 py-3 text-xs font-semibold tracking-wide text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving
-                ? "Saving..."
-                : "Save Changes"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/admin/subcategories")
-              }
+              onClick={() => navigate("/admin/subcategories")}
               className="border border-[#383838] px-6 py-3 text-xs text-gray-300 transition hover:border-gray-500 hover:text-white"
             >
               Cancel

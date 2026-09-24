@@ -7,12 +7,9 @@ import {
   unblockUser,
 } from "../controllers/adminUserController.js";
 
-import {
-  protectAdmin,
-} from "../middleware/adminMiddleware.js";
+import { protectAdmin } from "../middleware/adminMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
 /*
 |--------------------------------------------------------------------------
@@ -37,10 +34,7 @@ router.use(protectAdmin);
 |
 */
 
-router.get(
-  "/",
-  getUsers
-);
+router.get("/", getUsers);
 
 /*
 |--------------------------------------------------------------------------
@@ -48,10 +42,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/:userId",
-  getUser
-);
+router.get("/:userId", getUser);
 
 /*
 |--------------------------------------------------------------------------
@@ -59,10 +50,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.patch(
-  "/:userId/block",
-  blockUser
-);
+router.patch("/:userId/block", blockUser);
 
 /*
 |--------------------------------------------------------------------------
@@ -70,9 +58,6 @@ router.patch(
 |--------------------------------------------------------------------------
 */
 
-router.patch(
-  "/:userId/unblock",
-  unblockUser
-);
+router.patch("/:userId/unblock", unblockUser);
 
 export default router;

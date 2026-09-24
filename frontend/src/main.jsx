@@ -21,5 +21,5 @@ createRoot(document.getElementById("root")).render(
         </AdminAuthProvider>
       </AuthProvider>
     </GoogleOAuthProvider>
-  </StrictMode>
+  </StrictMode>,
 );

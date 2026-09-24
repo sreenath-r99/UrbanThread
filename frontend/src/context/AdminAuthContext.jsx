@@ -1,8 +1,4 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useEffect, useState } from "react";
 
 import { loginAdmin } from "../services/adminService";
 
@@ -12,7 +8,7 @@ export const AdminAuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
 
   const [adminToken, setAdminToken] = useState(
-    localStorage.getItem("adminToken") || null
+    localStorage.getItem("adminToken") || null,
   );
 
   const [loading, setLoading] = useState(true);
@@ -66,20 +62,12 @@ export const AdminAuthProvider = ({ children }) => {
     const response = await loginAdmin(loginData);
 
     if (!response?.token || !response?.admin) {
-      throw new Error(
-        "Invalid admin login response from server"
-      );
+      throw new Error("Invalid admin login response from server");
     }
 
-    localStorage.setItem(
-      "adminToken",
-      response.token
-    );
+    localStorage.setItem("adminToken", response.token);
 
-    localStorage.setItem(
-      "admin",
-      JSON.stringify(response.admin)
-    );
+    localStorage.setItem("admin", JSON.stringify(response.admin));
 
     setAdminToken(response.token);
     setAdmin(response.admin);

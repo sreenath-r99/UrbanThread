@@ -11,12 +11,8 @@ const API = axios.create({
 |--------------------------------------------------------------------------
 */
 
-const getProductDetails = async (
-  productId
-) => {
-  const response = await API.get(
-    `/admin/products/store/${productId}`
-  );
+const getProductDetails = async (productId) => {
+  const response = await API.get(`/admin/products/store/${productId}`);
 
   return response.data;
 };
@@ -27,22 +23,14 @@ const getProductDetails = async (
 |--------------------------------------------------------------------------
 */
 
-const getRelatedProducts = async (
-  productId
-) => {
-  const response = await API.get(
-    `/admin/products/store/${productId}/related`,
-    {
-      params: {
-        limit: 4,
-      },
-    }
-  );
+const getRelatedProducts = async (productId) => {
+  const response = await API.get(`/admin/products/store/${productId}/related`, {
+    params: {
+      limit: 4,
+    },
+  });
 
   return response.data;
 };
 
-export {
-  getProductDetails,
-  getRelatedProducts,
-};
+export { getProductDetails, getRelatedProducts };

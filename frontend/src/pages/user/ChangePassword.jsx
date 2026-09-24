@@ -53,26 +53,19 @@ const ChangePassword = () => {
     const newErrors = {};
 
     if (!formData.currentPassword.trim()) {
-      newErrors.currentPassword =
-        "Current password is required";
+      newErrors.currentPassword = "Current password is required";
     }
 
     if (!formData.newPassword.trim()) {
-      newErrors.newPassword =
-        "New password is required";
+      newErrors.newPassword = "New password is required";
     } else if (formData.newPassword.length < 6) {
-      newErrors.newPassword =
-        "New password must be at least 6 characters";
+      newErrors.newPassword = "New password must be at least 6 characters";
     }
 
     if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword =
-        "Please confirm your new password";
-    } else if (
-      formData.newPassword !== formData.confirmPassword
-    ) {
-      newErrors.confirmPassword =
-        "Passwords do not match";
+      newErrors.confirmPassword = "Please confirm your new password";
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     if (
@@ -106,20 +99,17 @@ const ChangePassword = () => {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
         },
-        token
+        token,
       );
 
-      alert(
-        "Password changed successfully. Please login again."
-      );
+      alert("Password changed successfully. Please login again.");
 
       logout();
 
       navigate("/login", { replace: true });
     } catch (error) {
       const message =
-        error.response?.data?.message ||
-        "Unable to change password";
+        error.response?.data?.message || "Unable to change password";
 
       setServerError(message);
     } finally {
@@ -133,15 +123,9 @@ const ChangePassword = () => {
     return (
       <button
         type="button"
-        onClick={() =>
-          togglePasswordVisibility(fieldName)
-        }
+        onClick={() => togglePasswordVisibility(fieldName)}
         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-700"
-        aria-label={
-          isVisible
-            ? "Hide password"
-            : "Show password"
-        }
+        aria-label={isVisible ? "Hide password" : "Show password"}
       >
         {isVisible ? (
           <svg
@@ -167,22 +151,14 @@ const ChangePassword = () => {
             className="h-5 w-5"
           >
             <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
-            <circle
-              cx="12"
-              cy="12"
-              r="2.5"
-            />
+            <circle cx="12" cy="12" r="2.5" />
           </svg>
         )}
       </button>
     );
   };
 
-  const renderPasswordField = ({
-    id,
-    label,
-    placeholder,
-  }) => {
+  const renderPasswordField = ({ id, label, placeholder }) => {
     const isVisible = showPasswords[id];
 
     return (
@@ -209,9 +185,7 @@ const ChangePassword = () => {
         </div>
 
         {errors[id] && (
-          <p className="mt-2 text-xs text-red-400">
-            {errors[id]}
-          </p>
+          <p className="mt-2 text-xs text-red-400">{errors[id]}</p>
         )}
       </div>
     );
@@ -245,15 +219,11 @@ const ChangePassword = () => {
           </h1>
 
           <p className="mx-auto mt-3 max-w-[275px] text-sm leading-5 text-[#b8b1aa]">
-            Choose a strong password for your
-            UrbanThread account.
+            Choose a strong password for your UrbanThread account.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           {renderPasswordField({
             id: "currentPassword",
             label: "Current Password",
@@ -283,9 +253,7 @@ const ChangePassword = () => {
             disabled={isSubmitting}
             className="mt-3 h-12 w-full bg-[#e9dfd3] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#282522] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting
-              ? "Updating Password..."
-              : "Reset Password"}
+            {isSubmitting ? "Updating Password..." : "Reset Password"}
           </button>
 
           <button

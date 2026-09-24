@@ -16,29 +16,14 @@ const router = express.Router();
 
 router.use(protectCart);
 
-router.get(
-  "/",
-  getWishlistController
-);
+router.get("/", getWishlistController);
 
-router.get(
-  "/check/:productId",
-  checkWishlistController
-);
+router.get("/check/:productId", checkWishlistController);
 
-router.post(
-  "/:productId",
-  addToWishlistController
-);
+router.post("/:productId", addToWishlistController);
 
-router.delete(
-  "/:productId",
-  removeFromWishlistController
-);
+router.delete("/:productId", removeFromWishlistController);
 
-router.delete(
-  "/",
-  clearWishlistController
-);
+router.delete("/", clearWishlistController);
 
 export default router;

@@ -1,8 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -19,8 +15,7 @@ const Subcategories = () => {
   // STATE
   // ==========================================
 
-  const [subcategories, setSubcategories] =
-    useState([]);
+  const [subcategories, setSubcategories] = useState([]);
 
   const [search, setSearch] = useState("");
 
@@ -30,13 +25,11 @@ const Subcategories = () => {
 
   const [totalPages, setTotalPages] = useState(1);
 
-  const [totalSubcategories, setTotalSubcategories] =
-    useState(0);
+  const [totalSubcategories, setTotalSubcategories] = useState(0);
 
   const [loading, setLoading] = useState(true);
 
-  const [actionLoading, setActionLoading] =
-    useState("");
+  const [actionLoading, setActionLoading] = useState("");
 
   const [error, setError] = useState("");
 
@@ -45,10 +38,7 @@ const Subcategories = () => {
   // ==========================================
 
   const fetchSubcategories = useCallback(
-    async (
-      searchValue = search,
-      pageValue = page
-    ) => {
+    async (searchValue = search, pageValue = page) => {
       try {
         setLoading(true);
         setError("");
@@ -74,39 +64,25 @@ const Subcategories = () => {
          */
 
         setSubcategories(
-          Array.isArray(
-            response?.subcategories
-          )
-            ? response.subcategories
-            : []
+          Array.isArray(response?.subcategories) ? response.subcategories : [],
         );
 
-        setTotalPages(
-          Number(response?.totalPages) || 1
-        );
+        setTotalPages(Number(response?.totalPages) || 1);
 
-        setTotalSubcategories(
-          Number(
-            response?.totalSubcategories
-          ) || 0
-        );
+        setTotalSubcategories(Number(response?.totalSubcategories) || 0);
       } catch (error) {
-        console.error(
-          "Fetch subcategories error:",
-          error
-        );
+        console.error("Fetch subcategories error:", error);
 
         setSubcategories([]);
 
         setError(
-          error?.response?.data?.message ||
-            "Failed to load subcategories"
+          error?.response?.data?.message || "Failed to load subcategories",
         );
       } finally {
         setLoading(false);
       }
     },
-    [search, page, limit]
+    [search, page, limit],
   );
 
   // ==========================================
@@ -121,11 +97,7 @@ const Subcategories = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, [
-    search,
-    page,
-    fetchSubcategories,
-  ]);
+  }, [search, page, fetchSubcategories]);
 
   // ==========================================
   // SEARCH CHANGE
@@ -157,30 +129,19 @@ const Subcategories = () => {
   // TOGGLE STATUS
   // ==========================================
 
-  const handleToggleStatus = async (
-    subcategoryId
-  ) => {
+  const handleToggleStatus = async (subcategoryId) => {
     try {
       setActionLoading(subcategoryId);
       setError("");
 
-      await toggleSubcategoryStatus(
-        subcategoryId
-      );
+      await toggleSubcategoryStatus(subcategoryId);
 
-      await fetchSubcategories(
-        search,
-        page
-      );
+      await fetchSubcategories(search, page);
     } catch (error) {
-      console.error(
-        "Toggle subcategory status error:",
-        error
-      );
+      console.error("Toggle subcategory status error:", error);
 
       setError(
-        error?.response?.data?.message ||
-          "Failed to update subcategory status"
+        error?.response?.data?.message || "Failed to update subcategory status",
       );
     } finally {
       setActionLoading("");
@@ -191,11 +152,9 @@ const Subcategories = () => {
   // DELETE SUBCATEGORY
   // ==========================================
 
-  const handleDelete = async (
-    subcategoryId
-  ) => {
+  const handleDelete = async (subcategoryId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this subcategory?"
+      "Are you sure you want to delete this subcategory?",
     );
 
     if (!confirmed) {
@@ -210,23 +169,14 @@ const Subcategories = () => {
        * Backend should perform SOFT DELETE.
        */
 
-      await deleteSubcategory(
-        subcategoryId
-      );
+      await deleteSubcategory(subcategoryId);
 
-      await fetchSubcategories(
-        search,
-        page
-      );
+      await fetchSubcategories(search, page);
     } catch (error) {
-      console.error(
-        "Delete subcategory error:",
-        error
-      );
+      console.error("Delete subcategory error:", error);
 
       setError(
-        error?.response?.data?.message ||
-          "Failed to delete subcategory"
+        error?.response?.data?.message || "Failed to delete subcategory",
       );
     } finally {
       setActionLoading("");
@@ -239,19 +189,13 @@ const Subcategories = () => {
 
   const handlePreviousPage = () => {
     if (page > 1) {
-      setPage(
-        (previousPage) =>
-          previousPage - 1
-      );
+      setPage((previousPage) => previousPage - 1);
     }
   };
 
   const handleNextPage = () => {
     if (page < totalPages) {
-      setPage(
-        (previousPage) =>
-          previousPage + 1
-      );
+      setPage((previousPage) => previousPage + 1);
     }
   };
 
@@ -262,11 +206,7 @@ const Subcategories = () => {
   const getPageNumbers = () => {
     const pages = [];
 
-    for (
-      let pageNumber = 1;
-      pageNumber <= totalPages;
-      pageNumber++
-    ) {
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
       pages.push(pageNumber);
     }
 
@@ -293,13 +233,11 @@ const Subcategories = () => {
 
   return (
     <div className="min-h-screen bg-[#111111] px-6 py-6 text-white md:px-8">
-
       {/* ======================================
           PAGE HEADER
       ====================================== */}
 
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-
         <div>
           <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-gray-500">
             Management
@@ -310,23 +248,17 @@ const Subcategories = () => {
           </h1>
 
           <p className="mt-1 text-xs text-gray-500">
-            Create and manage product
-            subcategories.
+            Create and manage product subcategories.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() =>
-            navigate(
-              "/admin/subcategories/add"
-            )
-          }
+          onClick={() => navigate("/admin/subcategories/add")}
           className="w-fit bg-[#f1f0ed] px-5 py-3 text-[11px] font-semibold tracking-wide text-black transition hover:bg-white"
         >
           + Add Subcategory
         </button>
-
       </div>
 
       {/* ======================================
@@ -334,9 +266,7 @@ const Subcategories = () => {
       ====================================== */}
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-
         <div className="relative w-full max-w-sm">
-
           <input
             type="text"
             placeholder="Search subcategories..."
@@ -356,7 +286,6 @@ const Subcategories = () => {
               ×
             </button>
           )}
-
         </div>
 
         {search && (
@@ -368,7 +297,6 @@ const Subcategories = () => {
             Clear
           </button>
         )}
-
       </div>
 
       {/* ======================================
@@ -386,19 +314,14 @@ const Subcategories = () => {
       ====================================== */}
 
       <div className="overflow-hidden border border-[#242424] bg-[#171717]">
-
         <div className="overflow-x-auto">
-
           <table className="w-full min-w-[900px] border-collapse">
-
             {/* ==================================
                 TABLE HEADER
             ================================== */}
 
             <thead>
-
               <tr className="border-b border-[#292929] bg-[#1d1d1d]">
-
                 <th className="w-14 px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                   #
                 </th>
@@ -422,9 +345,7 @@ const Subcategories = () => {
                 <th className="px-4 py-4 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
-
               </tr>
-
             </thead>
 
             {/* ==================================
@@ -432,7 +353,6 @@ const Subcategories = () => {
             ================================== */}
 
             <tbody>
-
               {/* LOADING */}
 
               {loading ? (
@@ -441,22 +361,14 @@ const Subcategories = () => {
                     colSpan="6"
                     className="px-4 py-12 text-center text-xs text-gray-500"
                   >
-                    Loading
-                    subcategories...
+                    Loading subcategories...
                   </td>
                 </tr>
-
-              ) : subcategories.length ===
-                0 ? (
-
+              ) : subcategories.length === 0 ? (
                 /* EMPTY */
 
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="px-4 py-12 text-center"
-                  >
-
+                  <td colSpan="6" className="px-4 py-12 text-center">
                     <p className="text-xs text-gray-500">
                       {search
                         ? `No subcategories found for "${search}".`
@@ -466,273 +378,171 @@ const Subcategories = () => {
                     {search && (
                       <button
                         type="button"
-                        onClick={
-                          handleClearSearch
-                        }
+                        onClick={handleClearSearch}
                         className="mt-3 text-xs text-gray-400 underline underline-offset-4 transition hover:text-white"
                       >
                         Clear search
                       </button>
                     )}
-
                   </td>
                 </tr>
-
               ) : (
-
                 /* DATA */
 
-                subcategories.map(
-                  (
-                    subcategory,
-                    index
-                  ) => (
+                subcategories.map((subcategory, index) => (
+                  <tr
+                    key={subcategory._id}
+                    className="border-b border-[#242424] last:border-b-0 transition hover:bg-[#1c1c1c]"
+                  >
+                    {/* NUMBER */}
 
-                    <tr
-                      key={
-                        subcategory._id
-                      }
-                      className="border-b border-[#242424] last:border-b-0 transition hover:bg-[#1c1c1c]"
-                    >
+                    <td className="px-4 py-4 text-xs text-gray-600">
+                      {(page - 1) * limit + index + 1}
+                    </td>
 
-                      {/* NUMBER */}
+                    {/* SUBCATEGORY */}
 
-                      <td className="px-4 py-4 text-xs text-gray-600">
-                        {(page - 1) *
-                          limit +
-                          index +
-                          1}
-                      </td>
+                    <td className="px-4 py-4">
+                      <p className="text-xs font-semibold text-white">
+                        {subcategory.name}
+                      </p>
+                    </td>
 
-                      {/* SUBCATEGORY */}
+                    {/* PARENT CATEGORY */}
 
-                      <td className="px-4 py-4">
+                    <td className="px-4 py-4 text-xs text-gray-400">
+                      {subcategory.category?.name || "Unknown"}
+                    </td>
 
-                        <p className="text-xs font-semibold text-white">
-                          {
-                            subcategory.name
-                          }
-                        </p>
+                    {/* DESCRIPTION */}
 
-                      </td>
+                    <td className="max-w-xs px-4 py-4">
+                      <p className="truncate text-xs text-gray-500">
+                        {subcategory.description || "—"}
+                      </p>
+                    </td>
 
-                      {/* PARENT CATEGORY */}
+                    {/* STATUS */}
 
-                      <td className="px-4 py-4 text-xs text-gray-400">
-                        {subcategory
-                          .category
-                          ?.name ||
-                          "Unknown"}
-                      </td>
+                    <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(subcategory._id)}
+                        disabled={actionLoading === subcategory._id}
+                        className={`rounded-full px-3 py-1 text-[10px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                          subcategory.isActive
+                            ? "bg-green-950 text-green-400 hover:bg-green-900"
+                            : "bg-red-950 text-red-400 hover:bg-red-900"
+                        }`}
+                      >
+                        {actionLoading === subcategory._id
+                          ? "..."
+                          : subcategory.isActive
+                            ? "Active"
+                            : "Inactive"}
+                      </button>
+                    </td>
 
-                      {/* DESCRIPTION */}
+                    {/* ACTIONS */}
 
-                      <td className="max-w-xs px-4 py-4">
-
-                        <p className="truncate text-xs text-gray-500">
-                          {subcategory
-                            .description ||
-                            "—"}
-                        </p>
-
-                      </td>
-
-                      {/* STATUS */}
-
-                      <td className="px-4 py-4">
+                    <td className="px-4 py-4">
+                      <div className="flex justify-end gap-2">
+                        {/* EDIT */}
 
                         <button
                           type="button"
                           onClick={() =>
-                            handleToggleStatus(
-                              subcategory._id
+                            navigate(
+                              `/admin/subcategories/edit/${subcategory._id}`,
                             )
                           }
-                          disabled={
-                            actionLoading ===
-                            subcategory._id
-                          }
-                          className={`rounded-full px-3 py-1 text-[10px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                            subcategory.isActive
-                              ? "bg-green-950 text-green-400 hover:bg-green-900"
-                              : "bg-red-950 text-red-400 hover:bg-red-900"
-                          }`}
+                          className="border border-[#383838] px-3 py-1.5 text-[10px] text-gray-300 transition hover:border-gray-500 hover:bg-[#222222] hover:text-white"
                         >
-                          {actionLoading ===
-                          subcategory._id
-                            ? "..."
-                            : subcategory.isActive
-                              ? "Active"
-                              : "Inactive"}
+                          Edit
                         </button>
 
-                      </td>
+                        {/* DELETE */}
 
-                      {/* ACTIONS */}
-
-                      <td className="px-4 py-4">
-
-                        <div className="flex justify-end gap-2">
-
-                          {/* EDIT */}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(
-                                `/admin/subcategories/edit/${subcategory._id}`
-                              )
-                            }
-                            className="border border-[#383838] px-3 py-1.5 text-[10px] text-gray-300 transition hover:border-gray-500 hover:bg-[#222222] hover:text-white"
-                          >
-                            Edit
-                          </button>
-
-                          {/* DELETE */}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleDelete(
-                                subcategory._id
-                              )
-                            }
-                            disabled={
-                              actionLoading ===
-                              subcategory._id
-                            }
-                            className="border border-red-950 px-3 py-1.5 text-[10px] text-red-400 transition hover:border-red-700 hover:bg-red-950/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {actionLoading ===
-                            subcategory._id
-                              ? "..."
-                              : "Delete"}
-                          </button>
-
-                        </div>
-
-                      </td>
-
-                    </tr>
-
-                  )
-                )
-
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(subcategory._id)}
+                          disabled={actionLoading === subcategory._id}
+                          className="border border-red-950 px-3 py-1.5 text-[10px] text-red-400 transition hover:border-red-700 hover:bg-red-950/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {actionLoading === subcategory._id ? "..." : "Delete"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
-
             </tbody>
-
           </table>
-
         </div>
 
         {/* ======================================
             PAGINATION
         ====================================== */}
 
-        {!loading &&
-          totalSubcategories > 0 && (
+        {!loading && totalSubcategories > 0 && (
+          <div className="flex flex-col gap-4 border-t border-[#292929] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* TOTAL */}
 
-            <div className="flex flex-col gap-4 border-t border-[#292929] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[11px] text-gray-500">
+              Showing{" "}
+              <span className="text-gray-300">{(page - 1) * limit + 1}</span> to{" "}
+              <span className="text-gray-300">
+                {Math.min(page * limit, totalSubcategories)}
+              </span>{" "}
+              of <span className="text-gray-300">{totalSubcategories}</span>{" "}
+              subcategories
+            </p>
 
-              {/* TOTAL */}
+            {/* PAGINATION BUTTONS */}
 
-              <p className="text-[11px] text-gray-500">
+            <div className="flex items-center gap-1">
+              {/* PREVIOUS */}
 
-                Showing{" "}
+              <button
+                type="button"
+                onClick={handlePreviousPage}
+                disabled={page === 1}
+                className="border border-[#333333] px-3 py-2 text-[10px] text-gray-400 transition hover:bg-[#252525] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
 
-                <span className="text-gray-300">
-                  {(page - 1) *
-                    limit +
-                    1}
-                </span>{" "}
+              {/* PAGE NUMBERS */}
 
-                to{" "}
-
-                <span className="text-gray-300">
-                  {Math.min(
-                    page * limit,
-                    totalSubcategories
-                  )}
-                </span>{" "}
-
-                of{" "}
-
-                <span className="text-gray-300">
-                  {
-                    totalSubcategories
-                  }
-                </span>{" "}
-
-                subcategories
-
-              </p>
-
-              {/* PAGINATION BUTTONS */}
-
-              <div className="flex items-center gap-1">
-
-                {/* PREVIOUS */}
-
+              {getPageNumbers().map((pageNumber) => (
                 <button
+                  key={pageNumber}
                   type="button"
-                  onClick={
-                    handlePreviousPage
-                  }
-                  disabled={page === 1}
-                  className="border border-[#333333] px-3 py-2 text-[10px] text-gray-400 transition hover:bg-[#252525] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => setPage(pageNumber)}
+                  className={`min-w-8 px-3 py-2 text-[10px] transition ${
+                    page === pageNumber
+                      ? "bg-white text-black"
+                      : "border border-[#333333] text-gray-400 hover:bg-[#252525] hover:text-white"
+                  }`}
                 >
-                  Previous
+                  {pageNumber}
                 </button>
+              ))}
 
-                {/* PAGE NUMBERS */}
+              {/* NEXT */}
 
-                {getPageNumbers().map(
-                  (pageNumber) => (
-
-                    <button
-                      key={pageNumber}
-                      type="button"
-                      onClick={() =>
-                        setPage(
-                          pageNumber
-                        )
-                      }
-                      className={`min-w-8 px-3 py-2 text-[10px] transition ${
-                        page === pageNumber
-                          ? "bg-white text-black"
-                          : "border border-[#333333] text-gray-400 hover:bg-[#252525] hover:text-white"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-
-                  )
-                )}
-
-                {/* NEXT */}
-
-                <button
-                  type="button"
-                  onClick={
-                    handleNextPage
-                  }
-                  disabled={
-                    page >= totalPages
-                  }
-                  className="border border-[#333333] px-3 py-2 text-[10px] text-gray-400 transition hover:bg-[#252525] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Next
-                </button>
-
-              </div>
-
+              <button
+                type="button"
+                onClick={handleNextPage}
+                disabled={page >= totalPages}
+                className="border border-[#333333] px-3 py-2 text-[10px] text-gray-400 transition hover:bg-[#252525] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
             </div>
-
-          )}
-
+          </div>
+        )}
       </div>
-
     </div>
   );
 };

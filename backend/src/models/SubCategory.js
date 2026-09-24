@@ -35,7 +35,7 @@ const subcategorySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Prevent duplicate subcategory names inside the same parent category
@@ -46,7 +46,7 @@ subcategorySchema.index(
   },
   {
     unique: true,
-  }
+  },
 );
 
 const Subcategory =

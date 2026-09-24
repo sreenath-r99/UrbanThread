@@ -18,45 +18,21 @@ const router = express.Router();
 // ==========================
 
 // Get all addresses
-router.get(
-  "/",
-  protect,
-  getAddresses
-);
+router.get("/", protect, getAddresses);
 
 // Create address
-router.post(
-  "/",
-  protect,
-  createAddress
-);
+router.post("/", protect, createAddress);
 
 // Get one address
-router.get(
-  "/:addressId",
-  protect,
-  getAddress
-);
+router.get("/:addressId", protect, getAddress);
 
 // Update address
-router.put(
-  "/:addressId",
-  protect,
-  updateAddress
-);
+router.put("/:addressId", protect, updateAddress);
 
 // Delete address
-router.delete(
-  "/:addressId",
-  protect,
-  deleteAddress
-);
+router.delete("/:addressId", protect, deleteAddress);
 
 // Set default address
-router.patch(
-  "/:addressId/default",
-  protect,
-  setDefaultAddress
-);
+router.patch("/:addressId/default", protect, setDefaultAddress);
 
 export default router;

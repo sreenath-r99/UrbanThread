@@ -7,43 +7,30 @@ import {
   adminResetPassword,
 } from "../controllers/adminController.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
 // ==========================
 // ADMIN LOGIN
 // ==========================
 
-router.post(
-  "/login",
-  adminLogin
-);
+router.post("/login", adminLogin);
 
 // ==========================
 // ADMIN FORGOT PASSWORD
 // ==========================
 
-router.post(
-  "/forgot-password",
-  adminForgotPassword
-);
+router.post("/forgot-password", adminForgotPassword);
 
 // ==========================
 // ADMIN VERIFY RESET OTP
 // ==========================
 
-router.post(
-  "/verify-reset-otp",
-  adminVerifyResetOtp
-);
+router.post("/verify-reset-otp", adminVerifyResetOtp);
 
 // ==========================
 // ADMIN RESET PASSWORD
 // ==========================
 
-router.post(
-  "/reset-password",
-  adminResetPassword
-);
+router.post("/reset-password", adminResetPassword);
 
 export default router;

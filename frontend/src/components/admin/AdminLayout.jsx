@@ -3,7 +3,6 @@ import AdminSidebar from "./AdminSidebar";
 const AdminLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#111111] text-white">
-
       {/* ==========================================
           ADMIN SIDEBAR
           
@@ -20,10 +19,7 @@ const AdminLayout = ({ children }) => {
           Therefore the content starts after 256px.
       ========================================== */}
 
-      <main className="min-h-screen pl-64">
-        {children}
-      </main>
-
+      <main className="min-h-screen pl-64">{children}</main>
     </div>
   );
 };

@@ -1,27 +1,19 @@
 import { useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { forgotPassword } from "../../services/authService";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] =
-    useState("");
+  const [email, setEmail] = useState("");
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
-
+  const [loading, setLoading] = useState(false);
 
   // ==========================
   // HANDLE SUBMIT
@@ -35,9 +27,7 @@ const ForgotPassword = () => {
 
     // Basic validation
     if (!email.trim()) {
-      setError(
-        "Please enter your email address"
-      );
+      setError("Please enter your email address");
 
       return;
     }
@@ -45,15 +35,9 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
 
-      const response =
-        await forgotPassword(
-          email.trim()
-        );
+      const response = await forgotPassword(email.trim());
 
-      setSuccess(
-        response.message ||
-          "OTP sent successfully"
-      );
+      setSuccess(response.message || "OTP sent successfully");
 
       // Small delay for success message
       setTimeout(() => {
@@ -70,13 +54,12 @@ const ForgotPassword = () => {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center p-4">
-
       {/* MAIN CONTAINER */}
 
-      <div className="
+      <div
+        className="
         w-full
         max-w-6xl
         min-h-[650px]
@@ -87,9 +70,8 @@ const ForgotPassword = () => {
         border
         border-[#292929]
         overflow-hidden
-      ">
-
-
+      "
+      >
         {/* ==========================
             LEFT IMAGE SECTION
         ========================== */}
@@ -108,37 +90,37 @@ const ForgotPassword = () => {
               "linear-gradient(to right, rgba(10,10,10,0.20), rgba(10,10,10,0.85)), url('https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?auto=format&fit=crop&w=1200&q=80')",
           }}
         >
-
           {/* DARK OVERLAY */}
 
-          <div className="
+          <div
+            className="
             absolute
             inset-0
             bg-black/20
-          " />
-
+          "
+          />
         </div>
-
 
         {/* ==========================
             RIGHT FORM SECTION
         ========================== */}
 
-        <div className="
+        <div
+          className="
           flex
           items-center
           justify-center
           p-6
           sm:p-10
           lg:p-16
-        ">
-
-          <div className="
+        "
+        >
+          <div
+            className="
             w-full
             max-w-md
-          ">
-
-
+          "
+          >
             {/* BACK TO LOGIN */}
 
             <Link
@@ -157,10 +139,10 @@ const ForgotPassword = () => {
               ← Back to Login
             </Link>
 
-
             {/* CARD */}
 
-            <div className="
+            <div
+              className="
               bg-[#202020]
               border
               border-[#303030]
@@ -168,67 +150,61 @@ const ForgotPassword = () => {
               p-8
               sm:p-10
               shadow-2xl
-            ">
-
-
+            "
+            >
               {/* TITLE */}
 
-              <h1 className="
+              <h1
+                className="
                 text-3xl
                 font-serif
                 font-semibold
                 text-center
                 text-[#e7dfd3]
                 mb-4
-              ">
+              "
+              >
                 Reset with OTP
               </h1>
 
-
               {/* DESCRIPTION */}
 
-              <p className="
+              <p
+                className="
                 text-sm
                 text-gray-400
                 text-center
                 leading-relaxed
                 mb-8
-              ">
-                Enter your email address and we'll
-                send you a 6-digit one-time password
-                to reset your password.
+              "
+              >
+                Enter your email address and we'll send you a 6-digit one-time
+                password to reset your password.
               </p>
-
 
               {/* FORM */}
 
-              <form
-                onSubmit={handleSubmit}
-              >
-
+              <form onSubmit={handleSubmit}>
                 {/* EMAIL */}
 
                 <div className="mb-5">
-
-                  <label className="
+                  <label
+                    className="
                     block
                     text-xs
                     uppercase
                     tracking-wide
                     text-gray-300
                     mb-3
-                  ">
+                  "
+                  >
                     Email Address
                   </label>
 
                   <input
                     type="email"
                     value={email}
-                    onChange={(event) =>
-                      setEmail(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => setEmail(event.target.value)}
                     placeholder="your@email.com"
                     className="
                       w-full
@@ -244,35 +220,35 @@ const ForgotPassword = () => {
                       transition
                     "
                   />
-
                 </div>
-
 
                 {/* ERROR */}
 
                 {error && (
-                  <div className="
+                  <div
+                    className="
                     mb-4
                     text-sm
                     text-red-400
-                  ">
+                  "
+                  >
                     {error}
                   </div>
                 )}
 
-
                 {/* SUCCESS */}
 
                 {success && (
-                  <div className="
+                  <div
+                    className="
                     mb-4
                     text-sm
                     text-green-400
-                  ">
+                  "
+                  >
                     {success}
                   </div>
                 )}
-
 
                 {/* BUTTON */}
 
@@ -293,41 +269,35 @@ const ForgotPassword = () => {
                     disabled:cursor-not-allowed
                   "
                 >
-                  {loading
-                    ? "SENDING..."
-                    : "SEND OTP"}
+                  {loading ? "SENDING..." : "SEND OTP"}
                 </button>
-
               </form>
-
 
               {/* DIVIDER */}
 
-              <div className="
+              <div
+                className="
                 border-t
                 border-[#333]
                 my-8
-              " />
-
+              "
+              />
 
               {/* SECURITY TEXT */}
 
-              <p className="
+              <p
+                className="
                 text-center
                 text-xs
                 text-gray-500
-              ">
+              "
+              >
                 🔒 Your account security is important to us.
               </p>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

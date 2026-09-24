@@ -50,8 +50,7 @@ const getSingleSubcategory = async (req, res) => {
       subcategory,
     });
   } catch (error) {
-    const statusCode =
-      error.message === "Subcategory not found" ? 404 : 400;
+    const statusCode = error.message === "Subcategory not found" ? 404 : 400;
 
     res.status(statusCode).json({
       success: false,
@@ -74,9 +73,7 @@ const addSubcategory = async (req, res) => {
       subcategory,
     });
   } catch (error) {
-    const statusCode = error.message.includes("already exists")
-      ? 409
-      : 400;
+    const statusCode = error.message.includes("already exists") ? 409 : 400;
 
     res.status(statusCode).json({
       success: false,
@@ -93,10 +90,7 @@ const editSubcategory = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
 
-    const subcategory = await updateSubcategory(
-      subcategoryId,
-      req.body
-    );
+    const subcategory = await updateSubcategory(subcategoryId, req.body);
 
     res.status(200).json({
       success: true,
@@ -108,8 +102,8 @@ const editSubcategory = async (req, res) => {
       error.message === "Subcategory not found"
         ? 404
         : error.message.includes("already exists")
-        ? 409
-        : 400;
+          ? 409
+          : 400;
 
     res.status(statusCode).json({
       success: false,
@@ -126,8 +120,7 @@ const toggleStatus = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
 
-    const subcategory =
-      await toggleSubcategoryStatus(subcategoryId);
+    const subcategory = await toggleSubcategoryStatus(subcategoryId);
 
     res.status(200).json({
       success: true,
@@ -135,13 +128,11 @@ const toggleStatus = async (req, res) => {
       subcategory,
     });
   } catch (error) {
-    const statusCode =
-      error.message === "Subcategory not found" ? 404 : 400;
+    const statusCode = error.message === "Subcategory not found" ? 404 : 400;
 
     res.status(statusCode).json({
       success: false,
-      message:
-        error.message || "Failed to update subcategory status",
+      message: error.message || "Failed to update subcategory status",
     });
   }
 };
@@ -161,8 +152,7 @@ const removeSubcategory = async (req, res) => {
       message: "Subcategory deleted successfully",
     });
   } catch (error) {
-    const statusCode =
-      error.message === "Subcategory not found" ? 404 : 400;
+    const statusCode = error.message === "Subcategory not found" ? 404 : 400;
 
     res.status(statusCode).json({
       success: false,
@@ -179,10 +169,9 @@ const getPublicSubcategories = async (req, res) => {
   try {
     const { categoryId = "" } = req.query;
 
-    const subcategories =
-      await getPublicSubcategoriesService({
-        categoryId,
-      });
+    const subcategories = await getPublicSubcategoriesService({
+      categoryId,
+    });
 
     res.status(200).json({
       success: true,
@@ -192,8 +181,7 @@ const getPublicSubcategories = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message:
-        error.message || "Failed to fetch public subcategories",
+      message: error.message || "Failed to fetch public subcategories",
     });
   }
 };

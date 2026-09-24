@@ -35,10 +35,7 @@ const Addresses = () => {
     } catch (error) {
       console.error("FETCH ADDRESSES ERROR:", error);
 
-      setError(
-        error.response?.data?.message ||
-          "Unable to load addresses"
-      );
+      setError(error.response?.data?.message || "Unable to load addresses");
     } finally {
       setLoading(false);
     }
@@ -58,7 +55,7 @@ const Addresses = () => {
 
   const handleDelete = async (addressId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this address?"
+      "Are you sure you want to delete this address?",
     );
 
     if (!confirmed) {
@@ -73,19 +70,14 @@ const Addresses = () => {
       await deleteAddress(addressId, token);
 
       setAddresses((previousAddresses) =>
-        previousAddresses.filter(
-          (address) => address._id !== addressId
-        )
+        previousAddresses.filter((address) => address._id !== addressId),
       );
 
       setSuccess("Address deleted successfully");
     } catch (error) {
       console.error("DELETE ADDRESS ERROR:", error);
 
-      setError(
-        error.response?.data?.message ||
-          "Unable to delete address"
-      );
+      setError(error.response?.data?.message || "Unable to delete address");
     } finally {
       setActionLoading("");
     }
@@ -111,21 +103,16 @@ const Addresses = () => {
           }))
           .sort(
             (firstAddress, secondAddress) =>
-              Number(secondAddress.isDefault) -
-              Number(firstAddress.isDefault)
-          )
+              Number(secondAddress.isDefault) - Number(firstAddress.isDefault),
+          ),
       );
 
       setSuccess("Default address updated successfully");
     } catch (error) {
-      console.error(
-        "SET DEFAULT ADDRESS ERROR:",
-        error
-      );
+      console.error("SET DEFAULT ADDRESS ERROR:", error);
 
       setError(
-        error.response?.data?.message ||
-          "Unable to set default address"
+        error.response?.data?.message || "Unable to set default address",
       );
     } finally {
       setActionLoading("");
@@ -184,10 +171,7 @@ const Addresses = () => {
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
-                  src={
-                    user.profileImage ||
-                    user.googleImage
-                  }
+                  src={user.profileImage || user.googleImage}
                   alt={user.name || "User"}
                   className="h-11 w-11 rounded-full object-cover"
                 />
@@ -284,8 +268,7 @@ const Addresses = () => {
               </h1>
 
               <p className="mt-3 text-sm text-gray-500">
-                Manage your delivery addresses for a
-                faster checkout experience.
+                Manage your delivery addresses for a faster checkout experience.
               </p>
             </div>
 
@@ -307,10 +290,7 @@ const Addresses = () => {
 
               <p className="mt-2 text-sm text-gray-500">
                 {addresses.length}{" "}
-                {addresses.length === 1
-                  ? "address"
-                  : "addresses"}{" "}
-                saved
+                {addresses.length === 1 ? "address" : "addresses"} saved
               </p>
             </div>
 
@@ -326,9 +306,7 @@ const Addresses = () => {
 
           {success && (
             <div className="mt-6 border border-green-900/50 bg-green-950/20 p-4">
-              <p className="text-sm text-green-400">
-                {success}
-              </p>
+              <p className="text-sm text-green-400">{success}</p>
             </div>
           )}
 
@@ -336,9 +314,7 @@ const Addresses = () => {
 
           {error && (
             <div className="mt-6 border border-red-900/50 bg-red-950/20 p-4">
-              <p className="text-sm text-red-400">
-                {error}
-              </p>
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
@@ -354,27 +330,24 @@ const Addresses = () => {
 
           {/* EMPTY STATE */}
 
-          {!loading &&
-            !error &&
-            addresses.length === 0 && (
-              <div className="mt-7 border border-dashed border-[#3a3a3a] bg-[#151515] p-12 text-center">
-                <h3 className="font-serif text-xl text-[#e8e3dc]">
-                  No saved addresses
-                </h3>
+          {!loading && !error && addresses.length === 0 && (
+            <div className="mt-7 border border-dashed border-[#3a3a3a] bg-[#151515] p-12 text-center">
+              <h3 className="font-serif text-xl text-[#e8e3dc]">
+                No saved addresses
+              </h3>
 
-                <p className="mx-auto mt-3 max-w-md text-sm text-gray-500">
-                  You have not added a delivery address
-                  yet.
-                </p>
+              <p className="mx-auto mt-3 max-w-md text-sm text-gray-500">
+                You have not added a delivery address yet.
+              </p>
 
-                <Link
-                  to="/addresses/add"
-                  className="mt-6 inline-block border border-white bg-white px-6 py-3 text-[10px] uppercase tracking-[0.15em] text-black hover:bg-gray-200"
-                >
-                  Add Your First Address
-                </Link>
-              </div>
-            )}
+              <Link
+                to="/addresses/add"
+                className="mt-6 inline-block border border-white bg-white px-6 py-3 text-[10px] uppercase tracking-[0.15em] text-black hover:bg-gray-200"
+              >
+                Add Your First Address
+              </Link>
+            </div>
+          )}
 
           {/* ADDRESS CARDS */}
 
@@ -398,9 +371,7 @@ const Addresses = () => {
                   </div>
 
                   <div className="mt-6 space-y-2 text-sm leading-6 text-gray-400">
-                    <p className="font-medium text-white">
-                      {address.fullName}
-                    </p>
+                    <p className="font-medium text-white">{address.fullName}</p>
 
                     <p>{address.phone}</p>
                     <p>{address.houseName}</p>
@@ -411,8 +382,7 @@ const Addresses = () => {
                     </p>
 
                     <p>
-                      {address.pincode},{" "}
-                      {address.country}
+                      {address.pincode}, {address.country}
                     </p>
                   </div>
 
@@ -428,12 +398,8 @@ const Addresses = () => {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        handleDelete(address._id)
-                      }
-                      disabled={
-                        actionLoading === address._id
-                      }
+                      onClick={() => handleDelete(address._id)}
+                      disabled={actionLoading === address._id}
                       className="border border-red-900/60 px-4 py-2 text-[10px] uppercase tracking-[0.12em] text-red-400 hover:border-red-500 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {actionLoading === address._id
@@ -444,12 +410,8 @@ const Addresses = () => {
                     {!address.isDefault && (
                       <button
                         type="button"
-                        onClick={() =>
-                          handleSetDefault(address._id)
-                        }
-                        disabled={
-                          actionLoading === address._id
-                        }
+                        onClick={() => handleSetDefault(address._id)}
+                        disabled={actionLoading === address._id}
                         className="border border-[#3a3a3a] px-4 py-2 text-[10px] uppercase tracking-[0.12em] text-gray-400 hover:border-gray-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Set as Default

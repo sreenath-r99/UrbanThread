@@ -3,10 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { AuthContext } from "../../context/AuthContext";
 
-import {
-  getAddress,
-  updateAddress,
-} from "../../services/authService";
+import { getAddress, updateAddress } from "../../services/authService";
 
 const EditAddress = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -41,10 +38,7 @@ const EditAddress = () => {
       try {
         setLoading(true);
 
-        const response = await getAddress(
-          addressId,
-          token
-        );
+        const response = await getAddress(addressId, token);
 
         const address = response.address;
 
@@ -57,19 +51,14 @@ const EditAddress = () => {
           state: address.state || "",
           pincode: address.pincode || "",
           country: address.country || "India",
-          addressType:
-            address.addressType || "Home",
+          addressType: address.addressType || "Home",
           isDefault: Boolean(address.isDefault),
         });
       } catch (error) {
-        console.error(
-          "FETCH ADDRESS ERROR:",
-          error
-        );
+        console.error("FETCH ADDRESS ERROR:", error);
 
         setSubmitError(
-          error.response?.data?.message ||
-            "Unable to load address"
+          error.response?.data?.message || "Unable to load address",
         );
       } finally {
         setLoading(false);
@@ -86,8 +75,7 @@ const EditAddress = () => {
   // ==========================
 
   const handleChange = (event) => {
-    const { name, value, type, checked } =
-      event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previousData) => ({
       ...previousData,
@@ -112,23 +100,19 @@ const EditAddress = () => {
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Full name is required";
     } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName =
-        "Full name must contain at least 2 characters";
+      newErrors.fullName = "Full name must contain at least 2 characters";
     }
 
     if (!/^[6-9]\d{9}$/.test(formData.phone)) {
-      newErrors.phone =
-        "Enter a valid 10-digit Indian phone number";
+      newErrors.phone = "Enter a valid 10-digit Indian phone number";
     }
 
     if (!formData.houseName.trim()) {
-      newErrors.houseName =
-        "House or building name is required";
+      newErrors.houseName = "House or building name is required";
     }
 
     if (!formData.street.trim()) {
-      newErrors.street =
-        "Street or area is required";
+      newErrors.street = "Street or area is required";
     }
 
     if (!formData.city.trim()) {
@@ -140,8 +124,7 @@ const EditAddress = () => {
     }
 
     if (!/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode =
-        "Pincode must contain exactly 6 digits";
+      newErrors.pincode = "Pincode must contain exactly 6 digits";
     }
 
     if (!formData.country.trim()) {
@@ -169,24 +152,16 @@ const EditAddress = () => {
     try {
       setSaving(true);
 
-      await updateAddress(
-        addressId,
-        formData,
-        token
-      );
+      await updateAddress(addressId, formData, token);
 
       navigate("/addresses", {
         replace: true,
       });
     } catch (error) {
-      console.error(
-        "UPDATE ADDRESS ERROR:",
-        error
-      );
+      console.error("UPDATE ADDRESS ERROR:", error);
 
       setSubmitError(
-        error.response?.data?.message ||
-          "Unable to update address"
+        error.response?.data?.message || "Unable to update address",
       );
     } finally {
       setSaving(false);
@@ -220,17 +195,14 @@ const EditAddress = () => {
   const inputClassName =
     "mt-2 w-full border-b border-[#3a3a3a] bg-transparent px-0 py-3 text-sm text-[#e8e3dc] outline-none transition placeholder:text-gray-700 focus:border-gray-400";
 
-  const errorClassName =
-    "mt-2 text-[11px] text-red-400";
+  const errorClassName = "mt-2 text-[11px] text-red-400";
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <div className="flex min-h-screen">
-
         {/* SIDEBAR */}
 
         <aside className="flex w-[245px] shrink-0 flex-col border-r border-[#333333] bg-[#181818]">
-
           <div className="border-b border-[#333333] px-7 py-7">
             <Link
               to="/"
@@ -244,10 +216,7 @@ const EditAddress = () => {
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
-                  src={
-                    user.profileImage ||
-                    user.googleImage
-                  }
+                  src={user.profileImage || user.googleImage}
                   alt={user.name}
                   className="h-11 w-11 rounded-full object-cover"
                 />
@@ -327,7 +296,6 @@ const EditAddress = () => {
         {/* MAIN CONTENT */}
 
         <main className="flex-1 px-6 py-8 sm:px-10 lg:px-14">
-
           <div className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-7 md:flex-row md:items-center">
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
@@ -353,27 +321,18 @@ const EditAddress = () => {
 
           {loading ? (
             <div className="mt-9 max-w-4xl border border-[#2c2c2c] bg-[#1b1b1b] p-8">
-              <p className="text-sm text-gray-500">
-                Loading address...
-              </p>
+              <p className="text-sm text-gray-500">Loading address...</p>
             </div>
           ) : (
             <div className="mt-9 max-w-4xl border border-[#2c2c2c] bg-[#1b1b1b] p-6 sm:p-8 lg:p-10">
-
               {submitError && (
                 <div className="mb-7 border border-red-900/50 bg-red-950/20 p-4">
-                  <p className="text-sm text-red-400">
-                    {submitError}
-                  </p>
+                  <p className="text-sm text-red-400">{submitError}</p>
                 </div>
               )}
 
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-              >
+              <form onSubmit={handleSubmit} noValidate>
                 <div className="grid gap-x-8 gap-y-7 md:grid-cols-2">
-
                   {/* Full Name */}
 
                   <div>
@@ -394,9 +353,7 @@ const EditAddress = () => {
                     />
 
                     {errors.fullName && (
-                      <p className={errorClassName}>
-                        {errors.fullName}
-                      </p>
+                      <p className={errorClassName}>{errors.fullName}</p>
                     )}
                   </div>
 
@@ -421,9 +378,7 @@ const EditAddress = () => {
                     />
 
                     {errors.phone && (
-                      <p className={errorClassName}>
-                        {errors.phone}
-                      </p>
+                      <p className={errorClassName}>{errors.phone}</p>
                     )}
                   </div>
 
@@ -447,9 +402,7 @@ const EditAddress = () => {
                     />
 
                     {errors.houseName && (
-                      <p className={errorClassName}>
-                        {errors.houseName}
-                      </p>
+                      <p className={errorClassName}>{errors.houseName}</p>
                     )}
                   </div>
 
@@ -473,9 +426,7 @@ const EditAddress = () => {
                     />
 
                     {errors.street && (
-                      <p className={errorClassName}>
-                        {errors.street}
-                      </p>
+                      <p className={errorClassName}>{errors.street}</p>
                     )}
                   </div>
 
@@ -499,9 +450,7 @@ const EditAddress = () => {
                     />
 
                     {errors.city && (
-                      <p className={errorClassName}>
-                        {errors.city}
-                      </p>
+                      <p className={errorClassName}>{errors.city}</p>
                     )}
                   </div>
 
@@ -525,9 +474,7 @@ const EditAddress = () => {
                     />
 
                     {errors.state && (
-                      <p className={errorClassName}>
-                        {errors.state}
-                      </p>
+                      <p className={errorClassName}>{errors.state}</p>
                     )}
                   </div>
 
@@ -552,9 +499,7 @@ const EditAddress = () => {
                     />
 
                     {errors.pincode && (
-                      <p className={errorClassName}>
-                        {errors.pincode}
-                      </p>
+                      <p className={errorClassName}>{errors.pincode}</p>
                     )}
                   </div>
 
@@ -578,9 +523,7 @@ const EditAddress = () => {
                     />
 
                     {errors.country && (
-                      <p className={errorClassName}>
-                        {errors.country}
-                      </p>
+                      <p className={errorClassName}>{errors.country}</p>
                     )}
                   </div>
 
@@ -601,17 +544,11 @@ const EditAddress = () => {
                       onChange={handleChange}
                       className="mt-2 w-full border-b border-[#3a3a3a] bg-[#1b1b1b] px-0 py-3 text-sm text-[#e8e3dc] outline-none focus:border-gray-400"
                     >
-                      <option value="Home">
-                        Home
-                      </option>
+                      <option value="Home">Home</option>
 
-                      <option value="Work">
-                        Work
-                      </option>
+                      <option value="Work">Work</option>
 
-                      <option value="Other">
-                        Other
-                      </option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
 
@@ -627,9 +564,7 @@ const EditAddress = () => {
                         className="h-4 w-4 accent-gray-400"
                       />
 
-                      <span>
-                        Set as default address
-                      </span>
+                      <span>Set as default address</span>
                     </label>
                   </div>
                 </div>
@@ -647,9 +582,7 @@ const EditAddress = () => {
                     disabled={saving}
                     className="border border-white bg-white px-7 py-3 text-[10px] uppercase tracking-[0.15em] text-black hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {saving
-                      ? "Updating..."
-                      : "Update Address"}
+                    {saving ? "Updating..." : "Update Address"}
                   </button>
                 </div>
               </form>

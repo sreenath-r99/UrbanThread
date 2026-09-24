@@ -12,19 +12,17 @@ const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    const token =
-      localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminToken");
 
     if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 /*
@@ -49,9 +47,7 @@ API.interceptors.request.use(
 |--------------------------------------------------------------------------
 */
 
-const getCategories = async (
-  options = ""
-) => {
+const getCategories = async (options = "") => {
   let params = {
     search: "",
     includeInactive: true,
@@ -69,22 +65,16 @@ const getCategories = async (
 
   if (typeof options === "string") {
     params.search = options;
-  } else if (
-    typeof options === "object" &&
-    options !== null
-  ) {
+  } else if (typeof options === "object" && options !== null) {
     params = {
       ...params,
       ...options,
     };
   }
 
-  const response = await API.get(
-    "/categories",
-    {
-      params,
-    }
-  );
+  const response = await API.get("/categories", {
+    params,
+  });
 
   return response.data;
 };
@@ -95,12 +85,8 @@ const getCategories = async (
 |--------------------------------------------------------------------------
 */
 
-const getCategory = async (
-  categoryId
-) => {
-  const response = await API.get(
-    `/categories/${categoryId}`
-  );
+const getCategory = async (categoryId) => {
+  const response = await API.get(`/categories/${categoryId}`);
 
   return response.data;
 };
@@ -111,13 +97,8 @@ const getCategory = async (
 |--------------------------------------------------------------------------
 */
 
-const createCategory = async (
-  categoryData
-) => {
-  const response = await API.post(
-    "/categories",
-    categoryData
-  );
+const createCategory = async (categoryData) => {
+  const response = await API.post("/categories", categoryData);
 
   return response.data;
 };
@@ -128,14 +109,8 @@ const createCategory = async (
 |--------------------------------------------------------------------------
 */
 
-const updateCategory = async (
-  categoryId,
-  categoryData
-) => {
-  const response = await API.put(
-    `/categories/${categoryId}`,
-    categoryData
-  );
+const updateCategory = async (categoryId, categoryData) => {
+  const response = await API.put(`/categories/${categoryId}`, categoryData);
 
   return response.data;
 };
@@ -146,12 +121,8 @@ const updateCategory = async (
 |--------------------------------------------------------------------------
 */
 
-const deleteCategory = async (
-  categoryId
-) => {
-  const response = await API.delete(
-    `/categories/${categoryId}`
-  );
+const deleteCategory = async (categoryId) => {
+  const response = await API.delete(`/categories/${categoryId}`);
 
   return response.data;
 };
@@ -162,12 +133,8 @@ const deleteCategory = async (
 |--------------------------------------------------------------------------
 */
 
-const toggleCategoryStatus = async (
-  categoryId
-) => {
-  const response = await API.patch(
-    `/categories/${categoryId}/toggle-status`
-  );
+const toggleCategoryStatus = async (categoryId) => {
+  const response = await API.patch(`/categories/${categoryId}/toggle-status`);
 
   return response.data;
 };

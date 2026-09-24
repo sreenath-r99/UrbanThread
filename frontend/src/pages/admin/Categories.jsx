@@ -45,30 +45,23 @@ const Categories = () => {
         });
 
         setCategories(
-          Array.isArray(response?.categories)
-            ? response.categories
-            : []
+          Array.isArray(response?.categories) ? response.categories : [],
         );
 
         setTotalPages(Number(response?.totalPages) || 1);
 
-        setTotalCategories(
-          Number(response?.totalCategories) || 0
-        );
+        setTotalCategories(Number(response?.totalCategories) || 0);
       } catch (err) {
         console.error("Fetch categories error:", err);
 
         setCategories([]);
 
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load categories"
-        );
+        setError(err?.response?.data?.message || "Failed to load categories");
       } finally {
         setLoading(false);
       }
     },
-    [search, page, limit]
+    [search, page, limit],
   );
 
   // ==========================================
@@ -113,7 +106,7 @@ const Categories = () => {
 
   const handleDelete = async (categoryId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this category?"
+      "Are you sure you want to delete this category?",
     );
 
     if (!confirmed) {
@@ -132,10 +125,7 @@ const Categories = () => {
     } catch (err) {
       console.error("Delete category error:", err);
 
-      setError(
-        err?.response?.data?.message ||
-          "Failed to delete category"
-      );
+      setError(err?.response?.data?.message || "Failed to delete category");
     } finally {
       setActionLoading("");
     }
@@ -154,14 +144,10 @@ const Categories = () => {
 
       await fetchCategories(search, page);
     } catch (err) {
-      console.error(
-        "Toggle category status error:",
-        err
-      );
+      console.error("Toggle category status error:", err);
 
       setError(
-        err?.response?.data?.message ||
-          "Failed to update category status"
+        err?.response?.data?.message || "Failed to update category status",
       );
     } finally {
       setActionLoading("");
@@ -191,11 +177,7 @@ const Categories = () => {
   const getPageNumbers = () => {
     const pages = [];
 
-    for (
-      let pageNumber = 1;
-      pageNumber <= totalPages;
-      pageNumber++
-    ) {
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
       pages.push(pageNumber);
     }
 
@@ -208,7 +190,6 @@ const Categories = () => {
 
   return (
     <div className="min-h-screen min-w-0 w-full bg-[#111111] px-6 py-6 text-white md:px-8">
-
       {/* ======================================
           PAGE HEADER
       ====================================== */}
@@ -297,7 +278,6 @@ const Categories = () => {
       <div className="w-full min-w-0 overflow-hidden border border-[#242424] bg-[#171717]">
         <div className="w-full min-w-0 overflow-x-auto">
           <table className="w-full min-w-[850px] border-collapse">
-
             {/* ==================================
                 TABLE HEADER
             ================================== */}
@@ -331,7 +311,6 @@ const Categories = () => {
             ================================== */}
 
             <tbody>
-
               {/* LOADING */}
 
               {loading ? (
@@ -344,14 +323,10 @@ const Categories = () => {
                   </td>
                 </tr>
               ) : categories.length === 0 ? (
-
                 /* EMPTY */
 
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-4 py-12 text-center"
-                  >
+                  <td colSpan="5" className="px-4 py-12 text-center">
                     <p className="text-xs text-gray-500">
                       {search
                         ? `No categories found for "${search}".`
@@ -369,9 +344,7 @@ const Categories = () => {
                     )}
                   </td>
                 </tr>
-
               ) : (
-
                 /* CATEGORY DATA */
 
                 categories.map((category, index) => (
@@ -379,7 +352,6 @@ const Categories = () => {
                     key={category._id}
                     className="border-b border-[#242424] last:border-b-0 transition hover:bg-[#1c1c1c]"
                   >
-
                     {/* NUMBER */}
 
                     <td className="px-4 py-4 text-xs text-gray-600">
@@ -407,12 +379,8 @@ const Categories = () => {
                     <td className="px-4 py-4">
                       <button
                         type="button"
-                        onClick={() =>
-                          handleToggleStatus(category._id)
-                        }
-                        disabled={
-                          actionLoading === category._id
-                        }
+                        onClick={() => handleToggleStatus(category._id)}
+                        disabled={actionLoading === category._id}
                         className={`rounded-full px-3 py-1 text-[10px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                           category.isActive
                             ? "bg-green-950 text-green-400 hover:bg-green-900"
@@ -431,7 +399,6 @@ const Categories = () => {
 
                     <td className="px-4 py-4">
                       <div className="flex justify-end gap-2">
-
                         {/* EDIT */}
 
                         <Link
@@ -445,17 +412,11 @@ const Categories = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            handleDelete(category._id)
-                          }
-                          disabled={
-                            actionLoading === category._id
-                          }
+                          onClick={() => handleDelete(category._id)}
+                          disabled={actionLoading === category._id}
                           className="border border-red-950 px-3 py-1.5 text-[10px] text-red-400 transition hover:border-red-700 hover:bg-red-950/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {actionLoading === category._id
-                            ? "..."
-                            : "Delete"}
+                          {actionLoading === category._id ? "..." : "Delete"}
                         </button>
                       </div>
                     </td>
@@ -472,32 +433,21 @@ const Categories = () => {
 
         {!loading && totalCategories > 0 && (
           <div className="flex flex-col gap-4 border-t border-[#292929] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-
             {/* RESULT COUNT */}
 
             <p className="text-[11px] text-gray-500">
               Showing{" "}
+              <span className="text-gray-300">{(page - 1) * limit + 1}</span> to{" "}
               <span className="text-gray-300">
-                {(page - 1) * limit + 1}
+                {Math.min(page * limit, totalCategories)}
               </span>{" "}
-              to{" "}
-              <span className="text-gray-300">
-                {Math.min(
-                  page * limit,
-                  totalCategories
-                )}
-              </span>{" "}
-              of{" "}
-              <span className="text-gray-300">
-                {totalCategories}
-              </span>{" "}
+              of <span className="text-gray-300">{totalCategories}</span>{" "}
               categories
             </p>
 
             {/* PAGINATION CONTROLS */}
 
             <div className="flex items-center gap-1">
-
               {/* PREVIOUS */}
 
               <button

@@ -10,14 +10,7 @@ const VerifyOtp = () => {
   const email = location.state?.email;
 
   // OTP state
-  const [otp, setOtp] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   // 10 minutes = 600 seconds
   const [timeLeft, setTimeLeft] = useState(60);
@@ -64,7 +57,7 @@ const VerifyOtp = () => {
 
     return `${String(minutes).padStart(
       2,
-      "0"
+      "0",
     )}:${String(seconds).padStart(2, "0")}`;
   };
 
@@ -94,11 +87,7 @@ const VerifyOtp = () => {
   // =========================
 
   const handleKeyDown = (event, index) => {
-    if (
-      event.key === "Backspace" &&
-      !otp[index] &&
-      index > 0
-    ) {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -117,27 +106,15 @@ const VerifyOtp = () => {
 
     if (!pastedData) return;
 
-    const newOtp = [
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-    ];
+    const newOtp = ["", "", "", "", "", ""];
 
-    pastedData.split("").forEach(
-      (digit, index) => {
-        newOtp[index] = digit;
-      }
-    );
+    pastedData.split("").forEach((digit, index) => {
+      newOtp[index] = digit;
+    });
 
     setOtp(newOtp);
 
-    const lastIndex = Math.min(
-      pastedData.length - 1,
-      5
-    );
+    const lastIndex = Math.min(pastedData.length - 1, 5);
 
     inputRefs.current[lastIndex]?.focus();
   };
@@ -155,9 +132,7 @@ const VerifyOtp = () => {
     const otpCode = otp.join("");
 
     if (otpCode.length !== 6) {
-      setError(
-        "Please enter the complete 6-digit OTP"
-      );
+      setError("Please enter the complete 6-digit OTP");
       return;
     }
 
@@ -171,22 +146,15 @@ const VerifyOtp = () => {
 
       console.log(response);
 
-      setMessage(
-        "Email verified successfully!"
-      );
+      setMessage("Email verified successfully!");
 
       setTimeout(() => {
         navigate("/login");
       }, 1000);
-
     } catch (error) {
       console.error(error);
 
-      setError(
-        error.response?.data?.message ||
-          "Invalid or expired OTP"
-      );
-
+      setError(error.response?.data?.message || "Invalid or expired OTP");
     } finally {
       setLoading(false);
     }
@@ -211,19 +179,10 @@ const VerifyOtp = () => {
 
       console.log(response);
 
-      setMessage(
-        "A new OTP has been sent to your email"
-      );
+      setMessage("A new OTP has been sent to your email");
 
       // Clear old OTP
-      setOtp([
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ]);
+      setOtp(["", "", "", "", "", ""]);
 
       // Restart 10-minute timer
       setTimeLeft(60);
@@ -232,15 +191,10 @@ const VerifyOtp = () => {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
-
     } catch (error) {
       console.error(error);
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to resend OTP"
-      );
-
+      setError(error.response?.data?.message || "Failed to resend OTP");
     } finally {
       setResending(false);
     }
@@ -248,7 +202,6 @@ const VerifyOtp = () => {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#171718] text-white">
-
       {/* BACKGROUND DESIGN */}
 
       <div
@@ -285,7 +238,6 @@ const VerifyOtp = () => {
         </h1>
       </header>
 
-
       {/* MAIN */}
 
       <main
@@ -300,7 +252,6 @@ const VerifyOtp = () => {
           pb-[70px]
         "
       >
-
         {/* OTP CARD */}
 
         <div
@@ -318,7 +269,6 @@ const VerifyOtp = () => {
             sm:min-h-[410px]
           "
         >
-
           {/* TITLE */}
 
           <h2
@@ -331,7 +281,6 @@ const VerifyOtp = () => {
           >
             Verify Your Email
           </h2>
-
 
           {/* DESCRIPTION */}
 
@@ -348,7 +297,6 @@ const VerifyOtp = () => {
             email address to continue.
           </p>
 
-
           {/* EMAIL */}
 
           {email && (
@@ -364,9 +312,7 @@ const VerifyOtp = () => {
             </p>
           )}
 
-
           <form onSubmit={handleVerify}>
-
             {/* OTP INPUTS */}
 
             <div
@@ -380,15 +326,12 @@ const VerifyOtp = () => {
               "
               onPaste={handlePaste}
             >
-
               {otp.map((digit, index) => (
-
                 <input
                   key={index}
 
                   ref={(element) => {
-                    inputRefs.current[index] =
-                      element;
+                    inputRefs.current[index] = element;
                   }}
 
                   type="text"
@@ -399,19 +342,9 @@ const VerifyOtp = () => {
 
                   value={digit}
 
-                  onChange={(event) =>
-                    handleChange(
-                      event.target.value,
-                      index
-                    )
-                  }
+                  onChange={(event) => handleChange(event.target.value, index)}
 
-                  onKeyDown={(event) =>
-                    handleKeyDown(
-                      event,
-                      index
-                    )
-                  }
+                  onKeyDown={(event) => handleKeyDown(event, index)}
 
                   autoFocus={index === 0}
 
@@ -431,11 +364,8 @@ const VerifyOtp = () => {
                     focus:ring-[#a99c8c]/35
                   "
                 />
-
               ))}
-
             </div>
-
 
             {/* TIMER */}
 
@@ -445,9 +375,7 @@ const VerifyOtp = () => {
                 min-h-[28px]
               "
             >
-
               {timeLeft > 0 ? (
-
                 <p
                   className="
                     text-[12px]
@@ -455,7 +383,6 @@ const VerifyOtp = () => {
                   "
                 >
                   Code expires in{" "}
-
                   <span
                     className="
                       ml-1
@@ -465,11 +392,8 @@ const VerifyOtp = () => {
                   >
                     {formatTime()}
                   </span>
-
                 </p>
-
               ) : (
-
                 <p
                   className="
                     text-[12px]
@@ -478,16 +402,12 @@ const VerifyOtp = () => {
                 >
                   OTP expired
                 </p>
-
               )}
-
             </div>
-
 
             {/* ERROR */}
 
             {error && (
-
               <p
                 className="
                   mb-[15px]
@@ -497,14 +417,11 @@ const VerifyOtp = () => {
               >
                 {error}
               </p>
-
             )}
-
 
             {/* SUCCESS */}
 
             {message && (
-
               <p
                 className="
                   mb-[15px]
@@ -514,9 +431,7 @@ const VerifyOtp = () => {
               >
                 {message}
               </p>
-
             )}
-
 
             {/* CONFIRM BUTTON */}
 
@@ -540,15 +455,9 @@ const VerifyOtp = () => {
                 disabled:opacity-60
               "
             >
-
-              {loading
-                ? "VERIFYING..."
-                : "CONFIRM"}
-
+              {loading ? "VERIFYING..." : "CONFIRM"}
             </button>
-
           </form>
-
 
           {/* RESEND OTP */}
 
@@ -557,10 +466,7 @@ const VerifyOtp = () => {
 
             onClick={handleResend}
 
-            disabled={
-              timeLeft > 0 ||
-              resending
-            }
+            disabled={timeLeft > 0 || resending}
 
             className="
               mt-5
@@ -574,24 +480,19 @@ const VerifyOtp = () => {
               disabled:text-[#5f5f61]
             "
           >
-
             {resending
               ? "Sending..."
               : timeLeft > 0
-              ? `Resend OTP in ${formatTime()}`
-              : "Resend OTP"}
-
+                ? `Resend OTP in ${formatTime()}`
+                : "Resend OTP"}
           </button>
-
 
           {/* BACK BUTTON */}
 
           <button
             type="button"
 
-            onClick={() =>
-              navigate("/register")
-            }
+            onClick={() => navigate("/register")}
 
             className="
               mt-[22px]
@@ -607,11 +508,8 @@ const VerifyOtp = () => {
           >
             ← BACK TO EMAIL
           </button>
-
         </div>
-
       </main>
-
 
       {/* FOOTER */}
 
@@ -633,7 +531,6 @@ const VerifyOtp = () => {
       >
         © 2026 URBANTHREAD. ALL RIGHTS RESERVED.
       </footer>
-
     </div>
   );
 };

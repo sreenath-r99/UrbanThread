@@ -15,10 +15,7 @@ const addressSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(
-      /^[6-9]\d{9}$/,
-      "Enter a valid 10-digit Indian phone number"
-    ),
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian phone number"),
 
   houseName: z
     .string()
@@ -47,10 +44,7 @@ const addressSchema = z.object({
   pincode: z
     .string()
     .trim()
-    .regex(
-      /^\d{6}$/,
-      "Pincode must contain exactly 6 digits"
-    ),
+    .regex(/^\d{6}$/, "Pincode must contain exactly 6 digits"),
 
   country: z
     .string()
@@ -58,13 +52,9 @@ const addressSchema = z.object({
     .min(2, "Country is required")
     .max(100, "Country name is too long"),
 
-  addressType: z
-    .enum(["Home", "Work", "Other"])
-    .default("Home"),
+  addressType: z.enum(["Home", "Work", "Other"]).default("Home"),
 
-  isDefault: z
-    .boolean()
-    .default(false),
+  isDefault: z.boolean().default(false),
 });
 
 // ==========================
@@ -86,18 +76,12 @@ export const getUserAddresses = async (userId) => {
 // CREATE ADDRESS
 // ==========================
 
-export const createUserAddress = async (
-  userId,
-  addressData
-) => {
-  const validatedData = addressSchema.parse(
-    addressData
-  );
+export const createUserAddress = async (userId, addressData) => {
+  const validatedData = addressSchema.parse(addressData);
 
-  const existingAddressCount =
-    await Address.countDocuments({
-      user: userId,
-    });
+  const existingAddressCount = await Address.countDocuments({
+    user: userId,
+  });
 
   let shouldBeDefault = validatedData.isDefault;
 
@@ -115,7 +99,7 @@ export const createUserAddress = async (
         $set: {
           isDefault: false,
         },
-      }
+      },
     );
   }
 
@@ -132,10 +116,7 @@ export const createUserAddress = async (
 // GET SINGLE ADDRESS
 // ==========================
 
-export const getSingleUserAddress = async (
-  userId,
-  addressId
-) => {
+export const getSingleUserAddress = async (userId, addressId) => {
   const address = await Address.findOne({
     _id: addressId,
     user: userId,
@@ -152,14 +133,8 @@ export const getSingleUserAddress = async (
 // UPDATE ADDRESS
 // ==========================
 
-export const updateUserAddress = async (
-  userId,
-  addressId,
-  addressData
-) => {
-  const validatedData = addressSchema.parse(
-    addressData
-  );
+export const updateUserAddress = async (userId, addressId, addressData) => {
+  const validatedData = addressSchema.parse(addressData);
 
   const address = await Address.findOne({
     _id: addressId,
@@ -182,7 +157,7 @@ export const updateUserAddress = async (
         $set: {
           isDefault: false,
         },
-      }
+      },
     );
   }
 
@@ -206,10 +181,7 @@ export const updateUserAddress = async (
 // DELETE ADDRESS
 // ==========================
 
-export const deleteUserAddress = async (
-  userId,
-  addressId
-) => {
+export const deleteUserAddress = async (userId, addressId) => {
   const address = await Address.findOne({
     _id: addressId,
     user: userId,
@@ -248,10 +220,7 @@ export const deleteUserAddress = async (
 // SET DEFAULT ADDRESS
 // ==========================
 
-export const setDefaultUserAddress = async (
-  userId,
-  addressId
-) => {
+export const setDefaultUserAddress = async (userId, addressId) => {
   const address = await Address.findOne({
     _id: addressId,
     user: userId,
@@ -269,7 +238,7 @@ export const setDefaultUserAddress = async (
       $set: {
         isDefault: false,
       },
-    }
+    },
   );
 
   address.isDefault = true;

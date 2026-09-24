@@ -20,10 +20,7 @@ router.use(protect);
 |----------------------------------------------------------------------
 */
 
-router.post(
-  "/",
-  createOrderController
-);
+router.post("/", createOrderController);
 
 /*
 |----------------------------------------------------------------------
@@ -31,25 +28,15 @@ router.post(
 |----------------------------------------------------------------------
 */
 
-router.get(
-  "/",
-  getOrdersController
-);
+router.get("/", getOrdersController);
 
 /*
 |----------------------------------------------------------------------
 | CANCEL SPECIFIC ORDER ITEM
 |----------------------------------------------------------------------
-|
-| IMPORTANT:
-| This route must appear before /:orderId/cancel.
-|
 */
 
-router.patch(
-  "/:orderId/items/:itemId/cancel",
-  cancelOrderItemController
-);
+router.patch("/:orderId/items/:itemId/cancel", cancelOrderItemController);
 
 /*
 |----------------------------------------------------------------------
@@ -57,10 +44,7 @@ router.patch(
 |----------------------------------------------------------------------
 */
 
-router.patch(
-  "/:orderId/cancel",
-  cancelOrderController
-);
+router.patch("/:orderId/cancel", cancelOrderController);
 
 /*
 |----------------------------------------------------------------------
@@ -68,9 +52,6 @@ router.patch(
 |----------------------------------------------------------------------
 */
 
-router.get(
-  "/:orderId",
-  getOrderController
-);
+router.get("/:orderId", getOrderController);
 
 export default router;

@@ -27,106 +27,60 @@ const router = express.Router();
 // ==========================
 
 // Register user
-router.post(
-  "/register",
-  register
-);
+router.post("/register", register);
 
 // Verify registration OTP
-router.post(
-  "/verify-otp",
-  verifyOtp
-);
+router.post("/verify-otp", verifyOtp);
 
 // User login
-router.post(
-  "/login",
-  login
-);
+router.post("/login", login);
 
 // Google authentication
-router.post(
-  "/google",
-  googleAuth
-);
+router.post("/google", googleAuth);
 
 // ==========================
 // PROTECTED USER ROUTES
 // ==========================
 
 // Get user profile
-router.get(
-  "/profile",
-  protect,
-  getProfile
-);
+router.get("/profile", protect, getProfile);
 
 // Update user profile with optional profile image
-router.put(
-  "/profile",
-  protect,
-  upload.single("profileImage"),
-  updateProfile
-);
+router.put("/profile", protect, upload.single("profileImage"), updateProfile);
 
 // Change password
-router.put(
-  "/change-password",
-  protect,
-  changePassword
-);
+router.put("/change-password", protect, changePassword);
 
 //
-
 
 // ==========================
 // CHANGE EMAIL ROUTES
 // ==========================
 
 // Request OTP for changing email
-router.post(
-  "/request-email-change",
-  protect,
-  requestChangeEmail
-);
+router.post("/request-email-change", protect, requestChangeEmail);
 
 // Verify OTP and update email
-router.post(
-  "/verify-email-change",
-  protect,
-  verifyChangeEmailOtp
-);
+router.post("/verify-email-change", protect, verifyChangeEmailOtp);
 
 // ==========================
 // PASSWORD RESET ROUTES
 // ==========================
 
 // Request forgot-password OTP
-router.post(
-  "/forgot-password",
-  forgotPassword
-);
+router.post("/forgot-password", forgotPassword);
 
 // Verify forgot-password OTP
-router.post(
-  "/verify-reset-otp",
-  verifyResetOtp
-);
+router.post("/verify-reset-otp", verifyResetOtp);
 
 // Reset password
-router.post(
-  "/reset-password",
-  resetPassword
-);
+router.post("/reset-password", resetPassword);
 
 // ==========================
 // RESEND REGISTRATION OTP
 // ==========================
 
 // Resend registration OTP
-router.post(
-  "/resend-otp",
-  resendOtp
-);
+router.post("/resend-otp", resendOtp);
 
 export default router;

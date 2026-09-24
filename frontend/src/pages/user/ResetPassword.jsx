@@ -9,7 +9,6 @@
 //   resetPassword,
 // } from "../../services/authService";
 
-
 // const ResetPassword = () => {
 //   const navigate = useNavigate();
 
@@ -20,7 +19,6 @@
 
 //   const otp =
 //     location.state?.otp;
-
 
 //   const [
 //     newPassword,
@@ -38,7 +36,6 @@
 //   const [loading, setLoading] =
 //     useState(false);
 
-
 //   // ==========================
 //   // PROTECT PAGE
 //   // ==========================
@@ -48,7 +45,6 @@
 
 //     return null;
 //   }
-
 
 //   // ==========================
 //   // HANDLE SUBMIT
@@ -103,7 +99,6 @@
 //     }
 //   };
 
-
 //   return (
 //     <div className="
 //       min-h-screen
@@ -136,7 +131,6 @@
 //           Create New Password
 //         </h1>
 
-
 //         <p className="
 //           text-sm
 //           text-gray-400
@@ -146,7 +140,6 @@
 //           Create a strong password for your
 //           UrbanThread account.
 //         </p>
-
 
 //         <form
 //           onSubmit={handleSubmit}
@@ -191,7 +184,6 @@
 
 //           </div>
 
-
 //           {/* CONFIRM PASSWORD */}
 
 //           <div className="mb-5">
@@ -231,7 +223,6 @@
 
 //           </div>
 
-
 //           {error && (
 //             <p className="
 //               text-red-400
@@ -241,7 +232,6 @@
 //               {error}
 //             </p>
 //           )}
-
 
 //           <button
 //             type="submit"
@@ -271,6 +261,5 @@
 //     </div>
 //   );
 // };
-
 
 // export default ResetPassword;

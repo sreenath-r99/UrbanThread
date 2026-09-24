@@ -10,15 +10,14 @@ const createAdmin = async () => {
   try {
     await connectDB();
 
-    const adminName =
-      process.env.ADMIN_NAME || "UrbanThread Admin";
+    const adminName = process.env.ADMIN_NAME || "UrbanThread Admin";
 
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPassword) {
       throw new Error(
-        "ADMIN_EMAIL and ADMIN_PASSWORD must be configured in .env"
+        "ADMIN_EMAIL and ADMIN_PASSWORD must be configured in .env",
       );
     }
 
@@ -33,10 +32,7 @@ const createAdmin = async () => {
       process.exit(0);
     }
 
-    const hashedPassword = await bcrypt.hash(
-      adminPassword,
-      10
-    );
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
     const admin = await Admin.create({
       name: adminName,
@@ -51,10 +47,7 @@ const createAdmin = async () => {
 
     process.exit(0);
   } catch (error) {
-    console.error(
-      "Failed to create admin:",
-      error.message
-    );
+    console.error("Failed to create admin:", error.message);
 
     process.exit(1);
   }

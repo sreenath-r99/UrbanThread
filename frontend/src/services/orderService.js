@@ -1,205 +1,212 @@
-// frontend/src/services/orderService.js
-
 import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-/*
-|--------------------------------------------------------------------------
-| AUTH CONFIG
-|--------------------------------------------------------------------------
-*/
+const userHeaders = (token) => ({
+  Authorization: `Bearer ${token}`,
+});
 
-const getAuthConfig = (token) => ({
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
+const adminHeaders = (adminToken) => ({
+  Authorization: `Bearer ${adminToken}`,
 });
 
 /*
-|--------------------------------------------------------------------------
-| USER — CREATE ORDER
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| CREATE USER ORDER
+|----------------------------------------------------------------------
+|
+| couponCode is optional. Only one coupon code can be sent for an
+| order. The backend validates it again before creating the order.
+|
+|----------------------------------------------------------------------
 */
 
-export const createOrder = async (
-  addressId,
-  token
-) => {
+export const createOrder = async (addressId, token, couponCode = "") => {
   const response = await API.post(
     "/orders",
+
     {
       addressId,
+      couponCode,
     },
-    getAuthConfig(token)
+
+    {
+      headers: userHeaders(token),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| USER — GET ORDERS
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| GET USER ORDERS
+|----------------------------------------------------------------------
 */
 
-export const getOrders = async (
-  token,
-  search = ""
-) => {
+export const getOrders = async (token, search = "") => {
   const response = await API.get(
     "/orders",
-    {
-      ...getAuthConfig(token),
 
+    {
       params: {
         search,
       },
-    }
+
+      headers: userHeaders(token),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| USER — GET SINGLE ORDER
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| GET USER ORDER
+|----------------------------------------------------------------------
 */
 
-export const getOrder = async (
-  orderId,
-  token
-) => {
+export const getOrder = async (orderId, token) => {
   const response = await API.get(
     `/orders/${orderId}`,
-    getAuthConfig(token)
+
+    {
+      headers: userHeaders(token),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| USER — CANCEL ORDER
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| CANCEL WHOLE USER ORDER
+|----------------------------------------------------------------------
 */
 
-export const cancelOrder = async (
-  orderId,
-  reason,
-  token
-) => {
+export const cancelOrder = async (orderId, reason = "", token) => {
   const response = await API.patch(
     `/orders/${orderId}/cancel`,
+
     {
       reason,
     },
-    getAuthConfig(token)
+
+    {
+      headers: userHeaders(token),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| USER — CANCEL INDIVIDUAL ORDER ITEM
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| CANCEL USER ORDER ITEM
+|----------------------------------------------------------------------
 */
 
-export const cancelOrderItem = async (
-  orderId,
-  itemId,
-  reason,
-  token
-) => {
+export const cancelOrderItem = async (orderId, itemId, reason = "", token) => {
   const response = await API.patch(
     `/orders/${orderId}/items/${itemId}/cancel`,
+
     {
       reason,
     },
-    getAuthConfig(token)
+
+    {
+      headers: userHeaders(token),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| ADMIN — GET ORDERS
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| ADMIN ORDERS
+|----------------------------------------------------------------------
 */
 
-export const getAdminOrders = async (
-  token,
-  {
-    page = 1,
-    limit = 10,
-    search = "",
-    status = "",
-    sortOrder = "desc",
-  } = {}
-) => {
+export const getAdminOrders = async (adminToken, filters = {}) => {
   const response = await API.get(
     "/admin/orders",
-    {
-      ...getAuthConfig(token),
 
+    {
       params: {
-        page,
-        limit,
-        search,
-        status,
-        sortOrder,
+        page: filters.page || 1,
+
+        limit: filters.limit || 10,
+
+        search: filters.search || "",
+
+        status: filters.status || "",
+
+        sortOrder: filters.sortOrder || "desc",
       },
-    }
+
+      headers: adminHeaders(adminToken),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| ADMIN — GET SINGLE ORDER
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| ADMIN SINGLE ORDER
+|----------------------------------------------------------------------
 */
 
-export const getAdminOrder = async (
-  orderId,
-  token
-) => {
+export const getAdminOrder = async (orderId, adminToken) => {
   const response = await API.get(
     `/admin/orders/${orderId}`,
-    getAuthConfig(token)
+
+    {
+      headers: adminHeaders(adminToken),
+    },
   );
 
   return response.data;
 };
 
 /*
-|--------------------------------------------------------------------------
-| ADMIN — UPDATE ORDER STATUS
-|--------------------------------------------------------------------------
+|----------------------------------------------------------------------
+| ADMIN UPDATE ORDER STATUS
+|----------------------------------------------------------------------
 */
 
-export const updateAdminOrderStatus =
-  async (
-    orderId,
-    status,
-    token,
-    reason = ""
-  ) => {
-    const response =
-      await API.patch(
-        `/admin/orders/${orderId}/status`,
-        {
-          status,
-          reason,
-        },
-        getAuthConfig(token)
-      );
+export const updateAdminOrderStatus = async (
+  orderId,
+  status,
+  adminToken,
+  cancellationReason = "",
+) => {
+  const response = await API.patch(
+    `/admin/orders/${orderId}/status`,
 
-    return response.data;
-  };
+    {
+      status,
+      cancellationReason,
+    },
+
+    {
+      headers: adminHeaders(adminToken),
+    },
+  );
+
+  return response.data;
+};
+
+export default {
+  createOrder,
+  getOrders,
+  getOrder,
+  cancelOrder,
+  cancelOrderItem,
+  getAdminOrders,
+  getAdminOrder,
+  updateAdminOrderStatus,
+};

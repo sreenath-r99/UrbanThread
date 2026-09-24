@@ -1,15 +1,6 @@
-import {
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { AuthContext } from "../../context/AuthContext";
 
@@ -19,6 +10,18 @@ import {
 } from "../../services/productDetailsService";
 
 import { addToCart } from "../../services/cartService";
+
+import {
+  getProductRating,
+  submitProductRating,
+} from "../../services/ratingService";
+
+import {
+  getProductReviews,
+  createProductReview,
+  updateProductReview,
+  deleteProductReview,
+} from "../../services/reviewService";
 
 import WishlistButton from "../../components/user/WishlistButton";
 
@@ -32,71 +35,104 @@ const ProductDetails = () => {
   // PRODUCT STATE
   // ============================================================
 
-  const [product, setProduct] =
-    useState(null);
+  const [product, setProduct] = useState(null);
 
-  const [relatedProducts, setRelatedProducts] =
-    useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
-  const [selectedImage, setSelectedImage] =
-    useState(0);
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  const [selectedSize, setSelectedSize] =
-    useState("");
+  const [selectedSize, setSelectedSize] = useState("");
 
-  const [quantity, setQuantity] =
-    useState(1);
+  const [quantity, setQuantity] = useState(1);
 
   // ============================================================
   // ZOOM STATE
   // ============================================================
 
-  const [zoomOpen, setZoomOpen] =
-    useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
 
-  const [zoomLevel, setZoomLevel] =
-    useState(1);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
-  const [panPosition, setPanPosition] =
-    useState({
-      x: 0,
-      y: 0,
-    });
+  const [panPosition, setPanPosition] = useState({
+    x: 0,
+    y: 0,
+  });
 
-  const [isDragging, setIsDragging] =
-    useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const [dragStart, setDragStart] =
-    useState({
-      x: 0,
-      y: 0,
-    });
+  const [dragStart, setDragStart] = useState({
+    x: 0,
+    y: 0,
+  });
 
   // ============================================================
   // LOADING / ERROR STATE
   // ============================================================
 
-  const [loading, setLoading] =
-    useState(Boolean(productId));
+  const [loading, setLoading] = useState(Boolean(productId));
 
-  const [relatedLoading, setRelatedLoading] =
-    useState(false);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   // ============================================================
   // CART STATE
   // ============================================================
 
-  const [cartLoading, setCartLoading] =
-    useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
 
-  const [cartMessage, setCartMessage] =
-    useState("");
+  const [cartMessage, setCartMessage] = useState("");
 
-  const [cartError, setCartError] =
-    useState("");
+  const [cartError, setCartError] = useState("");
+
+  // ============================================================
+  // RATING STATE
+  // ============================================================
+
+  const [averageRating, setAverageRating] = useState(0);
+
+  const [totalRatings, setTotalRatings] = useState(0);
+
+  const [userRating, setUserRating] = useState(0);
+
+  const [selectedRating, setSelectedRating] = useState(0);
+
+  const [ratingLoading, setRatingLoading] = useState(false);
+
+  const [ratingMessage, setRatingMessage] = useState("");
+
+  const [ratingError, setRatingError] = useState("");
+
+  // ============================================================
+  // REVIEW STATE
+  // ============================================================
+
+  const [reviews, setReviews] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editingComment, setEditingComment] = useState("");
+
+  // ============================================================
+  // CURRENT USER ID
+  // ============================================================
+
+  const currentUserId = useMemo(() => {
+    if (!token) return "";
+
+    try {
+      const payload = JSON.parse(
+        window.atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
+
+      return String(payload?.userId || payload?.id || payload?._id || "");
+    } catch {
+      return "";
+    }
+  }, [token]);
 
   // ============================================================
   // ZOOM SETTINGS
@@ -118,22 +154,14 @@ const ProductDetails = () => {
         setLoading(true);
         setError("");
 
-        const response =
-          await getProductDetails(
-            productId
-          );
+        const response = await getProductDetails(productId);
 
         if (!isMounted) {
           return;
         }
 
-        if (
-          !response?.success ||
-          !response?.product
-        ) {
-          throw new Error(
-            "Product is unavailable or no longer exists"
-          );
+        if (!response?.success || !response?.product) {
+          throw new Error("Product is unavailable or no longer exists");
         }
 
         setProduct(response.product);
@@ -154,7 +182,7 @@ const ProductDetails = () => {
         setError(
           error.response?.data?.message ||
             error.message ||
-            "Unable to load product details"
+            "Unable to load product details",
         );
       } finally {
         if (isMounted) {
@@ -179,47 +207,37 @@ const ProductDetails = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchRelatedProducts =
-      async () => {
-        if (!productId) {
+    const fetchRelatedProducts = async () => {
+      if (!productId) {
+        return;
+      }
+
+      try {
+        setRelatedLoading(true);
+
+        const response = await getRelatedProducts(productId);
+
+        if (!isMounted) {
           return;
         }
 
-        try {
-          setRelatedLoading(true);
+        setRelatedProducts(
+          response?.success && Array.isArray(response.products)
+            ? response.products
+            : [],
+        );
+      } catch (error) {
+        console.error("RELATED PRODUCTS ERROR:", error);
 
-          const response =
-            await getRelatedProducts(
-              productId
-            );
-
-          if (!isMounted) {
-            return;
-          }
-
-          setRelatedProducts(
-            response?.success &&
-              Array.isArray(
-                response.products
-              )
-              ? response.products
-              : []
-          );
-        } catch (error) {
-          console.error(
-            "RELATED PRODUCTS ERROR:",
-            error
-          );
-
-          if (isMounted) {
-            setRelatedProducts([]);
-          }
-        } finally {
-          if (isMounted) {
-            setRelatedLoading(false);
-          }
+        if (isMounted) {
+          setRelatedProducts([]);
         }
-      };
+      } finally {
+        if (isMounted) {
+          setRelatedLoading(false);
+        }
+      }
+    };
 
     fetchRelatedProducts();
 
@@ -227,6 +245,326 @@ const ProductDetails = () => {
       isMounted = false;
     };
   }, [productId]);
+
+  // ============================================================
+  // FETCH PRODUCT RATING
+  // ============================================================
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProductRating = async () => {
+      if (!productId) {
+        return;
+      }
+
+      try {
+        const response = await getProductRating(productId, token);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const ratingData = response?.data || response || {};
+
+        setAverageRating(Number(ratingData.averageRating) || 0);
+
+        setTotalRatings(Number(ratingData.totalRatings) || 0);
+
+        const existingUserRating = Number(ratingData.userRating) || 0;
+
+        setUserRating(existingUserRating);
+
+        setSelectedRating(existingUserRating);
+
+        setRatingMessage("");
+        setRatingError("");
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("PRODUCT RATING ERROR:", error);
+
+        setAverageRating(0);
+        setTotalRatings(0);
+        setUserRating(0);
+        setSelectedRating(0);
+
+        setRatingError(
+          error.response?.data?.message || "Unable to load product rating",
+        );
+      }
+    };
+
+    void fetchProductRating();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [productId, token]);
+
+  // ============================================================
+  // FETCH PRODUCT REVIEWS
+  // ============================================================
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProductReviews = async () => {
+      if (!productId) return;
+
+      try {
+        setReviewLoading(true);
+        setReviewError("");
+
+        const response = await getProductReviews(productId);
+
+        if (!isMounted) return;
+
+        setReviews(Array.isArray(response?.reviews) ? response.reviews : []);
+      } catch (error) {
+        if (!isMounted) return;
+
+        console.error("PRODUCT REVIEWS ERROR:", error);
+        setReviews([]);
+
+        setReviewError(
+          error.response?.data?.message || "Unable to load reviews",
+        );
+      } finally {
+        if (isMounted) {
+          setReviewLoading(false);
+        }
+      }
+    };
+
+    void fetchProductReviews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [productId]);
+
+  // ============================================================
+  // SUBMIT PRODUCT RATING
+  // ============================================================
+
+  const handleRatingSubmit = async () => {
+    setRatingMessage("");
+    setRatingError("");
+
+    if (!token) {
+      setRatingError("Please login to rate this product.");
+      return;
+    }
+
+    if (!product?._id) {
+      setRatingError("Product information is unavailable.");
+      return;
+    }
+
+    if (
+      !Number.isInteger(selectedRating) ||
+      selectedRating < 1 ||
+      selectedRating > 5
+    ) {
+      setRatingError("Please select a rating from 1 to 5.");
+      return;
+    }
+
+    try {
+      setRatingLoading(true);
+
+      const response = await submitProductRating(
+        product._id,
+        selectedRating,
+        token,
+      );
+
+      const ratingData = response?.data || response || {};
+
+      setAverageRating(Number(ratingData.averageRating) || 0);
+
+      setTotalRatings(Number(ratingData.totalRatings) || 0);
+
+      const savedRating = Number(ratingData.rating) || selectedRating;
+
+      setUserRating(savedRating);
+      setSelectedRating(savedRating);
+
+      setRatingMessage("Rating submitted successfully.");
+    } catch (error) {
+      console.error("SUBMIT RATING ERROR:", error);
+
+      setRatingError(
+        error.response?.data?.message || "Unable to submit rating.",
+      );
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
+  // ============================================================
+  // REVIEW HANDLERS
+  // ============================================================
+
+  const handleReviewSubmit = async () => {
+    setReviewMessage("");
+    setReviewError("");
+
+    if (!token) {
+      setReviewError("Please login to write a review.");
+      return;
+    }
+
+    if (!product?._id) {
+      setReviewError("Product information is unavailable.");
+      return;
+    }
+
+    const comment = reviewComment.trim();
+
+    if (!comment) {
+      setReviewError("Please enter a review.");
+      return;
+    }
+
+    if (comment.length < 3) {
+      setReviewError("Review must contain at least 3 characters.");
+      return;
+    }
+
+    if (comment.length > 1000) {
+      setReviewError("Review cannot exceed 1000 characters.");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+
+      const response = await createProductReview(product._id, comment, token);
+
+      if (response?.review) {
+        setReviews((previous) => [response.review, ...previous]);
+      }
+
+      setReviewComment("");
+      setReviewMessage("Review submitted successfully.");
+    } catch (error) {
+      console.error("SUBMIT REVIEW ERROR:", error);
+
+      setReviewError(
+        error.response?.data?.message || "Unable to submit review.",
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleStartEditReview = (review) => {
+    setReviewMessage("");
+    setReviewError("");
+    setEditingReviewId(review._id);
+    setEditingComment(review.comment || "");
+  };
+
+  const handleCancelEditReview = () => {
+    setEditingReviewId(null);
+    setEditingComment("");
+  };
+
+  const handleUpdateReview = async (reviewId) => {
+    setReviewMessage("");
+    setReviewError("");
+
+    if (!token) {
+      setReviewError("Please login to update your review.");
+      return;
+    }
+
+    const comment = editingComment.trim();
+
+    if (!comment) {
+      setReviewError("Review cannot be empty.");
+      return;
+    }
+
+    if (comment.length < 3) {
+      setReviewError("Review must contain at least 3 characters.");
+      return;
+    }
+
+    if (comment.length > 1000) {
+      setReviewError("Review cannot exceed 1000 characters.");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+
+      const response = await updateProductReview(reviewId, comment, token);
+
+      if (response?.review) {
+        setReviews((previous) =>
+          previous.map((review) =>
+            review._id === reviewId ? response.review : review,
+          ),
+        );
+      }
+
+      setEditingReviewId(null);
+      setEditingComment("");
+      setReviewMessage("Review updated successfully.");
+    } catch (error) {
+      console.error("UPDATE REVIEW ERROR:", error);
+
+      setReviewError(
+        error.response?.data?.message || "Unable to update review.",
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    setReviewMessage("");
+    setReviewError("");
+
+    if (!token) {
+      setReviewError("Please login to delete your review.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this review?")) {
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+
+      await deleteProductReview(reviewId, token);
+
+      setReviews((previous) =>
+        previous.filter((review) => review._id !== reviewId),
+      );
+
+      if (editingReviewId === reviewId) {
+        setEditingReviewId(null);
+        setEditingComment("");
+      }
+
+      setReviewMessage("Review deleted successfully.");
+    } catch (error) {
+      console.error("DELETE REVIEW ERROR:", error);
+
+      setReviewError(
+        error.response?.data?.message || "Unable to delete review.",
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   // ============================================================
   // HELPERS
@@ -248,16 +586,11 @@ const ProductDetails = () => {
   // PRODUCT IMAGES
   // ============================================================
 
-  const images = Array.isArray(
-    product?.images
-  )
-    ? product.images
-        .map(getImageUrl)
-        .filter(Boolean)
+  const images = Array.isArray(product?.images)
+    ? product.images.map(getImageUrl).filter(Boolean)
     : [];
 
-  const activeImage =
-    images[selectedImage] || "";
+  const activeImage = images[selectedImage] || "";
 
   // ============================================================
   // PRICE
@@ -266,8 +599,7 @@ const ProductDetails = () => {
   const currentPrice =
     product?.discountPrice !== null &&
     product?.discountPrice !== undefined &&
-    product.discountPrice <
-      product.price
+    product.discountPrice < product.price
       ? product.discountPrice
       : product?.price;
 
@@ -275,116 +607,89 @@ const ProductDetails = () => {
   // DISCOUNT
   // ============================================================
 
-  const discountPercentage =
-    useMemo(() => {
-      if (
-        !product?.discountPrice ||
-        !product?.price ||
-        product.discountPrice >=
-          product.price
-      ) {
-        return 0;
-      }
+  const discountPercentage = useMemo(() => {
+    if (
+      !product?.discountPrice ||
+      !product?.price ||
+      product.discountPrice >= product.price
+    ) {
+      return 0;
+    }
 
-      return Math.round(
-        ((product.price -
-          product.discountPrice) /
-          product.price) *
-          100
-      );
-    }, [product]);
+    return Math.round(
+      ((product.price - product.discountPrice) / product.price) * 100,
+    );
+  }, [product]);
 
   // ============================================================
   // STOCK
   // ============================================================
 
-  const totalAvailableStock =
-    useMemo(() => {
-      if (!product) {
-        return 0;
-      }
+  const totalAvailableStock = useMemo(() => {
+    if (!product) {
+      return 0;
+    }
 
-      if (
-        Array.isArray(product.sizes) &&
-        product.sizes.length > 0
-      ) {
-        return product.sizes.reduce(
-          (total, item) =>
-            total + (Number(item.stock) || 0),
-          0
-        );
-      }
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      return product.sizes.reduce(
+        (total, item) => total + (Number(item.stock) || 0),
+        0,
+      );
+    }
 
-      return Number(product.stock) || 0;
-    }, [product]);
+    return Number(product.stock) || 0;
+  }, [product]);
 
-  const stockStatus =
-    useMemo(() => {
-      if (!product) {
-        return {
-          label: "",
-          className: "",
-        };
-      }
-
-      if (totalAvailableStock <= 0) {
-        return {
-          label: "Out of stock",
-          className:
-            "text-red-400",
-        };
-      }
-
-      if (totalAvailableStock <= 5) {
-        return {
-          label: `Only ${totalAvailableStock} left`,
-          className:
-            "text-amber-400",
-        };
-      }
-
+  const stockStatus = useMemo(() => {
+    if (!product) {
       return {
-        label: "In stock",
-        className:
-          "text-emerald-400",
+        label: "",
+        className: "",
       };
-    }, [product, totalAvailableStock]);
+    }
 
-  const isOutOfStock =
-    totalAvailableStock <= 0;
+    if (totalAvailableStock <= 0) {
+      return {
+        label: "Out of stock",
+        className: "text-red-400",
+      };
+    }
+
+    if (totalAvailableStock <= 5) {
+      return {
+        label: `Only ${totalAvailableStock} left`,
+        className: "text-amber-400",
+      };
+    }
+
+    return {
+      label: "In stock",
+      className: "text-emerald-400",
+    };
+  }, [product, totalAvailableStock]);
+
+  const isOutOfStock = totalAvailableStock <= 0;
 
   // ============================================================
   // SIZE STOCK
   // ============================================================
 
   const selectedSizeStock =
-    product?.sizes?.find(
-      (item) =>
-        item.size === selectedSize
-    )?.stock ?? null;
+    product?.sizes?.find((item) => item.size === selectedSize)?.stock ?? null;
 
   // ============================================================
   // QUANTITY
   // ============================================================
 
   const maximumQuantity =
-    selectedSizeStock !== null
-      ? selectedSizeStock
-      : totalAvailableStock || 1;
+    selectedSizeStock !== null ? selectedSizeStock : totalAvailableStock || 1;
 
   const decreaseQuantity = () => {
-    setQuantity((current) =>
-      Math.max(1, current - 1)
-    );
+    setQuantity((current) => Math.max(1, current - 1));
   };
 
   const increaseQuantity = () => {
-    setQuantity((current) =>
-      Math.min(
-        maximumQuantity,
-        current + 1
-      )
-    );
+    setQuantity((current) => Math.min(maximumQuantity, current + 1));
   };
 
   // ============================================================
@@ -405,11 +710,8 @@ const ProductDetails = () => {
       return;
     }
 
-    setSelectedImage(
-      (current) =>
-        current === 0
-          ? images.length - 1
-          : current - 1
+    setSelectedImage((current) =>
+      current === 0 ? images.length - 1 : current - 1,
     );
 
     resetZoom();
@@ -420,11 +722,8 @@ const ProductDetails = () => {
       return;
     }
 
-    setSelectedImage(
-      (current) =>
-        current === images.length - 1
-          ? 0
-          : current + 1
+    setSelectedImage((current) =>
+      current === images.length - 1 ? 0 : current + 1,
     );
 
     resetZoom();
@@ -451,12 +750,7 @@ const ProductDetails = () => {
 
   const zoomIn = () => {
     setZoomLevel((current) =>
-      Math.min(
-        MAX_ZOOM,
-        Number(
-          (current + ZOOM_STEP).toFixed(2)
-        )
-      )
+      Math.min(MAX_ZOOM, Number((current + ZOOM_STEP).toFixed(2))),
     );
   };
 
@@ -468,9 +762,7 @@ const ProductDetails = () => {
     setZoomLevel((current) => {
       const nextZoom = Math.max(
         MIN_ZOOM,
-        Number(
-          (current - ZOOM_STEP).toFixed(2)
-        )
+        Number((current - ZOOM_STEP).toFixed(2)),
       );
 
       if (nextZoom === 1) {
@@ -524,30 +816,19 @@ const ProductDetails = () => {
     setIsDragging(true);
 
     setDragStart({
-      x:
-        event.clientX -
-        panPosition.x,
-      y:
-        event.clientY -
-        panPosition.y,
+      x: event.clientX - panPosition.x,
+      y: event.clientY - panPosition.y,
     });
   };
 
   const handleMouseMove = (event) => {
-    if (
-      !isDragging ||
-      zoomLevel <= 1
-    ) {
+    if (!isDragging || zoomLevel <= 1) {
       return;
     }
 
     setPanPosition({
-      x:
-        event.clientX -
-        dragStart.x,
-      y:
-        event.clientY -
-        dragStart.y,
+      x: event.clientX - dragStart.x,
+      y: event.clientY - dragStart.y,
     });
   };
 
@@ -569,22 +850,15 @@ const ProductDetails = () => {
         closeZoom();
       }
 
-      if (
-        event.key === "ArrowLeft"
-      ) {
+      if (event.key === "ArrowLeft") {
         showPreviousImage();
       }
 
-      if (
-        event.key === "ArrowRight"
-      ) {
+      if (event.key === "ArrowRight") {
         showNextImage();
       }
 
-      if (
-        event.key === "+" ||
-        event.key === "="
-      ) {
+      if (event.key === "+" || event.key === "=") {
         zoomIn();
       }
 
@@ -597,24 +871,12 @@ const ProductDetails = () => {
       }
     };
 
-    window.addEventListener(
-      "keydown",
-      handleKeyDown
-    );
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown
-      );
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    zoomOpen,
-    selectedImage,
-    images.length,
-    zoomLevel,
-    panPosition,
-  ]);
+  }, [zoomOpen, selectedImage, images.length, zoomLevel, panPosition]);
 
   // ============================================================
   // ADD TO CART
@@ -632,68 +894,44 @@ const ProductDetails = () => {
 
     // Product must exist
     if (!product?._id) {
-      setCartError(
-        "Product information is unavailable"
-      );
+      setCartError("Product information is unavailable");
       return;
     }
 
     // Size is required when product has sizes
-    if (
-      product.sizes?.length > 0 &&
-      !selectedSize
-    ) {
-      setCartError(
-        "Please select a size before adding to cart"
-      );
+    if (product.sizes?.length > 0 && !selectedSize) {
+      setCartError("Please select a size before adding to cart");
       return;
     }
 
     // Validate selected size stock
-    if (
-      product.sizes?.length > 0 &&
-      selectedSizeStock <= 0
-    ) {
-      setCartError(
-        "The selected size is currently out of stock"
-      );
+    if (product.sizes?.length > 0 && selectedSizeStock <= 0) {
+      setCartError("The selected size is currently out of stock");
       return;
     }
 
     // Validate quantity
     if (quantity < 1) {
-      setCartError(
-        "Quantity must be at least 1"
-      );
+      setCartError("Quantity must be at least 1");
       return;
     }
 
     // Prevent quantity greater than stock
-    if (
-      product.sizes?.length > 0 &&
-      quantity > selectedSizeStock
-    ) {
+    if (product.sizes?.length > 0 && quantity > selectedSizeStock) {
       setCartError(
         `Only ${selectedSizeStock} item${
-          selectedSizeStock === 1
-            ? ""
-            : "s"
-        } available for size ${selectedSize}`
+          selectedSizeStock === 1 ? "" : "s"
+        } available for size ${selectedSize}`,
       );
       return;
     }
 
     if (
-      (!product.sizes ||
-        product.sizes.length === 0) &&
+      (!product.sizes || product.sizes.length === 0) &&
       quantity > product.stock
     ) {
       setCartError(
-        `Only ${product.stock} item${
-          product.stock === 1
-            ? ""
-            : "s"
-        } available`
+        `Only ${product.stock} item${product.stock === 1 ? "" : "s"} available`,
       );
       return;
     }
@@ -701,27 +939,19 @@ const ProductDetails = () => {
     try {
       setCartLoading(true);
 
-      const response =
-        await addToCart(
-          product._id,
-          selectedSize || null,
-          quantity,
-          token
-        );
+      const response = await addToCart(
+        product._id,
+        selectedSize || null,
+        quantity,
+        token,
+      );
 
-      setCartMessage(
-        response?.message ||
-          "Product added to cart successfully"
-      );
+      setCartMessage(response?.message || "Product added to cart successfully");
     } catch (error) {
-      console.error(
-        "ADD TO CART ERROR:",
-        error
-      );
+      console.error("ADD TO CART ERROR:", error);
 
       setCartError(
-        error.response?.data?.message ||
-          "Unable to add product to cart"
+        error.response?.data?.message || "Unable to add product to cart",
       );
     } finally {
       setCartLoading(false);
@@ -737,10 +967,7 @@ const ProductDetails = () => {
       <div className="min-h-screen bg-[#111111] text-white">
         <header className="border-b border-[#262626] bg-[#151515]">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 lg:px-10">
-            <Link
-              to="/home"
-              className="font-serif text-lg tracking-wide"
-            >
+            <Link to="/home" className="font-serif text-lg tracking-wide">
               UrbanThread
             </Link>
 
@@ -787,10 +1014,7 @@ const ProductDetails = () => {
       <div className="min-h-screen bg-[#111111] text-white">
         <header className="border-b border-[#262626] bg-[#151515]">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 lg:px-10">
-            <Link
-              to="/home"
-              className="font-serif text-lg"
-            >
+            <Link to="/home" className="font-serif text-lg">
               UrbanThread
             </Link>
 
@@ -814,15 +1038,12 @@ const ProductDetails = () => {
             </h1>
 
             <p className="mt-5 text-sm leading-7 text-neutral-500">
-              {error ||
-                "The product could not be found."}
+              {error || "The product could not be found."}
             </p>
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/shop")
-              }
+              onClick={() => navigate("/shop")}
               className="mt-8 bg-[#e8e0d5] px-8 py-3 text-[10px] uppercase tracking-[0.2em] text-[#151515] transition hover:bg-white"
             >
               Back to Shop
@@ -837,19 +1058,11 @@ const ProductDetails = () => {
   // PRODUCT DATA
   // ============================================================
 
-  const categoryName =
-    product.category?.name ||
-    "Collection";
+  const categoryName = product.category?.name || "Collection";
 
-  const subcategoryName =
-    product.subcategory?.name ||
-    "";
+  const subcategoryName = product.subcategory?.name || "";
 
-  const sizes = Array.isArray(
-    product.sizes
-  )
-    ? product.sizes
-    : [];
+  const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
   // ============================================================
   // MAIN PAGE
@@ -878,9 +1091,7 @@ const ProductDetails = () => {
               Shop
             </Link>
 
-            <span>
-              Collections
-            </span>
+            <span>Collections</span>
           </nav>
 
           <div className="flex items-center gap-4 text-sm text-neutral-400">
@@ -919,25 +1130,18 @@ const ProductDetails = () => {
       {/* ======================================================== */}
 
       <main className="mx-auto max-w-[1400px] px-6 py-8 lg:px-10 lg:py-12">
-
         {/* ====================================================== */}
         {/* BACK BUTTON */}
         {/* ====================================================== */}
 
         <button
           type="button"
-          onClick={() =>
-            navigate("/shop")
-          }
+          onClick={() => navigate("/shop")}
           className="mb-7 inline-flex items-center gap-3 border border-[#303030] px-4 py-2.5 text-[9px] uppercase tracking-[0.18em] text-neutral-400 transition hover:border-[#555555] hover:bg-[#191919] hover:text-white"
         >
-          <span className="text-sm">
-            ←
-          </span>
+          <span className="text-sm">←</span>
 
-          <span>
-            Back to Shop
-          </span>
+          <span>Back to Shop</span>
         </button>
 
         {/* ====================================================== */}
@@ -945,35 +1149,25 @@ const ProductDetails = () => {
         {/* ====================================================== */}
 
         <div className="mb-8 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-neutral-600">
-          <Link
-            to="/home"
-            className="hover:text-neutral-300"
-          >
+          <Link to="/home" className="hover:text-neutral-300">
             Home
           </Link>
 
           <span>/</span>
 
-          <Link
-            to="/shop"
-            className="hover:text-neutral-300"
-          >
+          <Link to="/shop" className="hover:text-neutral-300">
             Shop
           </Link>
 
           <span>/</span>
 
-          <span className="text-neutral-500">
-            {categoryName}
-          </span>
+          <span className="text-neutral-500">{categoryName}</span>
 
           {subcategoryName && (
             <>
               <span>/</span>
 
-              <span className="text-neutral-500">
-                {subcategoryName}
-              </span>
+              <span className="text-neutral-500">{subcategoryName}</span>
             </>
           )}
 
@@ -989,46 +1183,37 @@ const ProductDetails = () => {
         {/* ====================================================== */}
 
         <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] xl:gap-16">
-
           {/* ==================================================== */}
           {/* GALLERY */}
           {/* ==================================================== */}
 
           <div>
             <div className="grid grid-cols-[72px_1fr] gap-4">
-
               {/* THUMBNAILS */}
 
               <div className="flex flex-col gap-3">
-                {images.map(
-                  (image, index) => (
-                    <button
-                      key={`${image}-${index}`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedImage(
-                          index
-                        );
+                {images.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedImage(index);
 
-                        resetZoom();
-                      }}
-                      className={`aspect-[3/4] overflow-hidden border transition ${
-                        selectedImage ===
-                        index
-                          ? "border-[#d8d0c5]"
-                          : "border-[#292929] hover:border-[#555555]"
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} ${
-                          index + 1
-                        }`}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  )
-                )}
+                      resetZoom();
+                    }}
+                    className={`aspect-[3/4] overflow-hidden border transition ${
+                      selectedImage === index
+                        ? "border-[#d8d0c5]"
+                        : "border-[#292929] hover:border-[#555555]"
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
               </div>
 
               {/* MAIN IMAGE */}
@@ -1057,8 +1242,7 @@ const ProductDetails = () => {
                   </div>
                 )}
 
-                {discountPercentage >
-                  0 && (
+                {discountPercentage > 0 && (
                   <div className="absolute left-4 top-4 bg-[#111111]/90 px-3 py-2 text-[9px] uppercase tracking-[0.15em] text-neutral-200">
                     {discountPercentage}% off
                   </div>
@@ -1071,30 +1255,21 @@ const ProductDetails = () => {
             <div className="mt-4 flex items-center justify-between">
               <button
                 type="button"
-                onClick={
-                  showPreviousImage
-                }
-                disabled={
-                  images.length <= 1
-                }
+                onClick={showPreviousImage}
+                disabled={images.length <= 1}
                 className="border border-[#2d2d2d] px-4 py-2 text-[9px] uppercase tracking-[0.15em] text-neutral-500 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Previous
               </button>
 
               <span className="text-[9px] uppercase tracking-[0.15em] text-neutral-600">
-                {selectedImage + 1} /{" "}
-                {images.length}
+                {selectedImage + 1} / {images.length}
               </span>
 
               <button
                 type="button"
-                onClick={
-                  showNextImage
-                }
-                disabled={
-                  images.length <= 1
-                }
+                onClick={showNextImage}
+                disabled={images.length <= 1}
                 className="border border-[#2d2d2d] px-4 py-2 text-[9px] uppercase tracking-[0.15em] text-neutral-500 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Next
@@ -1117,56 +1292,127 @@ const ProductDetails = () => {
 
             {/* RATINGS */}
 
-            <div className="mt-5 flex items-center gap-3 border-b border-[#282828] pb-6">
-              <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-500">
-                Ratings
-              </span>
+            <div className="mt-5 border-b border-[#282828] pb-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-500">
+                  Ratings
+                </span>
 
-              <span className="text-sm text-neutral-700">
-                ★★★★★
-              </span>
+                <div
+                  className="flex items-center gap-0.5"
+                  aria-label={`Product rating ${averageRating.toFixed(1)} out of 5`}
+                >
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      className={`text-sm ${
+                        star <= Math.round(averageRating)
+                          ? "text-[#e8e0d5]"
+                          : "text-neutral-700"
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
 
-              <span className="text-[10px] text-neutral-600">
-                Reviews will appear here
-                when the review module is
-                connected.
-              </span>
+                <span className="text-[10px] text-neutral-400">
+                  {averageRating.toFixed(1)}
+                </span>
+
+                <span className="text-[10px] text-neutral-600">
+                  ({totalRatings} {totalRatings === 1 ? "rating" : "ratings"})
+                </span>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-500">
+                  {userRating ? "Your Rating" : "Rate This Product"}
+                </p>
+
+                {token ? (
+                  <>
+                    <div className="mt-3 flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setSelectedRating(star)}
+                          disabled={ratingLoading}
+                          aria-label={`Rate ${star} out of 5`}
+                          className={`text-2xl leading-none transition ${
+                            star <= selectedRating
+                              ? "text-[#e8e0d5]"
+                              : "text-neutral-700"
+                          } ${
+                            ratingLoading
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:text-white"
+                          }`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleRatingSubmit}
+                        disabled={ratingLoading || selectedRating < 1}
+                        className="border border-[#e8e0d5] bg-[#e8e0d5] px-5 py-2.5 text-[9px] uppercase tracking-[0.18em] text-[#151515] transition hover:bg-white disabled:cursor-not-allowed disabled:border-[#292929] disabled:bg-[#292929] disabled:text-neutral-600"
+                      >
+                        {ratingLoading
+                          ? "Submitting..."
+                          : userRating
+                            ? "Update Rating"
+                            : "Submit Rating"}
+                      </button>
+
+                      {userRating > 0 && (
+                        <span className="text-[9px] uppercase tracking-[0.14em] text-neutral-600">
+                          You rated this product {userRating}/5
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-3 text-xs leading-6 text-neutral-600">
+                    Login to rate this product.
+                  </p>
+                )}
+
+                {ratingMessage && (
+                  <p className="mt-3 text-xs text-emerald-400">
+                    {ratingMessage}
+                  </p>
+                )}
+
+                {ratingError && (
+                  <p className="mt-3 text-xs text-red-400">{ratingError}</p>
+                )}
+              </div>
             </div>
 
             {/* PRICE */}
 
             <div className="mt-7 flex items-center gap-3">
               <span className="text-2xl text-[#eee7dc]">
-                ₹
-                {Number(
-                  currentPrice || 0
-                ).toLocaleString(
-                  "en-IN"
-                )}
+                ₹{Number(currentPrice || 0).toLocaleString("en-IN")}
               </span>
 
-              {product.discountPrice !==
-                null &&
-                product.discountPrice !==
-                  undefined &&
-                product.discountPrice <
-                  product.price && (
+              {product.discountPrice !== null &&
+                product.discountPrice !== undefined &&
+                product.discountPrice < product.price && (
                   <span className="text-sm text-neutral-600 line-through">
-                    ₹
-                    {Number(
-                      product.price
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
+                    ₹{Number(product.price).toLocaleString("en-IN")}
                   </span>
                 )}
             </div>
 
-            {discountPercentage >
-              0 && (
+            {discountPercentage > 0 && (
               <p className="mt-2 text-[10px] uppercase tracking-[0.15em] text-emerald-400">
-                You save{" "}
-                {discountPercentage}%
+                You save {discountPercentage}%
               </p>
             )}
 
@@ -1193,62 +1439,43 @@ const ProductDetails = () => {
 
                   {selectedSize && (
                     <span className="text-[10px] uppercase tracking-[0.12em] text-neutral-300">
-                      {selectedSizeStock}{" "}
-                      available
+                      {selectedSizeStock} available
                     </span>
                   )}
                 </div>
 
                 <div className="grid grid-cols-5 gap-2">
-                  {sizes.map(
-                    (item) => {
-                      const unavailable =
-                        item.stock <= 0;
+                  {sizes.map((item) => {
+                    const unavailable = item.stock <= 0;
 
-                      const selected =
-                        selectedSize ===
-                        item.size;
+                    const selected = selectedSize === item.size;
 
-                      return (
-                        <button
-                          key={
-                            item.size
-                          }
-                          type="button"
-                          disabled={
-                            unavailable ||
-                            isOutOfStock
-                          }
-                          onClick={() => {
-                            setSelectedSize(
-                              item.size
-                            );
+                    return (
+                      <button
+                        key={item.size}
+                        type="button"
+                        disabled={unavailable || isOutOfStock}
+                        onClick={() => {
+                          setSelectedSize(item.size);
 
-                            setQuantity(
-                              1
-                            );
+                          setQuantity(1);
 
-                            setCartMessage(
-                              ""
-                            );
+                          setCartMessage("");
 
-                            setCartError(
-                              ""
-                            );
-                          }}
-                          className={`h-11 border text-[10px] uppercase tracking-[0.12em] transition ${
-                            selected
-                              ? "border-[#e8e0d5] bg-[#e8e0d5] text-[#151515]"
-                              : unavailable
+                          setCartError("");
+                        }}
+                        className={`h-11 border text-[10px] uppercase tracking-[0.12em] transition ${
+                          selected
+                            ? "border-[#e8e0d5] bg-[#e8e0d5] text-[#151515]"
+                            : unavailable
                               ? "cursor-not-allowed border-[#222222] text-neutral-700 line-through"
                               : "border-[#2d2d2d] text-neutral-400 hover:border-[#666666] hover:text-white"
-                          }`}
-                        >
-                          {item.size}
-                        </button>
-                      );
-                    }
-                  )}
+                        }`}
+                      >
+                        {item.size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1278,12 +1505,8 @@ const ProductDetails = () => {
                 <div className="flex w-fit border border-[#303030]">
                   <button
                     type="button"
-                    onClick={
-                      decreaseQuantity
-                    }
-                    disabled={
-                      quantity <= 1
-                    }
+                    onClick={decreaseQuantity}
+                    disabled={quantity <= 1}
                     className="flex h-10 w-10 items-center justify-center text-neutral-400 hover:bg-[#1d1d1d] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
                   >
                     −
@@ -1295,28 +1518,19 @@ const ProductDetails = () => {
 
                   <button
                     type="button"
-                    onClick={
-                      increaseQuantity
-                    }
-                    disabled={
-                      quantity >=
-                      maximumQuantity
-                    }
+                    onClick={increaseQuantity}
+                    disabled={quantity >= maximumQuantity}
                     className="flex h-10 w-10 items-center justify-center text-neutral-400 hover:bg-[#1d1d1d] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
                   >
                     +
                   </button>
                 </div>
 
-                {selectedSize &&
-                  selectedSizeStock !==
-                    null && (
-                    <p className="mt-2 text-[9px] text-neutral-600">
-                      Maximum available:
-                      {" "}
-                      {selectedSizeStock}
-                    </p>
-                  )}
+                {selectedSize && selectedSizeStock !== null && (
+                  <p className="mt-2 text-[9px] text-neutral-600">
+                    Maximum available: {selectedSizeStock}
+                  </p>
+                )}
               </div>
             )}
 
@@ -1327,33 +1541,24 @@ const ProductDetails = () => {
             <div className="mt-7 grid gap-2 sm:grid-cols-[1fr_52px]">
               <button
                 type="button"
-                onClick={
-                  handleAddToCart
-                }
+                onClick={handleAddToCart}
                 disabled={
                   cartLoading ||
                   isOutOfStock ||
-                  (sizes.length > 0 &&
-                    !selectedSize) ||
-                  (sizes.length > 0 &&
-                    selectedSizeStock <=
-                      0)
+                  (sizes.length > 0 && !selectedSize) ||
+                  (sizes.length > 0 && selectedSizeStock <= 0)
                 }
                 className="h-12 bg-[#e8e0d5] text-[10px] uppercase tracking-[0.2em] text-[#151515] transition hover:bg-white disabled:cursor-not-allowed disabled:bg-[#292929] disabled:text-neutral-600"
               >
                 {cartLoading
                   ? "Adding..."
                   : isOutOfStock
-                  ? "Out of Stock"
-                  : sizes.length > 0 &&
-                    !selectedSize
-                  ? "Select Size"
-                  : selectedSizeStock !==
-                      null &&
-                    selectedSizeStock <=
-                      0
-                  ? "Size Out of Stock"
-                  : "Add to Cart"}
+                    ? "Out of Stock"
+                    : sizes.length > 0 && !selectedSize
+                      ? "Select Size"
+                      : selectedSizeStock !== null && selectedSizeStock <= 0
+                        ? "Size Out of Stock"
+                        : "Add to Cart"}
               </button>
 
               <WishlistButton
@@ -1369,17 +1574,11 @@ const ProductDetails = () => {
             {cartMessage && (
               <div className="mt-4 border border-emerald-900/40 bg-emerald-950/20 px-4 py-3 text-xs text-emerald-400">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span>
-                    {cartMessage}
-                  </span>
+                  <span>{cartMessage}</span>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(
-                        "/cart"
-                      )
-                    }
+                    onClick={() => navigate("/cart")}
                     className="text-[9px] uppercase tracking-[0.15em] text-emerald-300 underline underline-offset-4 transition hover:text-white"
                   >
                     View Cart
@@ -1403,14 +1602,11 @@ const ProductDetails = () => {
             {/* ================================================== */}
 
             <div className="mt-9 border-t border-[#282828]">
-
               {/* PRODUCT DETAILS */}
 
               <details className="group border-b border-[#282828]">
                 <summary className="flex cursor-pointer list-none items-center justify-between py-5 text-[10px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span>
-                    Product Details
-                  </span>
+                  <span>Product Details</span>
 
                   <span className="text-base transition group-open:rotate-45">
                     +
@@ -1419,43 +1615,28 @@ const ProductDetails = () => {
 
                 <div className="pb-5 text-sm leading-7 text-neutral-500">
                   <div className="grid grid-cols-2 gap-y-3">
-                    <span>
-                      Category
-                    </span>
+                    <span>Category</span>
 
                     <span className="text-right text-neutral-300">
                       {categoryName}
                     </span>
 
-                    <span>
-                      Subcategory
-                    </span>
+                    <span>Subcategory</span>
 
                     <span className="text-right text-neutral-300">
-                      {subcategoryName ||
-                        "—"}
+                      {subcategoryName || "—"}
                     </span>
 
-                    <span>
-                      Stock
-                    </span>
+                    <span>Stock</span>
 
                     <span className="text-right text-neutral-300">
                       {product.stock}
                     </span>
 
-                    <span>
-                      Sizes
-                    </span>
+                    <span>Sizes</span>
 
                     <span className="text-right text-neutral-300">
-                      {sizes
-                        .map(
-                          (item) =>
-                            item.size
-                        )
-                        .join(", ") ||
-                        "—"}
+                      {sizes.map((item) => item.size).join(", ") || "—"}
                     </span>
                   </div>
                 </div>
@@ -1465,9 +1646,7 @@ const ProductDetails = () => {
 
               <details className="group border-b border-[#282828]">
                 <summary className="flex cursor-pointer list-none items-center justify-between py-5 text-[10px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span>
-                    Product Highlights
-                  </span>
+                  <span>Product Highlights</span>
 
                   <span className="text-base transition group-open:rotate-45">
                     +
@@ -1476,26 +1655,13 @@ const ProductDetails = () => {
 
                 <div className="pb-5 text-sm leading-7 text-neutral-500">
                   <ul className="space-y-2">
-                    <li>
-                      • UrbanThread
-                      collection
-                    </li>
+                    <li>• UrbanThread collection</li>
 
-                    <li>
-                      • Multiple size
-                      options
-                    </li>
+                    <li>• Multiple size options</li>
 
-                    <li>
-                      • Live inventory
-                      availability
-                    </li>
+                    <li>• Live inventory availability</li>
 
-                    <li>
-                      • Category and
-                      subcategory
-                      classification
-                    </li>
+                    <li>• Category and subcategory classification</li>
                   </ul>
                 </div>
               </details>
@@ -1504,9 +1670,7 @@ const ProductDetails = () => {
 
               <details className="group border-b border-[#282828]">
                 <summary className="flex cursor-pointer list-none items-center justify-between py-5 text-[10px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span>
-                    Shipping & Returns
-                  </span>
+                  <span>Shipping & Returns</span>
 
                   <span className="text-base transition group-open:rotate-45">
                     +
@@ -1514,13 +1678,222 @@ const ProductDetails = () => {
                 </summary>
 
                 <div className="pb-5 text-sm leading-7 text-neutral-500">
-                  Shipping, return and
-                  exchange policies will
-                  be connected with the
-                  final order workflow.
+                  Shipping, return and exchange policies will be connected with
+                  the final order workflow.
                 </div>
               </details>
             </div>
+          </div>
+        </section>
+
+        {/* ====================================================== */}
+        {/* REVIEWS */}
+        {/* ====================================================== */}
+
+        <section className="mt-24 border-t border-[#292929] pt-12">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.25em] text-neutral-600">
+                Customer feedback
+              </p>
+              <h2 className="mt-2 font-serif text-3xl text-[#e8e1d7]">
+                Reviews
+              </h2>
+            </div>
+
+            <span className="text-[9px] uppercase tracking-[0.15em] text-neutral-600">
+              {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+            </span>
+          </div>
+
+          <div className="mt-8 border border-[#292929] bg-[#151515] p-5 sm:p-6">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-400">
+              {token ? "Write a Review" : "Share Your Experience"}
+            </p>
+
+            <p className="mt-2 text-xs leading-6 text-neutral-600">
+              {token
+                ? "Tell other customers what you think about this product."
+                : "Login to write a review for this product."}
+            </p>
+
+            {token ? (
+              <>
+                <textarea
+                  value={reviewComment}
+                  onChange={(event) => setReviewComment(event.target.value)}
+                  maxLength={1000}
+                  rows={4}
+                  placeholder="Write your review..."
+                  disabled={reviewSubmitting}
+                  className="mt-5 w-full resize-none border border-[#303030] bg-[#111111] px-4 py-3 text-sm leading-6 text-neutral-200 outline-none transition placeholder:text-neutral-700 focus:border-[#666666] disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-[9px] text-neutral-700">
+                    {reviewComment.length}/1000
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={handleReviewSubmit}
+                    disabled={reviewSubmitting || !reviewComment.trim()}
+                    className="w-full border border-[#e8e0d5] bg-[#e8e0d5] px-6 py-3 text-[9px] uppercase tracking-[0.18em] text-[#151515] transition hover:bg-white disabled:cursor-not-allowed disabled:border-[#292929] disabled:bg-[#292929] disabled:text-neutral-600 sm:w-auto"
+                  >
+                    {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="mt-5 border border-[#303030] px-5 py-3 text-[9px] uppercase tracking-[0.18em] text-neutral-300 transition hover:border-[#666666] hover:bg-[#1d1d1d] hover:text-white"
+              >
+                Login to Review
+              </button>
+            )}
+
+            {reviewMessage && (
+              <p className="mt-4 text-xs text-emerald-400">{reviewMessage}</p>
+            )}
+
+            {reviewError && (
+              <p className="mt-4 text-xs text-red-400">{reviewError}</p>
+            )}
+          </div>
+
+          <div className="mt-8">
+            {reviewLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="animate-pulse border-b border-[#292929] pb-6"
+                  >
+                    <div className="h-3 w-32 bg-[#222222]" />
+                    <div className="mt-4 h-3 w-full bg-[#222222]" />
+                    <div className="mt-2 h-3 w-4/5 bg-[#222222]" />
+                  </div>
+                ))}
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="border border-dashed border-[#303030] p-10 text-center">
+                <p className="text-sm text-neutral-500">No reviews yet.</p>
+                <p className="mt-2 text-xs text-neutral-700">
+                  Be the first to share your experience.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#292929]">
+                {reviews.map((review) => {
+                  const reviewUserId =
+                    review.user?._id || review.user?.id || review.user;
+
+                  const isOwnReview = Boolean(
+                    currentUserId &&
+                    reviewUserId &&
+                    currentUserId === String(reviewUserId),
+                  );
+
+                  const reviewDate = review.createdAt
+                    ? new Date(review.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "";
+
+                  return (
+                    <article
+                      key={review._id}
+                      className="py-6 first:pt-0 last:pb-0"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-300">
+                              {review.user?.name || "Customer"}
+                            </span>
+
+                            {reviewDate && (
+                              <span className="text-[9px] text-neutral-700">
+                                {reviewDate}
+                              </span>
+                            )}
+                          </div>
+
+                          {editingReviewId === review._id ? (
+                            <div className="mt-4">
+                              <textarea
+                                value={editingComment}
+                                onChange={(event) =>
+                                  setEditingComment(event.target.value)
+                                }
+                                maxLength={1000}
+                                rows={4}
+                                disabled={reviewSubmitting}
+                                className="w-full resize-none border border-[#303030] bg-[#151515] px-4 py-3 text-sm leading-6 text-neutral-200 outline-none transition placeholder:text-neutral-700 focus:border-[#666666] disabled:cursor-not-allowed disabled:opacity-60"
+                              />
+
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateReview(review._id)}
+                                  disabled={
+                                    reviewSubmitting || !editingComment.trim()
+                                  }
+                                  className="border border-[#e8e0d5] bg-[#e8e0d5] px-5 py-2.5 text-[9px] uppercase tracking-[0.15em] text-[#151515] transition hover:bg-white disabled:cursor-not-allowed disabled:border-[#292929] disabled:bg-[#292929] disabled:text-neutral-600"
+                                >
+                                  {reviewSubmitting
+                                    ? "Saving..."
+                                    : "Save Changes"}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEditReview}
+                                  disabled={reviewSubmitting}
+                                  className="border border-[#303030] px-5 py-2.5 text-[9px] uppercase tracking-[0.15em] text-neutral-400 transition hover:border-[#666666] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="mt-4 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-neutral-400">
+                              {review.comment}
+                            </p>
+                          )}
+                        </div>
+
+                        {isOwnReview && editingReviewId !== review._id && (
+                          <div className="flex shrink-0 items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditReview(review)}
+                              disabled={reviewSubmitting}
+                              className="text-[9px] uppercase tracking-[0.15em] text-neutral-600 transition hover:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReview(review._id)}
+                              disabled={reviewSubmitting}
+                              className="text-[9px] uppercase tracking-[0.15em] text-neutral-600 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -1550,119 +1923,80 @@ const ProductDetails = () => {
 
           {relatedLoading ? (
             <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[1, 2, 3, 4].map(
-                (item) => (
-                  <div
-                    key={item}
-                    className="animate-pulse"
-                  >
-                    <div className="aspect-[4/5] bg-[#1b1b1b]" />
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="animate-pulse">
+                  <div className="aspect-[4/5] bg-[#1b1b1b]" />
 
-                    <div className="mt-4 h-3 w-3/4 bg-[#222222]" />
+                  <div className="mt-4 h-3 w-3/4 bg-[#222222]" />
 
-                    <div className="mt-2 h-3 w-1/3 bg-[#222222]" />
-                  </div>
-                )
-              )}
+                  <div className="mt-2 h-3 w-1/3 bg-[#222222]" />
+                </div>
+              ))}
             </div>
-          ) : relatedProducts.length ===
-            0 ? (
+          ) : relatedProducts.length === 0 ? (
             <div className="mt-8 border border-dashed border-[#303030] p-10 text-center">
               <p className="text-sm text-neutral-600">
-                No related products
-                available yet.
+                No related products available yet.
               </p>
             </div>
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
-              {relatedProducts.map(
-                (related) => {
-                  const image =
-                    getImageUrl(
-                      related
-                        .images?.[0]
-                    );
+              {relatedProducts.map((related) => {
+                const image = getImageUrl(related.images?.[0]);
 
-                  const price =
-                    related.discountPrice !==
-                      null &&
-                    related.discountPrice !==
-                      undefined &&
-                    related.discountPrice <
-                      related.price
-                      ? related.discountPrice
-                      : related.price;
+                const price =
+                  related.discountPrice !== null &&
+                  related.discountPrice !== undefined &&
+                  related.discountPrice < related.price
+                    ? related.discountPrice
+                    : related.price;
 
-                  return (
-                    <Link
-                      key={
-                        related._id
-                      }
-                      to={`/products/${related._id}`}
-                      className="group"
-                    >
-                      <div className="aspect-[4/5] overflow-hidden bg-[#181818]">
-                        {image ? (
-                          <img
-                            src={image}
-                            alt={
-                              related.name
-                            }
-                            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.15em] text-neutral-700">
-                            No image
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4">
-                        <p className="text-[9px] uppercase tracking-[0.16em] text-neutral-600">
-                          {
-                            related
-                              .category
-                              ?.name
-                          }
-                        </p>
-
-                        <h3 className="mt-2 truncate text-sm text-neutral-300 transition group-hover:text-white">
-                          {
-                            related.name
-                          }
-                        </h3>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-sm text-neutral-200">
-                            ₹
-                            {Number(
-                              price
-                            ).toLocaleString(
-                              "en-IN"
-                            )}
-                          </span>
-
-                          {related.discountPrice !==
-                            null &&
-                            related.discountPrice !==
-                              undefined &&
-                            related.discountPrice <
-                              related.price && (
-                              <span className="text-[10px] text-neutral-700 line-through">
-                                ₹
-                                {Number(
-                                  related.price
-                                ).toLocaleString(
-                                  "en-IN"
-                                )}
-                              </span>
-                            )}
+                return (
+                  <Link
+                    key={related._id}
+                    to={`/products/${related._id}`}
+                    className="group"
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-[#181818]">
+                      {image ? (
+                        <img
+                          src={image}
+                          alt={related.name}
+                          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.15em] text-neutral-700">
+                          No image
                         </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-[9px] uppercase tracking-[0.16em] text-neutral-600">
+                        {related.category?.name}
+                      </p>
+
+                      <h3 className="mt-2 truncate text-sm text-neutral-300 transition group-hover:text-white">
+                        {related.name}
+                      </h3>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-sm text-neutral-200">
+                          ₹{Number(price).toLocaleString("en-IN")}
+                        </span>
+
+                        {related.discountPrice !== null &&
+                          related.discountPrice !== undefined &&
+                          related.discountPrice < related.price && (
+                            <span className="text-[10px] text-neutral-700 line-through">
+                              ₹{Number(related.price).toLocaleString("en-IN")}
+                            </span>
+                          )}
                       </div>
-                    </Link>
-                  );
-                }
-              )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
@@ -1672,196 +2006,163 @@ const ProductDetails = () => {
       {/* ADVANCED IMAGE ZOOM MODAL */}
       {/* ======================================================== */}
 
-      {zoomOpen &&
-        activeImage && (
+      {zoomOpen && activeImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeZoom();
+            }
+          }}
+        >
+          {/* ================================================== */}
+          {/* TOP TOOLBAR */}
+          {/* ================================================== */}
+
+          <div className="absolute left-1/2 top-5 z-20 flex -translate-x-1/2 items-center gap-1 border border-[#363636] bg-[#151515]/95 p-1 backdrop-blur-md">
+            {/* ZOOM OUT */}
+
+            <button
+              type="button"
+              onClick={zoomOut}
+              disabled={zoomLevel <= MIN_ZOOM}
+              className="flex h-9 w-9 items-center justify-center text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
+              title="Zoom out"
+            >
+              −
+            </button>
+
+            {/* ZOOM PERCENTAGE */}
+
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="h-9 min-w-[72px] px-3 text-[9px] uppercase tracking-[0.12em] text-neutral-300 transition hover:bg-[#242424] hover:text-white"
+              title="Reset zoom"
+            >
+              {Math.round(zoomLevel * 100)}%
+            </button>
+
+            {/* ZOOM IN */}
+
+            <button
+              type="button"
+              onClick={zoomIn}
+              disabled={zoomLevel >= MAX_ZOOM}
+              className="flex h-9 w-9 items-center justify-center text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
+              title="Zoom in"
+            >
+              +
+            </button>
+
+            {/* RESET */}
+
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="ml-1 h-9 border-l border-[#363636] px-4 text-[8px] uppercase tracking-[0.14em] text-neutral-500 transition hover:bg-[#242424] hover:text-white"
+            >
+              Reset
+            </button>
+
+            {/* CLOSE */}
+
+            <button
+              type="button"
+              onClick={closeZoom}
+              className="ml-1 flex h-9 w-9 items-center justify-center border-l border-[#363636] text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white"
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* ================================================== */}
+          {/* IMAGE VIEWPORT */}
+          {/* ================================================== */}
+
           <div
-            className="fixed inset-0 z-[100] bg-black/95"
-            onMouseMove={
-              handleMouseMove
-            }
-            onMouseUp={
-              handleMouseUp
-            }
-            onMouseLeave={
-              handleMouseUp
-            }
+            className={`absolute inset-0 flex items-center justify-center overflow-hidden pt-20 pb-16 ${
+              zoomLevel > 1
+                ? isDragging
+                  ? "cursor-grabbing"
+                  : "cursor-grab"
+                : "cursor-default"
+            }`}
+            onWheel={handleWheelZoom}
+            onMouseDown={handleMouseDown}
+            onDoubleClick={handleDoubleClickZoom}
             onClick={(event) => {
-              if (
-                event.target ===
-                event.currentTarget
-              ) {
-                closeZoom();
-              }
+              event.stopPropagation();
             }}
           >
-            {/* ================================================== */}
-            {/* TOP TOOLBAR */}
-            {/* ================================================== */}
-
-            <div className="absolute left-1/2 top-5 z-20 flex -translate-x-1/2 items-center gap-1 border border-[#363636] bg-[#151515]/95 p-1 backdrop-blur-md">
-
-              {/* ZOOM OUT */}
-
-              <button
-                type="button"
-                onClick={zoomOut}
-                disabled={
-                  zoomLevel <= MIN_ZOOM
-                }
-                className="flex h-9 w-9 items-center justify-center text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
-                title="Zoom out"
-              >
-                −
-              </button>
-
-              {/* ZOOM PERCENTAGE */}
-
-              <button
-                type="button"
-                onClick={resetZoom}
-                className="h-9 min-w-[72px] px-3 text-[9px] uppercase tracking-[0.12em] text-neutral-300 transition hover:bg-[#242424] hover:text-white"
-                title="Reset zoom"
-              >
-                {Math.round(
-                  zoomLevel * 100
-                )}
-                %
-              </button>
-
-              {/* ZOOM IN */}
-
-              <button
-                type="button"
-                onClick={zoomIn}
-                disabled={
-                  zoomLevel >= MAX_ZOOM
-                }
-                className="flex h-9 w-9 items-center justify-center text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:text-neutral-700"
-                title="Zoom in"
-              >
-                +
-              </button>
-
-              {/* RESET */}
-
-              <button
-                type="button"
-                onClick={resetZoom}
-                className="ml-1 h-9 border-l border-[#363636] px-4 text-[8px] uppercase tracking-[0.14em] text-neutral-500 transition hover:bg-[#242424] hover:text-white"
-              >
-                Reset
-              </button>
-
-              {/* CLOSE */}
-
-              <button
-                type="button"
-                onClick={closeZoom}
-                className="ml-1 flex h-9 w-9 items-center justify-center border-l border-[#363636] text-lg text-neutral-400 transition hover:bg-[#242424] hover:text-white"
-                title="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* ================================================== */}
-            {/* IMAGE VIEWPORT */}
-            {/* ================================================== */}
-
-            <div
-              className={`absolute inset-0 flex items-center justify-center overflow-hidden pt-20 pb-16 ${
-                zoomLevel > 1
-                  ? isDragging
-                    ? "cursor-grabbing"
-                    : "cursor-grab"
-                  : "cursor-default"
-              }`}
-              onWheel={
-                handleWheelZoom
-              }
-              onMouseDown={
-                handleMouseDown
-              }
-              onDoubleClick={
-                handleDoubleClickZoom
-              }
-              onClick={(event) => {
-                event.stopPropagation();
+            <img
+              src={activeImage}
+              alt={product.name}
+              draggable={false}
+              className="max-h-full max-w-full select-none object-contain"
+              style={{
+                transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel})`,
+                transition: isDragging ? "none" : "transform 200ms ease-out",
               }}
-            >
-              <img
-                src={activeImage}
-                alt={product.name}
-                draggable={false}
-                className="max-h-full max-w-full select-none object-contain"
-                style={{
-                  transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel})`,
-                  transition: isDragging
-                    ? "none"
-                    : "transform 200ms ease-out",
-                }}
-              />
-            </div>
-
-            {/* ================================================== */}
-            {/* PREVIOUS */}
-            {/* ================================================== */}
-
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-
-                showPreviousImage();
-              }}
-              disabled={
-                images.length <= 1
-              }
-              className="absolute left-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-[#3b3b3b] bg-[#151515]/80 text-xl text-neutral-400 backdrop-blur-md transition hover:border-[#666666] hover:bg-[#222222] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-              title="Previous image"
-            >
-              ←
-            </button>
-
-            {/* ================================================== */}
-            {/* NEXT */}
-            {/* ================================================== */}
-
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-
-                showNextImage();
-              }}
-              disabled={
-                images.length <= 1
-              }
-              className="absolute right-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-[#3b3b3b] bg-[#151515]/80 text-xl text-neutral-400 backdrop-blur-md transition hover:border-[#666666] hover:bg-[#222222] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-              title="Next image"
-            >
-              →
-            </button>
-
-            {/* ================================================== */}
-            {/* BOTTOM INFORMATION */}
-            {/* ================================================== */}
-
-            <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
-              <div className="border border-[#303030] bg-[#151515]/90 px-4 py-2 text-[9px] uppercase tracking-[0.16em] text-neutral-500 backdrop-blur-md">
-                Image {selectedImage + 1}{" "}
-                / {images.length}
-              </div>
-
-              <p className="text-center text-[8px] uppercase tracking-[0.15em] text-neutral-700">
-                Scroll to zoom • Drag to
-                move • Double click to zoom
-                • − / + to control • ESC to
-                close
-              </p>
-            </div>
+            />
           </div>
-        )}
+
+          {/* ================================================== */}
+          {/* PREVIOUS */}
+          {/* ================================================== */}
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+
+              showPreviousImage();
+            }}
+            disabled={images.length <= 1}
+            className="absolute left-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-[#3b3b3b] bg-[#151515]/80 text-xl text-neutral-400 backdrop-blur-md transition hover:border-[#666666] hover:bg-[#222222] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title="Previous image"
+          >
+            ←
+          </button>
+
+          {/* ================================================== */}
+          {/* NEXT */}
+          {/* ================================================== */}
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+
+              showNextImage();
+            }}
+            disabled={images.length <= 1}
+            className="absolute right-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-[#3b3b3b] bg-[#151515]/80 text-xl text-neutral-400 backdrop-blur-md transition hover:border-[#666666] hover:bg-[#222222] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title="Next image"
+          >
+            →
+          </button>
+
+          {/* ================================================== */}
+          {/* BOTTOM INFORMATION */}
+          {/* ================================================== */}
+
+          <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+            <div className="border border-[#303030] bg-[#151515]/90 px-4 py-2 text-[9px] uppercase tracking-[0.16em] text-neutral-500 backdrop-blur-md">
+              Image {selectedImage + 1} / {images.length}
+            </div>
+
+            <p className="text-center text-[8px] uppercase tracking-[0.15em] text-neutral-700">
+              Scroll to zoom • Drag to move • Double click to zoom • − / + to
+              control • ESC to close
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* FOOTER */}
@@ -1880,21 +2181,13 @@ const ProductDetails = () => {
           </div>
 
           <div className="flex gap-6 text-[9px] uppercase tracking-[0.15em] text-neutral-600">
-            <span>
-              Shipping
-            </span>
+            <span>Shipping</span>
 
-            <span>
-              Returns
-            </span>
+            <span>Returns</span>
 
-            <span>
-              Privacy
-            </span>
+            <span>Privacy</span>
 
-            <span>
-              Terms
-            </span>
+            <span>Terms</span>
           </div>
         </div>
       </footer>

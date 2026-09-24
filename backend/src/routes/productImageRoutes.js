@@ -5,16 +5,11 @@ import {
   deleteImage,
 } from "../controllers/productImageController.js";
 
-import {
-  protectAdmin,
-} from "../middleware/adminMiddleware.js";
+import { protectAdmin } from "../middleware/adminMiddleware.js";
 
-import {
-  uploadProductImages,
-} from "../middleware/uploadMiddleware.js";
+import { uploadProductImages } from "../middleware/uploadMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
 /*
 |--------------------------------------------------------------------------
@@ -30,14 +25,7 @@ router.use(protectAdmin);
 |--------------------------------------------------------------------------
 */
 
-router.post(
-  "/upload",
-  uploadProductImages.array(
-    "images",
-    5
-  ),
-  uploadImages
-);
+router.post("/upload", uploadProductImages.array("images", 5), uploadImages);
 
 /*
 |--------------------------------------------------------------------------
@@ -45,9 +33,6 @@ router.post(
 |--------------------------------------------------------------------------
 */
 
-router.delete(
-  "/delete",
-  deleteImage
-);
+router.delete("/delete", deleteImage);
 
 export default router;

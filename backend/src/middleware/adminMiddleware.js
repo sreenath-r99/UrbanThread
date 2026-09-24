@@ -10,10 +10,7 @@ export const protectAdmin = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     // Check whether the Authorization header exists
-    if (
-      !authHeader ||
-      !authHeader.startsWith("Bearer ")
-    ) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "Not authorized. Admin token not found",
@@ -24,16 +21,10 @@ export const protectAdmin = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     // Verify JWT token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Validate admin-specific token payload
-    if (
-      !decoded.adminId ||
-      decoded.accountType !== "admin"
-    ) {
+    if (!decoded.adminId || decoded.accountType !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Invalid admin token",
@@ -41,9 +32,7 @@ export const protectAdmin = async (req, res, next) => {
     }
 
     // Find the admin using the adminId stored in the token
-    const admin = await Admin.findById(
-      decoded.adminId
-    ).select("-password");
+    const admin = await Admin.findById(decoded.adminId).select("-password");
 
     if (!admin) {
       return res.status(401).json({

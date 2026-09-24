@@ -6,8 +6,7 @@ import multer from "multer";
 |--------------------------------------------------------------------------
 */
 
-const storage =
-  multer.memoryStorage();
+const storage = multer.memoryStorage();
 
 /*
 |--------------------------------------------------------------------------
@@ -15,30 +14,13 @@ const storage =
 |--------------------------------------------------------------------------
 */
 
-const fileFilter = (
-  req,
-  file,
-  cb
-) => {
-  const allowedMimeTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ];
+const fileFilter = (req, file, cb) => {
+  const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 
-  if (
-    allowedMimeTypes.includes(
-      file.mimetype
-    )
-  ) {
+  if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        "Only JPG, PNG, and WEBP images are allowed"
-      ),
-      false
-    );
+    cb(new Error("Only JPG, PNG, and WEBP images are allowed"), false);
   }
 };
 
@@ -52,16 +34,14 @@ const fileFilter = (
 |
 */
 
-export const uploadProfile =
-  multer({
-    storage,
-    fileFilter,
-    limits: {
-      fileSize:
-        2 * 1024 * 1024,
-      files: 1,
-    },
-  });
+export const uploadProfile = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024,
+    files: 1,
+  },
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -73,16 +53,14 @@ export const uploadProfile =
 |
 */
 
-export const uploadProductImages =
-  multer({
-    storage,
-    fileFilter,
-    limits: {
-      fileSize:
-        5 * 1024 * 1024,
-      files: 5,
-    },
-  });
+export const uploadProductImages = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5,
+  },
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -101,8 +79,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize:
-      2 * 1024 * 1024,
+    fileSize: 2 * 1024 * 1024,
     files: 1,
   },
 });

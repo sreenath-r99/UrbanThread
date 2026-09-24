@@ -1,15 +1,8 @@
 // frontend/src/pages/user/Wishlist.jsx
 
-import {
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useContext, useEffect, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../../context/AuthContext";
 
@@ -23,24 +16,17 @@ import { addToCart } from "../../services/cartService";
 const Wishlist = () => {
   const navigate = useNavigate();
 
-  const {
-    token,
-  } = useContext(AuthContext);
+  const { token } = useContext(AuthContext);
 
-  const [wishlist, setWishlist] =
-    useState(null);
+  const [wishlist, setWishlist] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [actionLoading, setActionLoading] =
-    useState("");
+  const [actionLoading, setActionLoading] = useState("");
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
   const fetchWishlist = async () => {
     if (!token) {
@@ -50,25 +36,18 @@ const Wishlist = () => {
     try {
       setLoading(true);
 
-      const response =
-        await getWishlist(token);
+      const response = await getWishlist(token);
 
       setWishlist(
         response?.wishlist || {
           items: [],
           itemCount: 0,
-        }
+        },
       );
     } catch (error) {
-      console.error(
-        "FETCH WISHLIST ERROR:",
-        error
-      );
+      console.error("FETCH WISHLIST ERROR:", error);
 
-      setError(
-        error?.response?.data?.message ||
-          "Unable to load wishlist"
-      );
+      setError(error?.response?.data?.message || "Unable to load wishlist");
     } finally {
       setLoading(false);
     }
@@ -90,8 +69,7 @@ const Wishlist = () => {
         setLoading(true);
         setError("");
 
-        const response =
-          await getWishlist(token);
+        const response = await getWishlist(token);
 
         if (!isMounted) {
           return;
@@ -101,19 +79,13 @@ const Wishlist = () => {
           response?.wishlist || {
             items: [],
             itemCount: 0,
-          }
+          },
         );
       } catch (error) {
-        console.error(
-          "FETCH WISHLIST ERROR:",
-          error
-        );
+        console.error("FETCH WISHLIST ERROR:", error);
 
         if (isMounted) {
-          setError(
-            error?.response?.data?.message ||
-              "Unable to load wishlist"
-          );
+          setError(error?.response?.data?.message || "Unable to load wishlist");
         }
       } finally {
         if (isMounted) {
@@ -129,51 +101,33 @@ const Wishlist = () => {
     };
   }, [token, navigate]);
 
-  const handleRemove = async (
-    productId
-  ) => {
+  const handleRemove = async (productId) => {
     try {
-      setActionLoading(
-        `remove-${productId}`
-      );
+      setActionLoading(`remove-${productId}`);
 
       setError("");
       setSuccess("");
 
-      const response =
-        await removeFromWishlist(
-          productId,
-          token
-        );
+      const response = await removeFromWishlist(productId, token);
 
       setWishlist(
         response?.wishlist || {
           items: [],
           itemCount: 0,
-        }
+        },
       );
 
-      setSuccess(
-        "Product removed from wishlist"
-      );
+      setSuccess("Product removed from wishlist");
     } catch (error) {
-      console.error(
-        "REMOVE WISHLIST ERROR:",
-        error
-      );
+      console.error("REMOVE WISHLIST ERROR:", error);
 
-      setError(
-        error?.response?.data?.message ||
-          "Unable to remove product"
-      );
+      setError(error?.response?.data?.message || "Unable to remove product");
     } finally {
       setActionLoading("");
     }
   };
 
-  const handleAddToCart = async (
-    item
-  ) => {
+  const handleAddToCart = async (item) => {
     const product = item.product;
 
     if (!product) {
@@ -182,45 +136,25 @@ const Wishlist = () => {
 
     const productId = product._id;
 
-    const sizes = Array.isArray(
-      product.sizes
-    )
-      ? product.sizes
-      : [];
+    const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
-    const availableSize =
-      sizes.find(
-        (size) => size.stock > 0
-      );
+    const availableSize = sizes.find((size) => size.stock > 0);
 
-    if (
-      sizes.length > 0 &&
-      !availableSize
-    ) {
-      setError(
-        "This product is currently out of stock"
-      );
+    if (sizes.length > 0 && !availableSize) {
+      setError("This product is currently out of stock");
 
       return;
     }
 
     try {
-      setActionLoading(
-        `cart-${productId}`
-      );
+      setActionLoading(`cart-${productId}`);
 
       setError("");
       setSuccess("");
 
-      const size =
-        availableSize?.size || null;
+      const size = availableSize?.size || null;
 
-      await addToCart(
-        productId,
-        size,
-        1,
-        token
-      );
+      await addToCart(productId, size, 1, token);
 
       /*
        * The backend also removes the product
@@ -232,29 +166,20 @@ const Wishlist = () => {
        */
       await fetchWishlist();
 
-      setSuccess(
-        `${product.name} moved to cart`
-      );
+      setSuccess(`${product.name} moved to cart`);
     } catch (error) {
-      console.error(
-        "WISHLIST ADD TO CART ERROR:",
-        error
-      );
+      console.error("WISHLIST ADD TO CART ERROR:", error);
 
       setError(
-        error?.response?.data?.message ||
-          "Unable to add product to cart"
+        error?.response?.data?.message || "Unable to add product to cart",
       );
     } finally {
       setActionLoading("");
     }
   };
 
-  const getImageUrl = (
-    product
-  ) => {
-    const image =
-      product?.images?.[0];
+  const getImageUrl = (product) => {
+    const image = product?.images?.[0];
 
     if (!image) {
       return "";
@@ -269,12 +194,9 @@ const Wishlist = () => {
 
   const getPrice = (product) => {
     if (
-      product?.discountPrice !==
-        null &&
-      product?.discountPrice !==
-        undefined &&
-      product.discountPrice <
-        product.price
+      product?.discountPrice !== null &&
+      product?.discountPrice !== undefined &&
+      product.discountPrice < product.price
     ) {
       return product.discountPrice;
     }
@@ -287,10 +209,7 @@ const Wishlist = () => {
       <div className="min-h-screen bg-[#111111] text-white">
         <header className="border-b border-[#262626] bg-[#151515]">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 lg:px-10">
-            <Link
-              to="/home"
-              className="font-serif text-lg tracking-wide"
-            >
+            <Link to="/home" className="font-serif text-lg tracking-wide">
               UrbanThread
             </Link>
 
@@ -308,15 +227,13 @@ const Wishlist = () => {
             <div className="h-10 w-64 bg-[#1d1d1d]" />
 
             <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-              {[1, 2, 3, 4].map(
-                (item) => (
-                  <div key={item}>
-                    <div className="aspect-[4/5] bg-[#1b1b1b]" />
-                    <div className="mt-4 h-3 w-3/4 bg-[#1d1d1d]" />
-                    <div className="mt-2 h-3 w-1/3 bg-[#1d1d1d]" />
-                  </div>
-                )
-              )}
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item}>
+                  <div className="aspect-[4/5] bg-[#1b1b1b]" />
+                  <div className="mt-4 h-3 w-3/4 bg-[#1d1d1d]" />
+                  <div className="mt-2 h-3 w-1/3 bg-[#1d1d1d]" />
+                </div>
+              ))}
             </div>
           </div>
         </main>
@@ -324,8 +241,7 @@ const Wishlist = () => {
     );
   }
 
-  const items =
-    wishlist?.items || [];
+  const items = wishlist?.items || [];
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
@@ -339,17 +255,11 @@ const Wishlist = () => {
           </Link>
 
           <nav className="flex items-center gap-5 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-            <Link
-              to="/shop"
-              className="transition hover:text-white"
-            >
+            <Link to="/shop" className="transition hover:text-white">
               Shop
             </Link>
 
-            <Link
-              to="/cart"
-              className="transition hover:text-white"
-            >
+            <Link to="/cart" className="transition hover:text-white">
               Cart
             </Link>
           </nav>
@@ -369,11 +279,7 @@ const Wishlist = () => {
 
             <p className="mt-4 text-sm text-neutral-500">
               {wishlist?.itemCount || 0}{" "}
-              {wishlist?.itemCount ===
-              1
-                ? "item"
-                : "items"}{" "}
-              saved
+              {wishlist?.itemCount === 1 ? "item" : "items"} saved
             </p>
           </div>
 
@@ -399,18 +305,14 @@ const Wishlist = () => {
 
         {items.length === 0 ? (
           <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
-            <div className="text-5xl text-neutral-700">
-              ♡
-            </div>
+            <div className="text-5xl text-neutral-700">♡</div>
 
             <h2 className="mt-6 font-serif text-3xl text-neutral-300">
               Your wishlist is empty
             </h2>
 
             <p className="mt-3 max-w-md text-sm leading-7 text-neutral-600">
-              Save pieces you love and
-              come back to them whenever
-              you are ready.
+              Save pieces you love and come back to them whenever you are ready.
             </p>
 
             <Link
@@ -423,47 +325,29 @@ const Wishlist = () => {
         ) : (
           <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4">
             {items.map((item) => {
-              const product =
-                item.product;
+              const product = item.product;
 
               if (!product) {
                 return null;
               }
 
-              const image =
-                getImageUrl(product);
+              const image = getImageUrl(product);
 
-              const price =
-                getPrice(product);
+              const price = getPrice(product);
 
               const hasDiscount =
-                product.discountPrice !==
-                  null &&
-                product.discountPrice !==
-                  undefined &&
-                product.discountPrice <
-                  product.price;
+                product.discountPrice !== null &&
+                product.discountPrice !== undefined &&
+                product.discountPrice < product.price;
 
-              const cartLoading =
-                actionLoading ===
-                `cart-${product._id}`;
+              const cartLoading = actionLoading === `cart-${product._id}`;
 
-              const removeLoading =
-                actionLoading ===
-                `remove-${product._id}`;
+              const removeLoading = actionLoading === `remove-${product._id}`;
 
               return (
-                <article
-                  key={
-                    item._id ||
-                    product._id
-                  }
-                  className="group"
-                >
+                <article key={item._id || product._id} className="group">
                   <div className="relative aspect-[4/5] overflow-hidden bg-[#181818]">
-                    <Link
-                      to={`/products/${product._id}`}
-                    >
+                    <Link to={`/products/${product._id}`}>
                       {image ? (
                         <img
                           src={image}
@@ -479,28 +363,18 @@ const Wishlist = () => {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        handleRemove(
-                          product._id
-                        )
-                      }
-                      disabled={
-                        removeLoading
-                      }
+                      onClick={() => handleRemove(product._id)}
+                      disabled={removeLoading}
                       aria-label="Remove from wishlist"
                       className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center border border-white/10 bg-[#111111]/85 text-lg text-white backdrop-blur-sm transition hover:border-white/30 disabled:opacity-50"
                     >
-                      {removeLoading
-                        ? "..."
-                        : "♥"}
+                      {removeLoading ? "..." : "♥"}
                     </button>
                   </div>
 
                   <div className="mt-4">
                     <p className="text-[9px] uppercase tracking-[0.16em] text-neutral-600">
-                      {product.category
-                        ?.name ||
-                        "Collection"}
+                      {product.category?.name || "Collection"}
                     </p>
 
                     <Link
@@ -512,45 +386,27 @@ const Wishlist = () => {
 
                     <div className="mt-2 flex items-center gap-2">
                       <span className="text-sm text-neutral-200">
-                        ₹
-                        {Number(
-                          price
-                        ).toLocaleString(
-                          "en-IN"
-                        )}
+                        ₹{Number(price).toLocaleString("en-IN")}
                       </span>
 
                       {hasDiscount && (
                         <span className="text-[10px] text-neutral-700 line-through">
-                          ₹
-                          {Number(
-                            product.price
-                          ).toLocaleString(
-                            "en-IN"
-                          )}
+                          ₹{Number(product.price).toLocaleString("en-IN")}
                         </span>
                       )}
                     </div>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        handleAddToCart(
-                          item
-                        )
-                      }
+                      onClick={() => handleAddToCart(item)}
                       disabled={
                         cartLoading ||
-                        product.isActive ===
-                          false ||
-                        product.isDeleted ===
-                          true
+                        product.isActive === false ||
+                        product.isDeleted === true
                       }
                       className="mt-4 w-full border border-[#393939] py-3 text-[9px] uppercase tracking-[0.18em] text-neutral-400 transition hover:border-[#777777] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {cartLoading
-                        ? "Adding..."
-                        : "Move to Cart"}
+                      {cartLoading ? "Adding..." : "Move to Cart"}
                     </button>
                   </div>
                 </article>

@@ -13,9 +13,7 @@ import {
 
 export const getAddresses = async (req, res) => {
   try {
-    const addresses = await getUserAddresses(
-      req.user._id
-    );
+    const addresses = await getUserAddresses(req.user._id);
 
     return res.status(200).json({
       success: true,
@@ -23,10 +21,7 @@ export const getAddresses = async (req, res) => {
       addresses,
     });
   } catch (error) {
-    console.error(
-      "GET ADDRESSES ERROR:",
-      error.message
-    );
+    console.error("GET ADDRESSES ERROR:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -43,7 +38,7 @@ export const getAddress = async (req, res) => {
   try {
     const address = await getSingleUserAddress(
       req.user._id,
-      req.params.addressId
+      req.params.addressId,
     );
 
     return res.status(200).json({
@@ -52,10 +47,7 @@ export const getAddress = async (req, res) => {
       address,
     });
   } catch (error) {
-    console.error(
-      "GET SINGLE ADDRESS ERROR:",
-      error.message
-    );
+    console.error("GET SINGLE ADDRESS ERROR:", error.message);
 
     return res.status(404).json({
       success: false,
@@ -70,10 +62,7 @@ export const getAddress = async (req, res) => {
 
 export const createAddress = async (req, res) => {
   try {
-    const address = await createUserAddress(
-      req.user._id,
-      req.body
-    );
+    const address = await createUserAddress(req.user._id, req.body);
 
     return res.status(201).json({
       success: true,
@@ -81,10 +70,7 @@ export const createAddress = async (req, res) => {
       address,
     });
   } catch (error) {
-    console.error(
-      "CREATE ADDRESS ERROR:",
-      error.message
-    );
+    console.error("CREATE ADDRESS ERROR:", error.message);
 
     if (error.name === "ZodError") {
       return res.status(400).json({
@@ -110,7 +96,7 @@ export const updateAddress = async (req, res) => {
     const address = await updateUserAddress(
       req.user._id,
       req.params.addressId,
-      req.body
+      req.body,
     );
 
     return res.status(200).json({
@@ -119,10 +105,7 @@ export const updateAddress = async (req, res) => {
       address,
     });
   } catch (error) {
-    console.error(
-      "UPDATE ADDRESS ERROR:",
-      error.message
-    );
+    console.error("UPDATE ADDRESS ERROR:", error.message);
 
     if (error.name === "ZodError") {
       return res.status(400).json({
@@ -145,20 +128,14 @@ export const updateAddress = async (req, res) => {
 
 export const deleteAddress = async (req, res) => {
   try {
-    await deleteUserAddress(
-      req.user._id,
-      req.params.addressId
-    );
+    await deleteUserAddress(req.user._id, req.params.addressId);
 
     return res.status(200).json({
       success: true,
       message: "Address deleted successfully",
     });
   } catch (error) {
-    console.error(
-      "DELETE ADDRESS ERROR:",
-      error.message
-    );
+    console.error("DELETE ADDRESS ERROR:", error.message);
 
     return res.status(404).json({
       success: false,
@@ -175,7 +152,7 @@ export const setDefaultAddress = async (req, res) => {
   try {
     const address = await setDefaultUserAddress(
       req.user._id,
-      req.params.addressId
+      req.params.addressId,
     );
 
     return res.status(200).json({
@@ -184,16 +161,11 @@ export const setDefaultAddress = async (req, res) => {
       address,
     });
   } catch (error) {
-    console.error(
-      "SET DEFAULT ADDRESS ERROR:",
-      error.message
-    );
+    console.error("SET DEFAULT ADDRESS ERROR:", error.message);
 
     return res.status(404).json({
       success: false,
-      message:
-        error.message ||
-        "Unable to set default address",
+      message: error.message || "Unable to set default address",
     });
   }
 };

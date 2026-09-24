@@ -18,19 +18,15 @@ const Login = () => {
     password: "",
   });
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [errors, setErrors] = useState({});
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [googleLoading, setGoogleLoading] =
-    useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [serverError, setServerError] =
-    useState("");
+  const [serverError, setServerError] = useState("");
 
   // =========================
   // HANDLE INPUT CHANGE
@@ -64,22 +60,18 @@ const Login = () => {
     setServerError("");
 
     // Zod validation
-    const validationResult =
-      loginSchema.safeParse(formData);
+    const validationResult = loginSchema.safeParse(formData);
 
     if (!validationResult.success) {
       const fieldErrors = {};
 
-      validationResult.error.issues.forEach(
-        (issue) => {
-          const fieldName = issue.path[0];
+      validationResult.error.issues.forEach((issue) => {
+        const fieldName = issue.path[0];
 
-          if (!fieldErrors[fieldName]) {
-            fieldErrors[fieldName] =
-              issue.message;
-          }
+        if (!fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = issue.message;
         }
-      );
+      });
 
       setErrors(fieldErrors);
 
@@ -89,26 +81,18 @@ const Login = () => {
     try {
       setLoading(true);
 
-      const response = await login(
-        validationResult.data
-      );
+      const response = await login(validationResult.data);
 
-      console.log(
-        "Normal login successful:",
-        response
-      );
+      console.log("Normal login successful:", response);
 
       navigate("/home", { replace: true });
     } catch (error) {
-      console.error(
-        "LOGIN ERROR:",
-        error
-      );
+      console.error("LOGIN ERROR:", error);
 
       setServerError(
         error.response?.data?.message ||
           error.message ||
-          "Login failed. Please try again."
+          "Login failed. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -119,37 +103,27 @@ const Login = () => {
   // GOOGLE LOGIN SUCCESS
   // =========================
 
-  const handleGoogleSuccess = async (
-    credentialResponse
-  ) => {
+  const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setGoogleLoading(true);
       setServerError("");
 
       // Check Google credential
       if (!credentialResponse?.credential) {
-        throw new Error(
-          "Google authentication failed"
-        );
+        throw new Error("Google authentication failed");
       }
 
-      console.log(
-        "Google credential received successfully"
-      );
+      console.log("Google credential received successfully");
 
       // Send Google credential to backend
       const response = await axios.post(
         "http://localhost:5000/api/auth/google",
         {
-          credential:
-            credentialResponse.credential,
-        }
+          credential: credentialResponse.credential,
+        },
       );
 
-      console.log(
-        "Google backend response:",
-        response.data
-      );
+      console.log("Google backend response:", response.data);
 
       // Check backend response
       if (
@@ -158,8 +132,7 @@ const Login = () => {
         !response.data.user
       ) {
         throw new Error(
-          response.data.message ||
-            "Google authentication failed"
+          response.data.message || "Google authentication failed",
         );
       }
 
@@ -168,26 +141,21 @@ const Login = () => {
       // =========================
 
       googleLogin({
-  token: response.data.token,
-  user: response.data.user,
-});
+        token: response.data.token,
+        user: response.data.user,
+      });
 
-      console.log(
-        "Google login successful"
-      );
+      console.log("Google login successful");
 
       // Redirect to home
       navigate("/home", { replace: true });
     } catch (error) {
-      console.error(
-        "GOOGLE LOGIN ERROR:",
-        error
-      );
+      console.error("GOOGLE LOGIN ERROR:", error);
 
       setServerError(
         error.response?.data?.message ||
           error.message ||
-          "Google login failed. Please try again."
+          "Google login failed. Please try again.",
       );
     } finally {
       setGoogleLoading(false);
@@ -201,15 +169,12 @@ const Login = () => {
   const handleGoogleError = () => {
     setGoogleLoading(false);
 
-    setServerError(
-      "Google login failed. Please try again."
-    );
+    setServerError("Google login failed. Please try again.");
   };
 
   return (
     <div className="min-h-screen bg-[#181818] text-white">
       <div className="flex min-h-screen">
-
         {/* =========================
             LEFT IMAGE SECTION
         ========================= */}
@@ -331,8 +296,7 @@ const Login = () => {
                   text-neutral-400
                 "
               >
-                Sign in to continue your
-                UrbanThread experience.
+                Sign in to continue your UrbanThread experience.
               </p>
             </div>
 
@@ -341,7 +305,6 @@ const Login = () => {
             ========================= */}
 
             <form onSubmit={handleSubmit}>
-
               {/* EMAIL */}
 
               <div className="mb-5">
@@ -380,11 +343,7 @@ const Login = () => {
                     transition
                     focus:border-[#cfc4b5]
 
-                    ${
-                      errors.email
-                        ? "border-red-500"
-                        : "border-[#303030]"
-                    }
+                    ${errors.email ? "border-red-500" : "border-[#303030]"}
                   `}
                 />
 
@@ -422,11 +381,7 @@ const Login = () => {
                 <div className="relative">
                   <input
                     id="password"
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="Enter your password"
                     value={formData.password}
@@ -445,11 +400,7 @@ const Login = () => {
                       transition
                       focus:border-[#cfc4b5]
 
-                      ${
-                        errors.password
-                          ? "border-red-500"
-                          : "border-[#303030]"
-                      }
+                      ${errors.password ? "border-red-500" : "border-[#303030]"}
                     `}
                   />
 
@@ -458,10 +409,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() =>
-                      setShowPassword(
-                        (previousValue) =>
-                          !previousValue
-                      )
+                      setShowPassword((previousValue) => !previousValue)
                     }
                     className="
                       absolute
@@ -475,9 +423,7 @@ const Login = () => {
                     "
                     aria-label="Toggle password visibility"
                   >
-                    {showPassword
-                      ? "◉"
-                      : "◉̸"}
+                    {showPassword ? "◉" : "◉̸"}
                   </button>
                 </div>
 
@@ -531,10 +477,7 @@ const Login = () => {
 
               <button
                 type="submit"
-                disabled={
-                  loading ||
-                  googleLoading
-                }
+                disabled={loading || googleLoading}
                 className="
                   w-full
                   bg-[#e3dbd0]
@@ -549,9 +492,7 @@ const Login = () => {
                   disabled:opacity-60
                 "
               >
-                {loading
-                  ? "SIGNING IN..."
-                  : "SIGN IN"}
+                {loading ? "SIGNING IN..." : "SIGN IN"}
               </button>
 
               {/* DIVIDER */}
@@ -635,7 +576,6 @@ const Login = () => {
                 "
               >
                 Don't have an account?
-
                 <Link
                   to="/register"
                   className="
@@ -651,7 +591,6 @@ const Login = () => {
                   Create an Account
                 </Link>
               </p>
-
             </form>
           </div>
         </section>

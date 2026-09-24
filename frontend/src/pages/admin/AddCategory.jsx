@@ -40,9 +40,7 @@ const AddCategory = () => {
 
       navigate("/admin/categories");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to create category"
-      );
+      setError(err.response?.data?.message || "Failed to create category");
     } finally {
       setLoading(false);
     }
@@ -58,9 +56,7 @@ const AddCategory = () => {
           ← Back to Categories
         </Link>
 
-        <h1 className="mt-5 text-3xl font-semibold">
-          Add Category
-        </h1>
+        <h1 className="mt-5 text-3xl font-semibold">Add Category</h1>
 
         <p className="mt-2 text-sm text-gray-400">
           Create a new product category.
@@ -108,9 +104,7 @@ const AddCategory = () => {
         </div>
 
         <div className="mb-8">
-          <label className="mb-2 block text-sm text-gray-300">
-            Image URL
-          </label>
+          <label className="mb-2 block text-sm text-gray-300">Image URL</label>
 
           <input
             type="url"

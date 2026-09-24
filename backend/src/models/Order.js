@@ -24,8 +24,7 @@ const orderItemSchema = new mongoose.Schema(
       type: String,
       enum: {
         values: ["S", "M", "L", "XL", "XXL"],
-        message:
-          "Size must be S, M, L, XL, or XXL",
+        message: "Size must be S, M, L, XL, or XXL",
       },
       required: true,
     },
@@ -79,7 +78,7 @@ const orderItemSchema = new mongoose.Schema(
   },
   {
     _id: true,
-  }
+  },
 );
 
 const shippingAddressSchema = new mongoose.Schema(
@@ -141,7 +140,7 @@ const shippingAddressSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const orderSchema = new mongoose.Schema(
@@ -165,11 +164,8 @@ const orderSchema = new mongoose.Schema(
       type: [orderItemSchema],
       required: true,
       validate: {
-        validator: (items) =>
-          Array.isArray(items) &&
-          items.length > 0,
-        message:
-          "Order must contain at least one item",
+        validator: (items) => Array.isArray(items) && items.length > 0,
+        message: "Order must contain at least one item",
       },
     },
 
@@ -187,12 +183,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
-      enum: [
-        "Pending",
-        "Paid",
-        "Failed",
-        "Refunded",
-      ],
+      enum: ["Pending", "Paid", "Failed", "Refunded"],
       default: "Pending",
     },
 
@@ -213,46 +204,50 @@ const orderSchema = new mongoose.Schema(
     subtotal: {
       type: Number,
       required: true,
-      min: [
-        0,
-        "Subtotal cannot be negative",
-      ],
+      min: [0, "Subtotal cannot be negative"],
     },
 
     discount: {
       type: Number,
       default: 0,
-      min: [
-        0,
-        "Discount cannot be negative",
-      ],
+      min: [0, "Discount cannot be negative"],
+    },
+
+    /*
+     * ---------------------------------------------------------
+     * COUPON
+     * ---------------------------------------------------------
+     */
+
+    couponCode: {
+      type: String,
+      default: "",
+      trim: true,
+      uppercase: true,
+    },
+
+    couponDiscount: {
+      type: Number,
+      default: 0,
+      min: [0, "Coupon discount cannot be negative"],
     },
 
     shippingCharge: {
       type: Number,
       default: 0,
-      min: [
-        0,
-        "Shipping charge cannot be negative",
-      ],
+      min: [0, "Shipping charge cannot be negative"],
     },
 
     tax: {
       type: Number,
       default: 0,
-      min: [
-        0,
-        "Tax cannot be negative",
-      ],
+      min: [0, "Tax cannot be negative"],
     },
 
     totalAmount: {
       type: Number,
       required: true,
-      min: [
-        0,
-        "Total amount cannot be negative",
-      ],
+      min: [0, "Total amount cannot be negative"],
     },
 
     cancellationReason: {
@@ -268,7 +263,7 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 orderSchema.index({
@@ -281,8 +276,6 @@ orderSchema.index({
   createdAt: -1,
 });
 
-const Order =
-  mongoose.models.Order ||
-  mongoose.model("Order", orderSchema);
+const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 
 export default Order;

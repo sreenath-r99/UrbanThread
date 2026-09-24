@@ -51,114 +51,113 @@ const Home = ({ isLandingPage = false }) => {
     NAVBAR
 ========================= */}
 
-<header className="absolute left-0 right-0 top-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-sm">
-  <div className="mx-auto flex h-20 max-w-[1500px] items-center justify-between px-6 md:px-10 lg:px-16">
-    {/* LOGO */}
+      <header className="absolute left-0 right-0 top-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-sm">
+        <div className="mx-auto flex h-20 max-w-[1500px] items-center justify-between px-6 md:px-10 lg:px-16">
+          {/* LOGO */}
 
-    <Link
-      to={isLandingPage ? "/" : "/home"}
-      className="font-serif text-xl tracking-[0.18em] text-[#e8e3dc] transition hover:text-white"
-    >
-      URBAN THREAD
-    </Link>
+          <Link
+            to={isLandingPage ? "/" : "/home"}
+            className="font-serif text-xl tracking-[0.18em] text-[#e8e3dc] transition hover:text-white"
+          >
+            URBAN THREAD
+          </Link>
 
-    {/* NAVIGATION LINKS */}
+          {/* NAVIGATION LINKS */}
 
-    <nav className="hidden items-center gap-10 md:flex">
-      {/* HOME */}
+          <nav className="hidden items-center gap-10 md:flex">
+            {/* HOME */}
 
-      <Link
-        to={isLandingPage ? "/" : "/home"}
-        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
-      >
-        Home
-      </Link>
+            <Link
+              to={isLandingPage ? "/" : "/home"}
+              className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+            >
+              Home
+            </Link>
 
-      {/* SHOP */}
+            {/* SHOP */}
 
-      <button
-        type="button"
-        onClick={() => handleProtectedNavigation("/shop")}
-        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
-      >
-        Shop
-      </button>
+            <button
+              type="button"
+              onClick={() => handleProtectedNavigation("/shop")}
+              className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+            >
+              Shop
+            </button>
 
-      {/* CATEGORIES */}
+            {/* CATEGORIES */}
 
-      <button
-        type="button"
-        onClick={() => handleProtectedNavigation("/categories")}
-        className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
-      >
-        Categories
-      </button>
-    </nav>
+            <button
+              type="button"
+              onClick={() => handleProtectedNavigation("/categories")}
+              className="text-[11px] uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+            >
+              Categories
+            </button>
+          </nav>
 
-    {/* RIGHT NAVBAR ACTIONS */}
+          {/* RIGHT NAVBAR ACTIONS */}
 
-    {isLandingPage ? (
-      <button
-        type="button"
-        onClick={() => navigate("/login")}
-        className="border border-white/50 px-5 py-2.5 text-[10px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
-      >
-        Sign In
-      </button>
-    ) : (
-      <div className="flex items-center gap-5 text-lg text-white/90">
-        {/* SEARCH */}
+          {isLandingPage ? (
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="border border-white/50 px-5 py-2.5 text-[10px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
+            >
+              Sign In
+            </button>
+          ) : (
+            <div className="flex items-center gap-5 text-lg text-white/90">
+              {/* SEARCH */}
 
-        <button
-          type="button"
-          aria-label="Search"
-          title="Search"
-          onClick={() => handleProtectedNavigation("/shop")}
-          className="transition hover:text-white/60"
-        >
-          ⌕
-        </button>
+              <button
+                type="button"
+                aria-label="Search"
+                title="Search"
+                onClick={() => handleProtectedNavigation("/shop")}
+                className="transition hover:text-white/60"
+              >
+                ⌕
+              </button>
 
-        {/* WISHLIST */}
+              {/* WISHLIST */}
 
-        <Link
-          to="/wishlist"
-          aria-label="Wishlist"
-          title="Wishlist"
-          className="transition hover:text-white/60"
-        >
-          ♡
-        </Link>
+              <Link
+                to="/wishlist"
+                aria-label="Wishlist"
+                title="Wishlist"
+                className="transition hover:text-white/60"
+              >
+                ♡
+              </Link>
 
-        {/* CART */}
+              {/* CART */}
 
-        <Link
-          to="/cart"
-          aria-label="Cart"
-          title="Cart"
-          className="relative transition hover:text-white/60"
-        >
-          🛒
+              <Link
+                to="/cart"
+                aria-label="Cart"
+                title="Cart"
+                className="relative transition hover:text-white/60"
+              >
+                🛒
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-black">
+                  0
+                </span>
+              </Link>
 
-          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-black">
-            0
-          </span>
-        </Link>
+              {/* PROFILE */}
 
-        {/* PROFILE */}
-
-        <Link
-          to="/profile"
-          aria-label="Profile"
-          title="Profile"
-          className="transition hover:text-white/60"
-        >
-          ◎
-        </Link>
-      </div>
-    )}
-  </div>
-</header>
+              <Link
+                to="/profile"
+                aria-label="Profile"
+                title="Profile"
+                className="transition hover:text-white/60"
+              >
+                ◎
+              </Link>
+            </div>
+          )}
+        </div>
+      </header>
 
       {/* =========================
           HERO SECTION
@@ -188,8 +187,8 @@ const Home = ({ isLandingPage = false }) => {
             </h1>
 
             <p className="mt-7 max-w-md text-sm leading-7 text-white/65 md:text-base">
-              Discover carefully selected clothing designed for
-              confidence, comfort, and effortless everyday expression.
+              Discover carefully selected clothing designed for confidence,
+              comfort, and effortless everyday expression.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -203,9 +202,7 @@ const Home = ({ isLandingPage = false }) => {
 
               <button
                 type="button"
-                onClick={() =>
-                  handleProtectedNavigation("/categories")
-                }
+                onClick={() => handleProtectedNavigation("/categories")}
                 className="border border-white/40 px-8 py-4 text-[11px] uppercase tracking-[0.2em] text-white transition hover:border-white hover:bg-white hover:text-black"
               >
                 Explore Categories
@@ -243,11 +240,10 @@ const Home = ({ isLandingPage = false }) => {
 
           <div>
             <p className="max-w-lg text-sm leading-8 text-white/55">
-              Urban Thread brings together timeless silhouettes, modern
-              details, and versatile pieces made for the rhythm of
-              everyday life. Our collections are designed to help you
-              build a wardrobe that feels personal, refined, and
-              effortless.
+              Urban Thread brings together timeless silhouettes, modern details,
+              and versatile pieces made for the rhythm of everyday life. Our
+              collections are designed to help you build a wardrobe that feels
+              personal, refined, and effortless.
             </p>
           </div>
         </div>
@@ -269,8 +265,8 @@ const Home = ({ isLandingPage = false }) => {
             </h2>
 
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/50">
-              Explore our latest collection and discover pieces that
-              work across every season.
+              Explore our latest collection and discover pieces that work across
+              every season.
             </p>
           </div>
 
@@ -303,9 +299,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories")
-              }
+              onClick={() => handleProtectedNavigation("/categories")}
               className="w-fit border-b border-white/40 pb-2 text-[11px] uppercase tracking-[0.2em] text-white/65 transition hover:border-white hover:text-white"
             >
               View all categories
@@ -317,9 +311,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories/shirts")
-              }
+              onClick={() => handleProtectedNavigation("/categories/shirts")}
               className="group text-left"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
@@ -341,9 +333,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories/t-shirts")
-              }
+              onClick={() => handleProtectedNavigation("/categories/t-shirts")}
               className="group text-left"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
@@ -365,9 +355,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories/jackets")
-              }
+              onClick={() => handleProtectedNavigation("/categories/jackets")}
               className="group text-left"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
@@ -389,9 +377,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories/jeans")
-              }
+              onClick={() => handleProtectedNavigation("/categories/jeans")}
               className="group text-left"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
@@ -413,9 +399,7 @@ const Home = ({ isLandingPage = false }) => {
 
             <button
               type="button"
-              onClick={() =>
-                handleProtectedNavigation("/categories/hoodies")
-              }
+              onClick={() => handleProtectedNavigation("/categories/hoodies")}
               className="group col-span-2 text-left md:col-span-1"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-[#222222]">
@@ -448,8 +432,8 @@ const Home = ({ isLandingPage = false }) => {
             </p>
 
             <p className="text-sm leading-7 text-white/45">
-              Thoughtfully selected pieces that balance quality,
-              comfort, and modern design.
+              Thoughtfully selected pieces that balance quality, comfort, and
+              modern design.
             </p>
           </div>
 
@@ -459,8 +443,8 @@ const Home = ({ isLandingPage = false }) => {
             </p>
 
             <p className="text-sm leading-7 text-white/45">
-              Build outfits that move naturally from casual days to
-              special occasions.
+              Build outfits that move naturally from casual days to special
+              occasions.
             </p>
           </div>
 
@@ -470,8 +454,8 @@ const Home = ({ isLandingPage = false }) => {
             </p>
 
             <p className="text-sm leading-7 text-white/45">
-              Enjoy a simple shopping experience with protected
-              accounts and reliable order management.
+              Enjoy a simple shopping experience with protected accounts and
+              reliable order management.
             </p>
           </div>
         </div>

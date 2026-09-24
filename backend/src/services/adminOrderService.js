@@ -2,9 +2,7 @@ import mongoose from "mongoose";
 
 import Order from "../models/Order.js";
 
-import {
-  cancelUserOrder,
-} from "./orderService.js";
+import { cancelUserOrder } from "./orderService.js";
 
 /*
 |--------------------------------------------------------------------------
@@ -45,23 +43,13 @@ const VALID_STATUSES = [
 */
 
 const allowedTransitions = {
-  Pending: [
-    "Shipped",
-    "Cancelled",
-  ],
+  Pending: ["Shipped", "Cancelled"],
 
-  "Partially Cancelled": [
-    "Shipped",
-    "Cancelled",
-  ],
+  "Partially Cancelled": ["Shipped", "Cancelled"],
 
-  Shipped: [
-    "Out for Delivery",
-  ],
+  Shipped: ["Out for Delivery"],
 
-  "Out for Delivery": [
-    "Delivered",
-  ],
+  "Out for Delivery": ["Delivered"],
 
   Delivered: [],
 
@@ -74,14 +62,10 @@ const allowedTransitions = {
 |--------------------------------------------------------------------------
 */
 
-const buildSearchQuery = (
-  search = "",
-  status = ""
-) => {
+const buildSearchQuery = (search = "", status = "") => {
   const query = {};
 
-  const trimmedSearch =
-    search.trim();
+  const trimmedSearch = search.trim();
 
   /*
    * SEARCH
@@ -122,14 +106,8 @@ const buildSearchQuery = (
    */
 
   if (status) {
-    if (
-      !VALID_STATUSES.includes(
-        status
-      )
-    ) {
-      throw new Error(
-        "Invalid order status filter"
-      );
+    if (!VALID_STATUSES.includes(status)) {
+      throw new Error("Invalid order status filter");
     }
 
     query.orderStatus = status;
@@ -155,70 +133,43 @@ const getAdminOrders = async ({
    * Make sure page is at least 1.
    */
 
-  const parsedPage =
-    Math.max(
-      Number(page) || 1,
-      1
-    );
+  const parsedPage = Math.max(Number(page) || 1, 1);
 
   /*
    * Limit between 1 and 50.
    */
 
-  const parsedLimit =
-    Math.min(
-      Math.max(
-        Number(limit) || 10,
-        1
-      ),
-      50
-    );
+  const parsedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
   /*
    * Calculate MongoDB skip.
    */
 
-  const skip =
-    (parsedPage - 1) *
-    parsedLimit;
+  const skip = (parsedPage - 1) * parsedLimit;
 
   /*
    * Descending = newest first.
    * Ascending = oldest first.
    */
 
-  const normalizedSortOrder =
-    sortOrder === "asc"
-      ? 1
-      : -1;
+  const normalizedSortOrder = sortOrder === "asc" ? 1 : -1;
 
   /*
    * Build search/filter query.
    */
 
-  const query =
-    buildSearchQuery(
-      search,
-      status
-    );
+  const query = buildSearchQuery(search, status);
 
   /*
    * Fetch orders and total count
    * at the same time.
    */
 
-  const [
-    orders,
-    totalOrders,
-  ] = await Promise.all([
+  const [orders, totalOrders] = await Promise.all([
     Order.find(query)
-      .populate(
-        "user",
-        "name email phone"
-      )
+      .populate("user", "name email phone")
       .sort({
-        createdAt:
-          normalizedSortOrder,
+        createdAt: normalizedSortOrder,
       })
       .skip(skip)
       .limit(parsedLimit)
@@ -231,32 +182,23 @@ const getAdminOrders = async ({
    * Calculate total pages.
    */
 
-  const totalPages =
-    Math.ceil(
-      totalOrders /
-        parsedLimit
-    );
+  const totalPages = Math.ceil(totalOrders / parsedLimit);
 
   return {
     orders,
 
     pagination: {
-      currentPage:
-        parsedPage,
+      currentPage: parsedPage,
 
       totalPages,
 
       totalOrders,
 
-      limit:
-        parsedLimit,
+      limit: parsedLimit,
 
-      hasNextPage:
-        parsedPage <
-        totalPages,
+      hasNextPage: parsedPage < totalPages,
 
-      hasPreviousPage:
-        parsedPage > 1,
+      hasPreviousPage: parsedPage > 1,
     },
   };
 };
@@ -267,45 +209,30 @@ const getAdminOrders = async ({
 |--------------------------------------------------------------------------
 */
 
-const getAdminOrderById =
-  async (orderId) => {
-    /*
-     * Validate MongoDB ObjectId.
-     */
+const getAdminOrderById = async (orderId) => {
+  /*
+   * Validate MongoDB ObjectId.
+   */
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        orderId
-      )
-    ) {
-      throw new Error(
-        "Invalid order ID"
-      );
-    }
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new Error("Invalid order ID");
+  }
 
-    /*
-     * Fetch order and populate
-     * user information.
-     */
+  /*
+   * Fetch order and populate
+   * user information.
+   */
 
-    const order =
-      await Order.findById(
-        orderId
-      )
-        .populate(
-          "user",
-          "name email phone"
-        )
-        .lean();
+  const order = await Order.findById(orderId)
+    .populate("user", "name email phone")
+    .lean();
 
-    if (!order) {
-      throw new Error(
-        "Order not found"
-      );
-    }
+  if (!order) {
+    throw new Error("Order not found");
+  }
 
-    return order;
-  };
+  return order;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -330,193 +257,133 @@ const getAdminOrderById =
 |--------------------------------------------------------------------------
 */
 
-const updateAdminOrderStatus =
-  async (
-    orderId,
-    newStatus,
-    reason = ""
-  ) => {
-    /*
-     * ---------------------------------------------------------------
-     * VALIDATE ORDER ID
-     * ---------------------------------------------------------------
-     */
+const updateAdminOrderStatus = async (orderId, newStatus, reason = "") => {
+  /*
+   * ---------------------------------------------------------------
+   * VALIDATE ORDER ID
+   * ---------------------------------------------------------------
+   */
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        orderId
-      )
-    ) {
-      throw new Error(
-        "Invalid order ID"
-      );
-    }
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new Error("Invalid order ID");
+  }
 
-    /*
-     * ---------------------------------------------------------------
-     * VALIDATE STATUS
-     * ---------------------------------------------------------------
-     */
+  /*
+   * ---------------------------------------------------------------
+   * VALIDATE STATUS
+   * ---------------------------------------------------------------
+   */
 
-    if (
-      !VALID_STATUSES.includes(
-        newStatus
-      )
-    ) {
-      throw new Error(
-        "Invalid order status"
-      );
-    }
+  if (!VALID_STATUSES.includes(newStatus)) {
+    throw new Error("Invalid order status");
+  }
 
-    /*
-     * ---------------------------------------------------------------
-     * FIND ORDER
-     * ---------------------------------------------------------------
-     */
+  /*
+   * ---------------------------------------------------------------
+   * FIND ORDER
+   * ---------------------------------------------------------------
+   */
 
-    const order =
-      await Order.findById(
-        orderId
-      );
+  const order = await Order.findById(orderId);
 
-    if (!order) {
-      throw new Error(
-        "Order not found"
-      );
-    }
+  if (!order) {
+    throw new Error("Order not found");
+  }
 
-    /*
-     * ---------------------------------------------------------------
-     * SAME STATUS
-     * ---------------------------------------------------------------
-     *
-     * If the order already has this status,
-     * don't perform another update.
-     */
+  /*
+   * ---------------------------------------------------------------
+   * SAME STATUS
+   * ---------------------------------------------------------------
+   *
+   * If the order already has this status,
+   * don't perform another update.
+   */
 
-    if (
-      order.orderStatus ===
-      newStatus
-    ) {
-      return Order.findById(
-        order._id
-      )
-        .populate(
-          "user",
-          "name email phone"
-        )
-        .lean();
-    }
-
-    /*
-     * ---------------------------------------------------------------
-     * CANCEL ORDER
-     * ---------------------------------------------------------------
-     *
-     * IMPORTANT:
-     *
-     * We reuse the existing user cancellation
-     * service instead of duplicating cancellation
-     * and stock-restoration logic.
-     *
-     * order.user is already the User ObjectId.
-     */
-
-    if (
-      newStatus === "Cancelled"
-    ) {
-      const cancelledOrder =
-        await cancelUserOrder(
-          order.user,
-          order.orderId,
-          reason
-        );
-
-      return Order.findById(
-        cancelledOrder._id
-      )
-        .populate(
-          "user",
-          "name email phone"
-        )
-        .lean();
-    }
-
-    /*
-     * ---------------------------------------------------------------
-     * VALIDATE STATUS TRANSITION
-     * ---------------------------------------------------------------
-     */
-
-    const allowedNextStatuses =
-      allowedTransitions[
-        order.orderStatus
-      ] || [];
-
-    if (
-      !allowedNextStatuses.includes(
-        newStatus
-      )
-    ) {
-      throw new Error(
-        `Cannot change order status from "${order.orderStatus}" to "${newStatus}"`
-      );
-    }
-
-    /*
-     * ---------------------------------------------------------------
-     * UPDATE ORDER STATUS
-     * ---------------------------------------------------------------
-     */
-
-    order.orderStatus =
-      newStatus;
-
-    /*
-     * ---------------------------------------------------------------
-     * PAYMENT STATUS
-     * ---------------------------------------------------------------
-     *
-     * UrbanThread currently uses COD.
-     *
-     * Therefore payment is considered
-     * successfully collected when the order
-     * reaches Delivered.
-     */
-
-    if (
-      newStatus === "Delivered"
-    ) {
-      order.paymentStatus =
-        "Paid";
-    }
-
-    /*
-     * ---------------------------------------------------------------
-     * SAVE ORDER
-     * ---------------------------------------------------------------
-     */
-
-    await order.save();
-
-    /*
-     * ---------------------------------------------------------------
-     * RETURN UPDATED ORDER
-     * ---------------------------------------------------------------
-     */
-
-    return Order.findById(
-      order._id
-    )
-      .populate(
-        "user",
-        "name email phone"
-      )
+  if (order.orderStatus === newStatus) {
+    return Order.findById(order._id)
+      .populate("user", "name email phone")
       .lean();
-  };
+  }
 
-export {
-  getAdminOrders,
-  getAdminOrderById,
-  updateAdminOrderStatus,
+  /*
+   * ---------------------------------------------------------------
+   * CANCEL ORDER
+   * ---------------------------------------------------------------
+   *
+   * IMPORTANT:
+   *
+   * We reuse the existing user cancellation
+   * service instead of duplicating cancellation
+   * and stock-restoration logic.
+   *
+   * order.user is already the User ObjectId.
+   */
+
+  if (newStatus === "Cancelled") {
+    const cancelledOrder = await cancelUserOrder(
+      order.user,
+      order.orderId,
+      reason,
+    );
+
+    return Order.findById(cancelledOrder._id)
+      .populate("user", "name email phone")
+      .lean();
+  }
+
+  /*
+   * ---------------------------------------------------------------
+   * VALIDATE STATUS TRANSITION
+   * ---------------------------------------------------------------
+   */
+
+  const allowedNextStatuses = allowedTransitions[order.orderStatus] || [];
+
+  if (!allowedNextStatuses.includes(newStatus)) {
+    throw new Error(
+      `Cannot change order status from "${order.orderStatus}" to "${newStatus}"`,
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------------
+   * UPDATE ORDER STATUS
+   * ---------------------------------------------------------------
+   */
+
+  order.orderStatus = newStatus;
+
+  /*
+   * ---------------------------------------------------------------
+   * PAYMENT STATUS
+   * ---------------------------------------------------------------
+   *
+   * UrbanThread currently uses COD.
+   *
+   * Therefore payment is considered
+   * successfully collected when the order
+   * reaches Delivered.
+   */
+
+  if (newStatus === "Delivered") {
+    order.paymentStatus = "Paid";
+  }
+
+  /*
+   * ---------------------------------------------------------------
+   * SAVE ORDER
+   * ---------------------------------------------------------------
+   */
+
+  await order.save();
+
+  /*
+   * ---------------------------------------------------------------
+   * RETURN UPDATED ORDER
+   * ---------------------------------------------------------------
+   */
+
+  return Order.findById(order._id).populate("user", "name email phone").lean();
 };
+
+export { getAdminOrders, getAdminOrderById, updateAdminOrderStatus };

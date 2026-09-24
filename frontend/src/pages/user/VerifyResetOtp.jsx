@@ -9,14 +9,7 @@ const VerifyResetOtp = () => {
 
   const email = location.state?.email || "";
 
-  const [otp, setOtp] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -61,11 +54,7 @@ const VerifyResetOtp = () => {
   };
 
   const handleKeyDown = (index, event) => {
-    if (
-      event.key === "Backspace" &&
-      !otp[index] &&
-      index > 0
-    ) {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -113,14 +102,7 @@ const VerifyResetOtp = () => {
 
       setMessage("A new OTP has been sent.");
 
-      setOtp([
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ]);
+      setOtp(["", "", "", "", "", ""]);
 
       setTimer(30);
 
@@ -128,7 +110,7 @@ const VerifyResetOtp = () => {
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to resend OTP. Please try again."
+          "Failed to resend OTP. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -143,9 +125,7 @@ const VerifyResetOtp = () => {
     if (!domain) return email;
 
     const hiddenUsername =
-      username.length > 2
-        ? `${username.slice(0, 1)}***`
-        : username;
+      username.length > 2 ? `${username.slice(0, 1)}***` : username;
 
     return `${hiddenUsername}@${domain}`;
   };
@@ -170,9 +150,7 @@ const VerifyResetOtp = () => {
           <p className="mt-4 text-center text-sm leading-6 text-gray-400">
             Enter the 6-digit code sent to
             <br />
-            <span className="text-gray-300">
-              {formatEmail()}
-            </span>
+            <span className="text-gray-300">{formatEmail()}</span>
             <br />
             to continue resetting your password.
           </p>
@@ -192,10 +170,7 @@ const VerifyResetOtp = () => {
           )}
 
           {/* FORM */}
-          <form
-            onSubmit={handleVerifyOtp}
-            className="mt-7"
-          >
+          <form onSubmit={handleVerifyOtp} className="mt-7">
             {/* OTP INPUTS */}
             <div className="flex justify-center gap-2 md:gap-3">
               {otp.map((digit, index) => (
@@ -208,15 +183,8 @@ const VerifyResetOtp = () => {
                   inputMode="numeric"
                   maxLength="1"
                   value={digit}
-                  onChange={(event) =>
-                    handleChange(
-                      index,
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleKeyDown(index, event)
-                  }
+                  onChange={(event) => handleChange(index, event.target.value)}
+                  onKeyDown={(event) => handleKeyDown(index, event)}
                   className="h-11 w-10 md:h-12 md:w-12 rounded-sm border border-[#343438] bg-[#29292b] text-center text-lg font-semibold text-white outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               ))}
@@ -249,9 +217,7 @@ const VerifyResetOtp = () => {
                   disabled={loading}
                   className="font-semibold text-[#ded8d1] underline underline-offset-4 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading
-                    ? "Sending..."
-                    : "Resend OTP"}
+                  {loading ? "Sending..." : "Resend OTP"}
                 </button>
               </>
             )}
@@ -294,8 +260,8 @@ const VerifyResetOtp = () => {
           </svg>
 
           <span>
-            Secure Verification: For your security,
-            this code expires after a limited time.
+            Secure Verification: For your security, this code expires after a
+            limited time.
           </span>
         </div>
       </main>

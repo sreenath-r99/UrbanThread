@@ -35,20 +35,14 @@ const validateProduct = async (productId) => {
     .lean();
 
   if (!product) {
-    throw new Error(
-      "Product is unavailable or no longer exists"
-    );
+    throw new Error("Product is unavailable or no longer exists");
   }
 
   return product;
 };
 
-const cleanInvalidWishlistItems = async (
-  wishlist
-) => {
-  const productIds = wishlist.items.map(
-    (item) => item.product
-  );
+const cleanInvalidWishlistItems = async (wishlist) => {
+  const productIds = wishlist.items.map((item) => item.product);
 
   if (productIds.length === 0) {
     return;
@@ -65,22 +59,14 @@ const cleanInvalidWishlistItems = async (
     .lean();
 
   const validProductIds = new Set(
-    validProducts.map((product) =>
-      product._id.toString()
-    )
+    validProducts.map((product) => product._id.toString()),
   );
 
-  const cleanedItems = wishlist.items.filter(
-    (item) =>
-      validProductIds.has(
-        item.product.toString()
-      )
+  const cleanedItems = wishlist.items.filter((item) =>
+    validProductIds.has(item.product.toString()),
   );
 
-  if (
-    cleanedItems.length !==
-    wishlist.items.length
-  ) {
+  if (cleanedItems.length !== wishlist.items.length) {
     wishlist.items = cleanedItems;
 
     await wishlist.save();
@@ -118,10 +104,7 @@ const getWishlist = async (userId) => {
   }
 
   const validItems = wishlist.items.filter(
-    (item) =>
-      item.product &&
-      !item.product.isDeleted &&
-      item.product.isActive
+    (item) => item.product && !item.product.isDeleted && item.product.isActive,
   );
 
   return {
@@ -132,23 +115,14 @@ const getWishlist = async (userId) => {
   };
 };
 
-const addToWishlist = async (
-  userId,
-  productId
-) => {
-  const product = await validateProduct(
-    productId
+const addToWishlist = async (userId, productId) => {
+  const product = await validateProduct(productId);
+
+  const wishlist = await getOrCreateWishlist(userId);
+
+  const alreadyExists = wishlist.items.some(
+    (item) => item.product.toString() === product._id.toString(),
   );
-
-  const wishlist =
-    await getOrCreateWishlist(userId);
-
-  const alreadyExists =
-    wishlist.items.some(
-      (item) =>
-        item.product.toString() ===
-        product._id.toString()
-    );
 
   if (alreadyExists) {
     return getWishlist(userId);
@@ -164,10 +138,7 @@ const addToWishlist = async (
   return getWishlist(userId);
 };
 
-const removeFromWishlist = async (
-  userId,
-  productId
-) => {
+const removeFromWishlist = async (userId, productId) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
     throw new Error("Invalid product ID");
   }
@@ -186,21 +157,15 @@ const removeFromWishlist = async (
   }
 
   const itemExists = wishlist.items.some(
-    (item) =>
-      item.product.toString() ===
-      productId.toString()
+    (item) => item.product.toString() === productId.toString(),
   );
 
   if (!itemExists) {
-    throw new Error(
-      "Product is not in your wishlist"
-    );
+    throw new Error("Product is not in your wishlist");
   }
 
   wishlist.items = wishlist.items.filter(
-    (item) =>
-      item.product.toString() !==
-      productId.toString()
+    (item) => item.product.toString() !== productId.toString(),
   );
 
   await wishlist.save();
@@ -208,10 +173,7 @@ const removeFromWishlist = async (
   return getWishlist(userId);
 };
 
-const removeProductFromWishlist = async (
-  userId,
-  productId
-) => {
+const removeProductFromWishlist = async (userId, productId) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
     return;
   }
@@ -224,26 +186,18 @@ const removeProductFromWishlist = async (
     return;
   }
 
-  const originalLength =
-    wishlist.items.length;
+  const originalLength = wishlist.items.length;
 
   wishlist.items = wishlist.items.filter(
-    (item) =>
-      item.product.toString() !==
-      productId.toString()
+    (item) => item.product.toString() !== productId.toString(),
   );
 
-  if (
-    wishlist.items.length !== originalLength
-  ) {
+  if (wishlist.items.length !== originalLength) {
     await wishlist.save();
   }
 };
 
-const isProductInWishlist = async (
-  userId,
-  productId
-) => {
+const isProductInWishlist = async (userId, productId) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
     throw new Error("Invalid product ID");
   }

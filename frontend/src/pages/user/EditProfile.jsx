@@ -1,20 +1,11 @@
 import { useContext, useEffect, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../../context/AuthContext";
 import { updateProfile } from "../../services/authService";
 
 const EditProfile = () => {
-  const {
-    user,
-    token,
-    setUser,
-    logout,
-  } = useContext(AuthContext);
+  const { user, token, setUser, logout } = useContext(AuthContext);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,9 +32,7 @@ const EditProfile = () => {
         phone: user.phone || "",
       });
 
-      setPreviewImage(
-        user.profileImage || user.googleImage || ""
-      );
+      setPreviewImage(user.profileImage || user.googleImage || "");
     }
   }, [user]);
 
@@ -86,34 +75,10 @@ const EditProfile = () => {
           strokeWidth="1.7"
           className="h-5 w-5"
         >
-          <rect
-            x="4"
-            y="4"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="4"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="4"
-            y="14"
-            width="6"
-            height="6"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="14"
-            width="6"
-            height="6"
-            rx="1"
-          />
+          <rect x="4" y="4" width="6" height="6" rx="1" />
+          <rect x="14" y="4" width="6" height="6" rx="1" />
+          <rect x="4" y="14" width="6" height="6" rx="1" />
+          <rect x="14" y="14" width="6" height="6" rx="1" />
         </svg>
       ),
     },
@@ -129,11 +94,7 @@ const EditProfile = () => {
           strokeWidth="1.7"
           className="h-5 w-5"
         >
-          <circle
-            cx="12"
-            cy="8"
-            r="3.5"
-          />
+          <circle cx="12" cy="8" r="3.5" />
           <path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" />
         </svg>
       ),
@@ -185,11 +146,7 @@ const EditProfile = () => {
           className="h-5 w-5"
         >
           <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-          <circle
-            cx="12"
-            cy="10"
-            r="2.5"
-          />
+          <circle cx="12" cy="10" r="2.5" />
         </svg>
       ),
     },
@@ -227,28 +184,19 @@ const EditProfile = () => {
       newErrors.name = "Name must not exceed 50 characters";
     }
 
-    if (
-      trimmedPhone &&
-      !/^[0-9+\-\s()]{7,20}$/.test(trimmedPhone)
-    ) {
+    if (trimmedPhone && !/^[0-9+\-\s()]{7,20}$/.test(trimmedPhone)) {
       newErrors.phone = "Please enter a valid phone number";
     }
 
     if (profileImage) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-      ];
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
       if (!allowedTypes.includes(profileImage.type)) {
-        newErrors.profileImage =
-          "Only JPG, PNG, and WEBP images are allowed";
+        newErrors.profileImage = "Only JPG, PNG, and WEBP images are allowed";
       }
 
       if (profileImage.size > 2 * 1024 * 1024) {
-        newErrors.profileImage =
-          "Profile image must not exceed 2MB";
+        newErrors.profileImage = "Profile image must not exceed 2MB";
       }
     }
 
@@ -281,18 +229,13 @@ const EditProfile = () => {
       return;
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
     if (!allowedTypes.includes(file.type)) {
       setProfileImage(null);
       setErrors((previousErrors) => ({
         ...previousErrors,
-        profileImage:
-          "Only JPG, PNG, and WEBP images are allowed",
+        profileImage: "Only JPG, PNG, and WEBP images are allowed",
       }));
       return;
     }
@@ -301,8 +244,7 @@ const EditProfile = () => {
       setProfileImage(null);
       setErrors((previousErrors) => ({
         ...previousErrors,
-        profileImage:
-          "Profile image must not exceed 2MB",
+        profileImage: "Profile image must not exceed 2MB",
       }));
       return;
     }
@@ -341,27 +283,18 @@ const EditProfile = () => {
         formDataToSend.append("profileImage", profileImage);
       }
 
-      const response = await updateProfile(
-        formDataToSend,
-        token
-      );
+      const response = await updateProfile(formDataToSend, token);
 
       setUser(response.user);
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.user)
-      );
+      localStorage.setItem("user", JSON.stringify(response.user));
 
       setProfileImage(null);
 
-      setSuccessMessage(
-        "Your profile has been updated successfully."
-      );
+      setSuccessMessage("Your profile has been updated successfully.");
     } catch (error) {
       const message =
-        error.response?.data?.message ||
-        "Unable to update your profile";
+        error.response?.data?.message || "Unable to update your profile";
 
       setServerError(message);
     } finally {
@@ -389,10 +322,7 @@ const EditProfile = () => {
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
-                  src={
-                    user.profileImage ||
-                    user.googleImage
-                  }
+                  src={user.profileImage || user.googleImage}
                   alt={user.name || "User"}
                   className="h-11 w-11 rounded-full object-cover"
                 />
@@ -417,8 +347,7 @@ const EditProfile = () => {
           {/* Navigation */}
           <nav className="flex-1 py-4">
             {menuItems.map((item) => {
-              const isActive =
-                location.pathname === item.path;
+              const isActive = location.pathname === item.path;
 
               return (
                 <Link
@@ -471,8 +400,7 @@ const EditProfile = () => {
               </h1>
 
               <p className="mt-3 text-sm text-gray-500">
-                Update your details and manage your
-                account information.
+                Update your details and manage your account information.
               </p>
             </div>
 
@@ -501,9 +429,7 @@ const EditProfile = () => {
                   />
 
                   {errors.name && (
-                    <p className="mt-2 text-xs text-red-400">
-                      {errors.name}
-                    </p>
+                    <p className="mt-2 text-xs text-red-400">{errors.name}</p>
                   )}
                 </div>
 
@@ -532,9 +458,7 @@ const EditProfile = () => {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        navigate("/profile/change-email")
-                      }
+                      onClick={() => navigate("/profile/change-email")}
                       className="border border-[#3a3a3a] px-4 py-2 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-gray-500 hover:text-white"
                     >
                       Change Email
@@ -562,9 +486,7 @@ const EditProfile = () => {
                   />
 
                   {errors.phone && (
-                    <p className="mt-2 text-xs text-red-400">
-                      {errors.phone}
-                    </p>
+                    <p className="mt-2 text-xs text-red-400">{errors.phone}</p>
                   )}
                 </div>
 
@@ -640,9 +562,7 @@ const EditProfile = () => {
                   disabled={isSubmitting}
                   className="bg-[#e8e3dc] px-7 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#171717] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting
-                    ? "Saving..."
-                    : "Save Changes"}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -656,16 +576,13 @@ const EditProfile = () => {
                   </h2>
 
                   <p className="mt-2 text-sm text-gray-500">
-                    Update your password to keep your
-                    account secure.
+                    Update your password to keep your account secure.
                   </p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    navigate("/profile/change-password")
-                  }
+                  onClick={() => navigate("/profile/change-password")}
                   className="border border-[#3a3a3a] px-6 py-3 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-gray-500 hover:text-white"
                 >
                   Change Password
@@ -673,8 +590,7 @@ const EditProfile = () => {
               </div>
 
               <p className="mt-4 text-xs text-gray-600">
-                Use your current password to securely create
-                a new password.
+                Use your current password to securely create a new password.
               </p>
             </div>
           </div>

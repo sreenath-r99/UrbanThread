@@ -31,8 +31,7 @@ const AddAddress = () => {
   // ==========================
 
   const handleChange = (event) => {
-    const { name, value, type, checked } =
-      event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previousData) => ({
       ...previousData,
@@ -57,23 +56,19 @@ const AddAddress = () => {
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Full name is required";
     } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName =
-        "Full name must contain at least 2 characters";
+      newErrors.fullName = "Full name must contain at least 2 characters";
     }
 
     if (!/^[6-9]\d{9}$/.test(formData.phone)) {
-      newErrors.phone =
-        "Enter a valid 10-digit Indian phone number";
+      newErrors.phone = "Enter a valid 10-digit Indian phone number";
     }
 
     if (!formData.houseName.trim()) {
-      newErrors.houseName =
-        "House or building name is required";
+      newErrors.houseName = "House or building name is required";
     }
 
     if (!formData.street.trim()) {
-      newErrors.street =
-        "Street or area is required";
+      newErrors.street = "Street or area is required";
     }
 
     if (!formData.city.trim()) {
@@ -85,8 +80,7 @@ const AddAddress = () => {
     }
 
     if (!/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode =
-        "Pincode must contain exactly 6 digits";
+      newErrors.pincode = "Pincode must contain exactly 6 digits";
     }
 
     if (!formData.country.trim()) {
@@ -120,15 +114,9 @@ const AddAddress = () => {
         replace: true,
       });
     } catch (error) {
-      console.error(
-        "CREATE ADDRESS ERROR:",
-        error
-      );
+      console.error("CREATE ADDRESS ERROR:", error);
 
-      setSubmitError(
-        error.response?.data?.message ||
-          "Unable to add address"
-      );
+      setSubmitError(error.response?.data?.message || "Unable to add address");
     } finally {
       setLoading(false);
     }
@@ -167,19 +155,16 @@ const AddAddress = () => {
   const inputClassName =
     "mt-2 w-full border-b border-[#3a3a3a] bg-transparent px-0 py-3 text-sm text-[#e8e3dc] outline-none transition placeholder:text-gray-700 focus:border-gray-400";
 
-  const errorClassName =
-    "mt-2 text-[11px] text-red-400";
+  const errorClassName = "mt-2 text-[11px] text-red-400";
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <div className="flex min-h-screen">
-
         {/* ======================
             SIDEBAR
         ====================== */}
 
         <aside className="flex w-[245px] shrink-0 flex-col border-r border-[#333333] bg-[#181818]">
-
           <div className="border-b border-[#333333] px-7 py-7">
             <Link
               to="/"
@@ -193,10 +178,7 @@ const AddAddress = () => {
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
-                  src={
-                    user.profileImage ||
-                    user.googleImage
-                  }
+                  src={user.profileImage || user.googleImage}
                   alt={user.name}
                   className="h-11 w-11 rounded-full object-cover"
                 />
@@ -278,7 +260,6 @@ const AddAddress = () => {
         ====================== */}
 
         <main className="flex-1 px-6 py-8 sm:px-10 lg:px-14">
-
           {/* Header */}
 
           <div className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-7 md:flex-row md:items-center">
@@ -307,7 +288,6 @@ const AddAddress = () => {
           {/* Form Container */}
 
           <div className="mt-9 max-w-4xl border border-[#2c2c2c] bg-[#1b1b1b] p-6 sm:p-8 lg:p-10">
-
             <div className="mb-8">
               <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
                 Delivery Details
@@ -320,18 +300,12 @@ const AddAddress = () => {
 
             {submitError && (
               <div className="mb-7 border border-red-900/50 bg-red-950/20 p-4">
-                <p className="text-sm text-red-400">
-                  {submitError}
-                </p>
+                <p className="text-sm text-red-400">{submitError}</p>
               </div>
             )}
 
-            <form
-              onSubmit={handleSubmit}
-              noValidate
-            >
+            <form onSubmit={handleSubmit} noValidate>
               <div className="grid gap-x-8 gap-y-7 md:grid-cols-2">
-
                 {/* Full Name */}
 
                 <div>
@@ -353,9 +327,7 @@ const AddAddress = () => {
                   />
 
                   {errors.fullName && (
-                    <p className={errorClassName}>
-                      {errors.fullName}
-                    </p>
+                    <p className={errorClassName}>{errors.fullName}</p>
                   )}
                 </div>
 
@@ -381,9 +353,7 @@ const AddAddress = () => {
                   />
 
                   {errors.phone && (
-                    <p className={errorClassName}>
-                      {errors.phone}
-                    </p>
+                    <p className={errorClassName}>{errors.phone}</p>
                   )}
                 </div>
 
@@ -408,9 +378,7 @@ const AddAddress = () => {
                   />
 
                   {errors.houseName && (
-                    <p className={errorClassName}>
-                      {errors.houseName}
-                    </p>
+                    <p className={errorClassName}>{errors.houseName}</p>
                   )}
                 </div>
 
@@ -435,9 +403,7 @@ const AddAddress = () => {
                   />
 
                   {errors.street && (
-                    <p className={errorClassName}>
-                      {errors.street}
-                    </p>
+                    <p className={errorClassName}>{errors.street}</p>
                   )}
                 </div>
 
@@ -462,9 +428,7 @@ const AddAddress = () => {
                   />
 
                   {errors.city && (
-                    <p className={errorClassName}>
-                      {errors.city}
-                    </p>
+                    <p className={errorClassName}>{errors.city}</p>
                   )}
                 </div>
 
@@ -489,9 +453,7 @@ const AddAddress = () => {
                   />
 
                   {errors.state && (
-                    <p className={errorClassName}>
-                      {errors.state}
-                    </p>
+                    <p className={errorClassName}>{errors.state}</p>
                   )}
                 </div>
 
@@ -517,9 +479,7 @@ const AddAddress = () => {
                   />
 
                   {errors.pincode && (
-                    <p className={errorClassName}>
-                      {errors.pincode}
-                    </p>
+                    <p className={errorClassName}>{errors.pincode}</p>
                   )}
                 </div>
 
@@ -543,9 +503,7 @@ const AddAddress = () => {
                   />
 
                   {errors.country && (
-                    <p className={errorClassName}>
-                      {errors.country}
-                    </p>
+                    <p className={errorClassName}>{errors.country}</p>
                   )}
                 </div>
 
@@ -584,9 +542,7 @@ const AddAddress = () => {
                       className="h-4 w-4 accent-gray-400"
                     />
 
-                    <span>
-                      Set as default address
-                    </span>
+                    <span>Set as default address</span>
                   </label>
                 </div>
               </div>
@@ -606,9 +562,7 @@ const AddAddress = () => {
                   disabled={loading}
                   className="border border-white bg-white px-7 py-3 text-[10px] uppercase tracking-[0.15em] text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading
-                    ? "Saving..."
-                    : "Save Address"}
+                  {loading ? "Saving..." : "Save Address"}
                 </button>
               </div>
             </form>

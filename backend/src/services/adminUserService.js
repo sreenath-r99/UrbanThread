@@ -13,22 +13,12 @@ import User from "../models/User.js";
 |
 */
 
-export const getAllUsers = async ({
-  search = "",
-  page = 1,
-  limit = 10,
-}) => {
-  const currentPage =
-    Math.max(Number(page) || 1, 1);
+export const getAllUsers = async ({ search = "", page = 1, limit = 10 }) => {
+  const currentPage = Math.max(Number(page) || 1, 1);
 
-  const pageLimit =
-    Math.min(
-      Math.max(Number(limit) || 10, 1),
-      100
-    );
+  const pageLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
-  const skip =
-    (currentPage - 1) * pageLimit;
+  const skip = (currentPage - 1) * pageLimit;
 
   /*
   |--------------------------------------------------------------------------
@@ -53,18 +43,13 @@ export const getAllUsers = async ({
   |--------------------------------------------------------------------------
   */
 
-  const trimmedSearch =
-    String(search).trim();
+  const trimmedSearch = String(search).trim();
 
   if (trimmedSearch) {
-    const searchRegex =
-      new RegExp(
-        trimmedSearch.replace(
-          /[.*+?^${}()|[\]\\]/g,
-          "\\$&"
-        ),
-        "i"
-      );
+    const searchRegex = new RegExp(
+      trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i",
+    );
 
     query.$or = [
       {
@@ -82,14 +67,9 @@ export const getAllUsers = async ({
   |--------------------------------------------------------------------------
   */
 
-  const [
-    users,
-    totalUsers,
-  ] = await Promise.all([
+  const [users, totalUsers] = await Promise.all([
     User.find(query)
-      .select(
-        "-password -otp -otpExpires"
-      )
+      .select("-password -otp -otpExpires")
       .sort({
         createdAt: -1,
       })
@@ -100,10 +80,7 @@ export const getAllUsers = async ({
     User.countDocuments(query),
   ]);
 
-  const totalPages =
-    Math.ceil(
-      totalUsers / pageLimit
-    ) || 1;
+  const totalPages = Math.ceil(totalUsers / pageLimit) || 1;
 
   return {
     users,
@@ -122,38 +99,26 @@ export const getAllUsers = async ({
 |--------------------------------------------------------------------------
 */
 
-export const getUserById =
-  async (userId) => {
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        userId
-      )
-    ) {
-      throw new Error(
-        "Invalid user ID"
-      );
-    }
+export const getUserById = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
+  }
 
-    const user =
-      await User.findOne({
-        _id: userId,
-        role: {
-          $ne: "admin",
-        },
-      })
-        .select(
-          "-password -otp -otpExpires"
-        )
-        .lean();
+  const user = await User.findOne({
+    _id: userId,
+    role: {
+      $ne: "admin",
+    },
+  })
+    .select("-password -otp -otpExpires")
+    .lean();
 
-    if (!user) {
-      throw new Error(
-        "User not found"
-      );
-    }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-    return user;
-  };
+  return user;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -161,50 +126,37 @@ export const getUserById =
 |--------------------------------------------------------------------------
 */
 
-export const blockUser =
-  async (userId) => {
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        userId
-      )
-    ) {
-      throw new Error(
-        "Invalid user ID"
-      );
-    }
+export const blockUser = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
+  }
 
-    const user =
-      await User.findOne({
-        _id: userId,
-        role: {
-          $ne: "admin",
-        },
-      });
+  const user = await User.findOne({
+    _id: userId,
+    role: {
+      $ne: "admin",
+    },
+  });
 
-    if (!user) {
-      throw new Error(
-        "User not found"
-      );
-    }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-    if (user.isBlocked) {
-      throw new Error(
-        "User is already blocked"
-      );
-    }
+  if (user.isBlocked) {
+    throw new Error("User is already blocked");
+  }
 
-    user.isBlocked = true;
+  user.isBlocked = true;
 
-    await user.save();
+  await user.save();
 
-    return {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isBlocked:
-        user.isBlocked,
-    };
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isBlocked: user.isBlocked,
   };
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -212,47 +164,34 @@ export const blockUser =
 |--------------------------------------------------------------------------
 */
 
-export const unblockUser =
-  async (userId) => {
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        userId
-      )
-    ) {
-      throw new Error(
-        "Invalid user ID"
-      );
-    }
+export const unblockUser = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
+  }
 
-    const user =
-      await User.findOne({
-        _id: userId,
-        role: {
-          $ne: "admin",
-        },
-      });
+  const user = await User.findOne({
+    _id: userId,
+    role: {
+      $ne: "admin",
+    },
+  });
 
-    if (!user) {
-      throw new Error(
-        "User not found"
-      );
-    }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-    if (!user.isBlocked) {
-      throw new Error(
-        "User is already unblocked"
-      );
-    }
+  if (!user.isBlocked) {
+    throw new Error("User is already unblocked");
+  }
 
-    user.isBlocked = false;
+  user.isBlocked = false;
 
-    await user.save();
+  await user.save();
 
-    return {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isBlocked:
-        user.isBlocked,
-    };
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isBlocked: user.isBlocked,
   };
+};
