@@ -1,4 +1,11 @@
+
 import mongoose from "mongoose";
+
+/*
+|--------------------------------------------------------------------------
+| ORDER ITEM SCHEMA
+|--------------------------------------------------------------------------
+*/
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -75,11 +82,83 @@ const orderItemSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    /*
+     * ---------------------------------------------------------
+     * ITEM RETURN
+     * ---------------------------------------------------------
+     *
+     * Customer return request and admin-managed return stages.
+     *
+     * Not Requested
+     *       ↓
+     *   Requested
+     *       ├── Approved
+     *       │      ↓
+     *       │  Pickup Scheduled
+     *       │      ↓
+     *       │   Picked Up
+     *       │      ↓
+     *       │   In Transit
+     *       │      ↓
+     *       │    Received
+     *       │      ↓
+     *       │    Inspected
+     *       │      ↓
+     *       │  Refund Completed
+     *       │
+     *       └── Rejected
+     *
+     * Status transitions are validated in the service layer.
+     * This schema enum ensures Mongoose accepts each valid stage.
+     * ---------------------------------------------------------
+     */
+
+    returnStatus: {
+      type: String,
+      enum: {
+        values: [
+          "Not Requested",
+          "Requested",
+          "Approved",
+          "Rejected",
+          "Pickup Scheduled",
+          "Picked Up",
+          "In Transit",
+          "Received",
+          "Inspected",
+          "Refund Completed",
+        ],
+        message: "Invalid return status",
+      },
+      default: "Not Requested",
+    },
+
+    returnReason: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: [
+        500,
+        "Return reason cannot exceed 500 characters",
+      ],
+    },
+
+    returnRequestedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     _id: true,
   },
 );
+
+/*
+|--------------------------------------------------------------------------
+| SHIPPING ADDRESS SCHEMA
+|--------------------------------------------------------------------------
+*/
 
 const shippingAddressSchema = new mongoose.Schema(
   {
@@ -143,8 +222,20 @@ const shippingAddressSchema = new mongoose.Schema(
   },
 );
 
+/*
+|--------------------------------------------------------------------------
+| ORDER SCHEMA
+|--------------------------------------------------------------------------
+*/
+
 const orderSchema = new mongoose.Schema(
   {
+    /*
+     * ---------------------------------------------------------
+     * ORDER IDENTIFICATION
+     * ---------------------------------------------------------
+     */
+
     orderId: {
       type: String,
       required: true,
@@ -160,19 +251,38 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    /*
+     * ---------------------------------------------------------
+     * ORDER ITEMS
+     * ---------------------------------------------------------
+     */
+
     items: {
       type: [orderItemSchema],
       required: true,
       validate: {
-        validator: (items) => Array.isArray(items) && items.length > 0,
+        validator: (items) =>
+          Array.isArray(items) && items.length > 0,
         message: "Order must contain at least one item",
       },
     },
+
+    /*
+     * ---------------------------------------------------------
+     * SHIPPING ADDRESS
+     * ---------------------------------------------------------
+     */
 
     shippingAddress: {
       type: shippingAddressSchema,
       required: true,
     },
+
+    /*
+     * ---------------------------------------------------------
+     * PAYMENT
+     * ---------------------------------------------------------
+     */
 
     paymentMethod: {
       type: String,
@@ -183,9 +293,20 @@ const orderSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
-      enum: ["Pending", "Paid", "Failed", "Refunded"],
+      enum: [
+        "Pending",
+        "Paid",
+        "Failed",
+        "Refunded",
+      ],
       default: "Pending",
     },
+
+    /*
+     * ---------------------------------------------------------
+     * ORDER STATUS
+     * ---------------------------------------------------------
+     */
 
     orderStatus: {
       type: String,
@@ -201,16 +322,28 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    /*
+     * ---------------------------------------------------------
+     * ORDER PRICING
+     * ---------------------------------------------------------
+     */
+
     subtotal: {
       type: Number,
       required: true,
-      min: [0, "Subtotal cannot be negative"],
+      min: [
+        0,
+        "Subtotal cannot be negative",
+      ],
     },
 
     discount: {
       type: Number,
       default: 0,
-      min: [0, "Discount cannot be negative"],
+      min: [
+        0,
+        "Discount cannot be negative",
+      ],
     },
 
     /*
@@ -229,26 +362,62 @@ const orderSchema = new mongoose.Schema(
     couponDiscount: {
       type: Number,
       default: 0,
-      min: [0, "Coupon discount cannot be negative"],
+      min: [
+        0,
+        "Coupon discount cannot be negative",
+      ],
     },
+
+    /*
+     * ---------------------------------------------------------
+     * SHIPPING CHARGE
+     * ---------------------------------------------------------
+     */
 
     shippingCharge: {
       type: Number,
       default: 0,
-      min: [0, "Shipping charge cannot be negative"],
+      min: [
+        0,
+        "Shipping charge cannot be negative",
+      ],
     },
+
+    /*
+     * ---------------------------------------------------------
+     * TAX
+     * ---------------------------------------------------------
+     */
 
     tax: {
       type: Number,
       default: 0,
-      min: [0, "Tax cannot be negative"],
+      min: [
+        0,
+        "Tax cannot be negative",
+      ],
     },
+
+    /*
+     * ---------------------------------------------------------
+     * TOTAL AMOUNT
+     * ---------------------------------------------------------
+     */
 
     totalAmount: {
       type: Number,
       required: true,
-      min: [0, "Total amount cannot be negative"],
+      min: [
+        0,
+        "Total amount cannot be negative",
+      ],
     },
+
+    /*
+     * ---------------------------------------------------------
+     * ORDER CANCELLATION
+     * ---------------------------------------------------------
+     */
 
     cancellationReason: {
       type: String,
@@ -266,6 +435,12 @@ const orderSchema = new mongoose.Schema(
   },
 );
 
+/*
+|--------------------------------------------------------------------------
+| INDEXES
+|--------------------------------------------------------------------------
+*/
+
 orderSchema.index({
   user: 1,
   createdAt: -1,
@@ -276,6 +451,14 @@ orderSchema.index({
   createdAt: -1,
 });
 
-const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
+/*
+|--------------------------------------------------------------------------
+| ORDER MODEL
+|--------------------------------------------------------------------------
+*/
+
+const Order =
+  mongoose.models.Order ||
+  mongoose.model("Order", orderSchema);
 
 export default Order;

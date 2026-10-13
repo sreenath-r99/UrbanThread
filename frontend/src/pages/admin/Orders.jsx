@@ -1,9 +1,15 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   getAdminOrder,
   getAdminOrders,
   updateAdminOrderStatus,
+  updateAdminOrderItemReturn,
 } from "../../services/orderService";
 
 import { AdminAuthContext } from "../../context/AdminAuthContext";
@@ -65,11 +71,14 @@ const formatDate = (date) => {
     return "-";
   }
 
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(date).toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 };
 
 /*
@@ -83,13 +92,16 @@ const formatDateTime = (date) => {
     return "-";
   }
 
-  return new Date(date).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(date).toLocaleString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 };
 
 /*
@@ -99,7 +111,9 @@ const formatDateTime = (date) => {
 */
 
 const formatCurrency = (amount) => {
-  return `₹${Number(amount || 0).toLocaleString("en-IN", {
+  return `₹${Number(
+    amount || 0
+  ).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -107,26 +121,99 @@ const formatCurrency = (amount) => {
 
 /*
 |--------------------------------------------------------------------------
-| STATUS TRANSITION CHECK
+| RETURN STATUS TRANSITIONS
 |--------------------------------------------------------------------------
-|
-| Keep the frontend consistent with the backend.
-|
 */
 
-const getAllowedNextStatuses = (currentStatus) => {
+const getAllowedNextReturnStatuses = (currentStatus) => {
+  switch (currentStatus) {
+    case "Requested":
+      return ["Approved", "Rejected"];
+
+    case "Approved":
+      return ["Pickup Scheduled"];
+
+    case "Pickup Scheduled":
+      return ["Picked Up"];
+
+    case "Picked Up":
+      return ["In Transit"];
+
+    case "In Transit":
+      return ["Received"];
+
+    case "Received":
+      return ["Inspected"];
+
+    case "Inspected":
+      return ["Refund Completed"];
+
+    default:
+      return [];
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| RETURN STATUS COLORS
+|--------------------------------------------------------------------------
+*/
+
+const getReturnStatusClass = (status) => {
+  switch (status) {
+    case "Requested":
+      return "border-yellow-800 bg-yellow-950/40 text-yellow-300";
+
+    case "Approved":
+    case "Pickup Scheduled":
+    case "Picked Up":
+    case "In Transit":
+    case "Received":
+    case "Inspected":
+      return "border-blue-800 bg-blue-950/40 text-blue-300";
+
+    case "Refund Completed":
+      return "border-green-800 bg-green-950/40 text-green-300";
+
+    case "Rejected":
+      return "border-red-800 bg-red-950/40 text-red-300";
+
+    default:
+      return "border-[#3a3a3a] bg-[#202020] text-neutral-300";
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| ORDER STATUS TRANSITIONS
+|--------------------------------------------------------------------------
+*/
+
+const getAllowedNextStatuses = (
+  currentStatus
+) => {
   switch (currentStatus) {
     case "Pending":
-      return ["Shipped", "Cancelled"];
+      return [
+        "Shipped",
+        "Cancelled",
+      ];
 
     case "Partially Cancelled":
-      return ["Shipped", "Cancelled"];
+      return [
+        "Shipped",
+        "Cancelled",
+      ];
 
     case "Shipped":
-      return ["Out for Delivery"];
+      return [
+        "Out for Delivery",
+      ];
 
     case "Out for Delivery":
-      return ["Delivered"];
+      return [
+        "Delivered",
+      ];
 
     case "Delivered":
       return [];
@@ -146,7 +233,10 @@ const getAllowedNextStatuses = (currentStatus) => {
 */
 
 const Orders = () => {
-  const { adminToken, loading: adminLoading } = useContext(AdminAuthContext);
+  const {
+    adminToken,
+    loading: adminLoading,
+  } = useContext(AdminAuthContext);
 
   /*
    * ---------------------------------------------------------------
@@ -156,9 +246,11 @@ const Orders = () => {
 
   const [orders, setOrders] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   /*
    * ---------------------------------------------------------------
@@ -166,11 +258,71 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] =
+    useState("");
 
-  const [status, setStatus] = useState("");
+  const [status, setStatus] =
+    useState("");
 
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortOrder, setSortOrder] =
+    useState("desc");
+
+  /*
+   * ---------------------------------------------------------------
+   * UPDATE RETURN STATUS
+   * ---------------------------------------------------------------
+   */
+
+  const handleReturnStatusUpdate = async (
+    itemId,
+    nextReturnStatus
+  ) => {
+    if (
+      !selectedOrder ||
+      !adminToken ||
+      updatingReturnItemId
+    ) {
+      return;
+    }
+
+    try {
+      setUpdatingReturnItemId(itemId);
+      setReturnError("");
+
+      const response =
+        await updateAdminOrderItemReturn(
+          selectedOrder._id,
+          itemId,
+          nextReturnStatus,
+          adminToken
+        );
+
+      if (!response?.success) {
+        throw new Error(
+          response?.message ||
+            "Unable to update return status"
+        );
+      }
+
+      setSelectedOrder(response.order);
+
+      await fetchOrders();
+    } catch (returnUpdateError) {
+      console.error(
+        "UPDATE ADMIN RETURN STATUS ERROR:",
+        returnUpdateError
+      );
+
+      setReturnError(
+        returnUpdateError?.response?.data
+          ?.message ||
+          returnUpdateError.message ||
+          "Unable to update return status"
+      );
+    } finally {
+      setUpdatingReturnItemId("");
+    }
+  };
 
   /*
    * ---------------------------------------------------------------
@@ -178,18 +330,21 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] =
+    useState(1);
 
-  const [limit] = useState(10);
+  const [limit] =
+    useState(10);
 
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 0,
-    totalOrders: 0,
-    limit: 10,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
+  const [pagination, setPagination] =
+    useState({
+      currentPage: 1,
+      totalPages: 0,
+      totalOrders: 0,
+      limit: 10,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    });
 
   /*
    * ---------------------------------------------------------------
@@ -197,11 +352,14 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrder, setSelectedOrder] =
+    useState(null);
 
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailLoading, setDetailLoading] =
+    useState(false);
 
-  const [detailError, setDetailError] = useState("");
+  const [detailError, setDetailError] =
+    useState("");
 
   /*
    * ---------------------------------------------------------------
@@ -209,9 +367,23 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingStatus, setUpdatingStatus] =
+    useState(false);
 
-  const [statusError, setStatusError] = useState("");
+  const [statusError, setStatusError] =
+    useState("");
+
+  /*
+   * ---------------------------------------------------------------
+   * RETURN UPDATE
+   * ---------------------------------------------------------------
+   */
+
+  const [updatingReturnItemId, setUpdatingReturnItemId] =
+    useState("");
+
+  const [returnError, setReturnError] =
+    useState("");
 
   /*
    * ---------------------------------------------------------------
@@ -219,9 +391,11 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const [showCancelReason, setShowCancelReason] = useState(false);
+  const [showCancelReason, setShowCancelReason] =
+    useState(false);
 
-  const [cancelReason, setCancelReason] = useState("");
+  const [cancelReason, setCancelReason] =
+    useState("");
 
   /*
    * ---------------------------------------------------------------
@@ -229,53 +403,76 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const fetchOrders = useCallback(async () => {
-    if (!adminToken) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await getAdminOrders(adminToken, {
-        page,
-        limit,
-        search,
-        status,
-        sortOrder,
-      });
-
-      if (!response?.success) {
-        throw new Error(response?.message || "Unable to fetch orders");
+  const fetchOrders = useCallback(
+    async () => {
+      if (!adminToken) {
+        return;
       }
 
-      setOrders(response.orders || []);
+      try {
+        setLoading(true);
+        setError("");
 
-      setPagination(
-        response.pagination || {
-          currentPage: page,
-          totalPages: 0,
-          totalOrders: 0,
-          limit,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      );
-    } catch (fetchError) {
-      console.error("FETCH ADMIN ORDERS ERROR:", fetchError);
+        const response =
+          await getAdminOrders(
+            adminToken,
+            {
+              page,
+              limit,
+              search,
+              status,
+              sortOrder,
+            }
+          );
 
-      setError(
-        fetchError?.response?.data?.message ||
-          fetchError.message ||
-          "Unable to fetch orders",
-      );
+        if (!response?.success) {
+          throw new Error(
+            response?.message ||
+              "Unable to fetch orders"
+          );
+        }
 
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [adminToken, page, limit, search, status, sortOrder]);
+        setOrders(
+          response.orders || []
+        );
+
+        setPagination(
+          response.pagination || {
+            currentPage: page,
+            totalPages: 0,
+            totalOrders: 0,
+            limit,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          }
+        );
+      } catch (fetchError) {
+        console.error(
+          "FETCH ADMIN ORDERS ERROR:",
+          fetchError
+        );
+
+        setError(
+          fetchError?.response?.data
+            ?.message ||
+            fetchError.message ||
+            "Unable to fetch orders"
+        );
+
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      adminToken,
+      page,
+      limit,
+      search,
+      status,
+      sortOrder,
+    ]
+  );
 
   /*
    * ---------------------------------------------------------------
@@ -287,7 +484,10 @@ const Orders = () => {
     if (!adminLoading) {
       fetchOrders();
     }
-  }, [adminLoading, fetchOrders]);
+  }, [
+    adminLoading,
+    fetchOrders,
+  ]);
 
   /*
    * ---------------------------------------------------------------
@@ -295,7 +495,9 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = (
+    event
+  ) => {
     setSearch(event.target.value);
     setPage(1);
   };
@@ -306,7 +508,9 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const handleStatusChange = (event) => {
+  const handleStatusChange = (
+    event
+  ) => {
     setStatus(event.target.value);
     setPage(1);
   };
@@ -317,7 +521,9 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const handleSortChange = (event) => {
+  const handleSortChange = (
+    event
+  ) => {
     setSortOrder(event.target.value);
     setPage(1);
   };
@@ -341,7 +547,9 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const handleViewOrder = async (orderId) => {
+  const handleViewOrder = async (
+    orderId
+  ) => {
     if (!adminToken) {
       return;
     }
@@ -351,23 +559,37 @@ const Orders = () => {
       setDetailError("");
       setSelectedOrder(null);
       setStatusError("");
+      setReturnError("");
       setShowCancelReason(false);
       setCancelReason("");
 
-      const response = await getAdminOrder(orderId, adminToken);
+      const response =
+        await getAdminOrder(
+          orderId,
+          adminToken
+        );
 
       if (!response?.success) {
-        throw new Error(response?.message || "Unable to fetch order details");
+        throw new Error(
+          response?.message ||
+            "Unable to fetch order details"
+        );
       }
 
-      setSelectedOrder(response.order);
+      setSelectedOrder(
+        response.order
+      );
     } catch (detailFetchError) {
-      console.error("FETCH ADMIN ORDER ERROR:", detailFetchError);
+      console.error(
+        "FETCH ADMIN ORDER ERROR:",
+        detailFetchError
+      );
 
       setDetailError(
-        detailFetchError?.response?.data?.message ||
+        detailFetchError?.response
+          ?.data?.message ||
           detailFetchError.message ||
-          "Unable to fetch order details",
+          "Unable to fetch order details"
       );
     } finally {
       setDetailLoading(false);
@@ -381,13 +603,14 @@ const Orders = () => {
    */
 
   const handleCloseDetails = () => {
-    if (updatingStatus) {
+    if (updatingStatus || updatingReturnItemId) {
       return;
     }
 
     setSelectedOrder(null);
     setDetailError("");
     setStatusError("");
+    setReturnError("");
     setShowCancelReason(false);
     setCancelReason("");
   };
@@ -398,8 +621,14 @@ const Orders = () => {
    * ---------------------------------------------------------------
    */
 
-  const handleStatusUpdate = async (nextStatus) => {
-    if (!selectedOrder || !adminToken || updatingStatus) {
+  const handleStatusUpdate = async (
+    nextStatus
+  ) => {
+    if (
+      !selectedOrder ||
+      !adminToken ||
+      updatingStatus
+    ) {
       return;
     }
 
@@ -409,14 +638,18 @@ const Orders = () => {
      * Cancellation requires a reason.
      */
 
-    if (nextStatus === "Cancelled") {
+    if (
+      nextStatus === "Cancelled"
+    ) {
       if (!showCancelReason) {
         setShowCancelReason(true);
         return;
       }
 
       if (!cancelReason.trim()) {
-        setStatusError("Cancellation reason is required.");
+        setStatusError(
+          "Cancellation reason is required."
+        );
 
         return;
       }
@@ -425,22 +658,28 @@ const Orders = () => {
     try {
       setUpdatingStatus(true);
 
-      const response = await updateAdminOrderStatus(
-        selectedOrder._id,
-        nextStatus,
-        adminToken,
-        cancelReason.trim(),
-      );
+      const response =
+        await updateAdminOrderStatus(
+          selectedOrder._id,
+          nextStatus,
+          adminToken,
+          cancelReason.trim()
+        );
 
       if (!response?.success) {
-        throw new Error(response?.message || "Unable to update order status");
+        throw new Error(
+          response?.message ||
+            "Unable to update order status"
+        );
       }
 
       /*
        * Update modal immediately.
        */
 
-      setSelectedOrder(response.order);
+      setSelectedOrder(
+        response.order
+      );
 
       setShowCancelReason(false);
       setCancelReason("");
@@ -453,12 +692,16 @@ const Orders = () => {
 
       await fetchOrders();
     } catch (statusUpdateError) {
-      console.error("UPDATE ADMIN ORDER STATUS ERROR:", statusUpdateError);
+      console.error(
+        "UPDATE ADMIN ORDER STATUS ERROR:",
+        statusUpdateError
+      );
 
       setStatusError(
-        statusUpdateError?.response?.data?.message ||
+        statusUpdateError?.response
+          ?.data?.message ||
           statusUpdateError.message ||
-          "Unable to update order status",
+          "Unable to update order status"
       );
     } finally {
       setUpdatingStatus(false);
@@ -472,14 +715,22 @@ const Orders = () => {
    */
 
   const handlePreviousPage = () => {
-    if (pagination.hasPreviousPage) {
-      setPage((currentPage) => currentPage - 1);
+    if (
+      pagination.hasPreviousPage
+    ) {
+      setPage(
+        (currentPage) =>
+          currentPage - 1
+      );
     }
   };
 
   const handleNextPage = () => {
     if (pagination.hasNextPage) {
-      setPage((currentPage) => currentPage + 1);
+      setPage(
+        (currentPage) =>
+          currentPage + 1
+      );
     }
   };
 
@@ -490,9 +741,11 @@ const Orders = () => {
    */
 
   const getPageNumbers = () => {
-    const totalPages = pagination.totalPages;
+    const totalPages =
+      pagination.totalPages;
 
-    const currentPage = pagination.currentPage;
+    const currentPage =
+      pagination.currentPage;
 
     if (!totalPages) {
       return [];
@@ -500,11 +753,21 @@ const Orders = () => {
 
     const pages = [];
 
-    const start = Math.max(1, currentPage - 2);
+    const start = Math.max(
+      1,
+      currentPage - 2
+    );
 
-    const end = Math.min(totalPages, currentPage + 2);
+    const end = Math.min(
+      totalPages,
+      currentPage + 2
+    );
 
-    for (let number = start; number <= end; number += 1) {
+    for (
+      let number = start;
+      number <= end;
+      number += 1
+    ) {
       pages.push(number);
     }
 
@@ -524,8 +787,7 @@ const Orders = () => {
       </div>
     );
   }
-
-  /*
+    /*
    * ---------------------------------------------------------------
    * PAGE
    * ---------------------------------------------------------------
@@ -548,13 +810,16 @@ const Orders = () => {
           </h1>
 
           <p className="mt-2 text-sm text-neutral-500">
-            Manage customer orders and fulfillment status.
+            Manage customer orders and
+            fulfillment status.
           </p>
         </div>
 
         <div className="text-sm text-neutral-500">
           {pagination.totalOrders}{" "}
-          {pagination.totalOrders === 1 ? "order" : "orders"}
+          {pagination.totalOrders === 1
+            ? "order"
+            : "orders"}
         </div>
       </div>
 
@@ -592,13 +857,20 @@ const Orders = () => {
               onChange={handleStatusChange}
               className="h-11 w-full border border-[#303030] bg-[#111111] px-4 text-sm text-white outline-none focus:border-[#5a5a5a]"
             >
-              <option value="">All statuses</option>
+              <option value="">
+                All statuses
+              </option>
 
-              {STATUS_OPTIONS.map((statusOption) => (
-                <option key={statusOption} value={statusOption}>
-                  {statusOption}
-                </option>
-              ))}
+              {STATUS_OPTIONS.map(
+                (statusOption) => (
+                  <option
+                    key={statusOption}
+                    value={statusOption}
+                  >
+                    {statusOption}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -614,9 +886,13 @@ const Orders = () => {
               onChange={handleSortChange}
               className="h-11 w-full border border-[#303030] bg-[#111111] px-4 text-sm text-white outline-none focus:border-[#5a5a5a]"
             >
-              <option value="desc">Newest first</option>
+              <option value="desc">
+                Newest first
+              </option>
 
-              <option value="asc">Oldest first</option>
+              <option value="asc">
+                Oldest first
+              </option>
             </select>
           </div>
 
@@ -673,6 +949,10 @@ const Orders = () => {
                   Status
                 </th>
 
+                <th className="px-5 py-4 text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                  Returns
+                </th>
+
                 <th className="px-5 py-4 text-right text-[10px] uppercase tracking-[0.14em] text-neutral-500">
                   Action
                 </th>
@@ -683,7 +963,7 @@ const Orders = () => {
               {loading ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="7"
                     className="px-5 py-16 text-center text-sm text-neutral-500"
                   >
                     Loading orders...
@@ -691,11 +971,17 @@ const Orders = () => {
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-5 py-16 text-center">
-                    <p className="text-sm text-neutral-400">No orders found.</p>
+                  <td
+                    colSpan="7"
+                    className="px-5 py-16 text-center"
+                  >
+                    <p className="text-sm text-neutral-400">
+                      No orders found.
+                    </p>
 
                     <p className="mt-1 text-xs text-neutral-600">
-                      Try changing your search or filters.
+                      Try changing your
+                      search or filters.
                     </p>
                   </td>
                 </tr>
@@ -714,7 +1000,9 @@ const Orders = () => {
 
                       <p className="mt-1 text-xs text-neutral-600">
                         {order.items?.length || 0}{" "}
-                        {order.items?.length === 1 ? "item" : "items"}
+                        {order.items?.length === 1
+                          ? "item"
+                          : "items"}
                       </p>
                     </td>
 
@@ -744,7 +1032,9 @@ const Orders = () => {
 
                     <td className="px-5 py-5">
                       <p className="text-sm text-neutral-200">
-                        {formatCurrency(order.totalAmount)}
+                        {formatCurrency(
+                          order.totalAmount
+                        )}
                       </p>
                     </td>
 
@@ -753,11 +1043,74 @@ const Orders = () => {
                     <td className="px-5 py-5">
                       <span
                         className={`inline-flex border px-3 py-1.5 text-xs ${getStatusClass(
-                          order.orderStatus,
+                          order.orderStatus
                         )}`}
                       >
                         {order.orderStatus}
                       </span>
+                    </td>
+
+                    {/* RETURNS */}
+
+                    <td className="px-5 py-5">
+                      {(() => {
+                        const returnItems =
+                          order.items?.filter(
+                            (item) =>
+                              item?.returnStatus &&
+                              item.returnStatus !==
+                                "Not Requested"
+                          ) || [];
+
+                        if (returnItems.length === 0) {
+                          return (
+                            <span className="text-xs text-neutral-600">
+                              No requests
+                            </span>
+                          );
+                        }
+
+                        const hasRequested =
+                          returnItems.some(
+                            (item) =>
+                              item.returnStatus ===
+                              "Requested"
+                          );
+
+                        const hasApproved =
+                          returnItems.some(
+                            (item) =>
+                              item.returnStatus ===
+                              "Approved"
+                          );
+
+                        return (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex border px-2.5 py-1 text-[10px] ${
+                                hasRequested
+                                  ? "border-yellow-800 bg-yellow-950/40 text-yellow-300"
+                                  : hasApproved
+                                    ? "border-green-800 bg-green-950/40 text-green-300"
+                                    : "border-red-800 bg-red-950/40 text-red-300"
+                              }`}
+                            >
+                              {hasRequested
+                                ? "Requested"
+                                : hasApproved
+                                  ? "Approved"
+                                  : "Rejected"}
+                            </span>
+
+                            <span className="text-[10px] text-neutral-600">
+                              {returnItems.length} item
+                              {returnItems.length === 1
+                                ? ""
+                                : "s"}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* ACTION */}
@@ -765,7 +1118,9 @@ const Orders = () => {
                     <td className="px-5 py-5 text-right">
                       <button
                         type="button"
-                        onClick={() => handleViewOrder(order._id)}
+                        onClick={() =>
+                          handleViewOrder(order._id)
+                        }
                         className="border border-[#3a3a3a] px-4 py-2 text-xs text-neutral-300 transition hover:bg-[#242424] hover:text-white"
                       >
                         View Details
@@ -783,56 +1138,72 @@ const Orders = () => {
           PAGINATION
       ========================================================== */}
 
-      {!loading && pagination.totalPages > 0 && (
-        <div className="mt-5 flex flex-col gap-4 border border-[#292929] bg-[#151515] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page{" "}
-            <span className="text-neutral-300">{pagination.currentPage}</span>{" "}
-            of <span className="text-neutral-300">{pagination.totalPages}</span>
-          </p>
+      {!loading &&
+        pagination.totalPages > 0 && (
+          <div className="mt-5 flex flex-col gap-4 border border-[#292929] bg-[#151515] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-neutral-500">
+              Page{" "}
+              <span className="text-neutral-300">
+                {pagination.currentPage}
+              </span>{" "}
+              of{" "}
+              <span className="text-neutral-300">
+                {pagination.totalPages}
+              </span>
+            </p>
 
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={!pagination.hasPreviousPage}
-              onClick={handlePreviousPage}
-              className="border border-[#303030] px-3 py-2 text-xs text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Previous
-            </button>
-
-            {getPageNumbers().map((pageNumber) => (
+            <div className="flex items-center gap-1">
               <button
-                key={pageNumber}
                 type="button"
-                onClick={() => setPage(pageNumber)}
-                className={`min-w-9 border px-3 py-2 text-xs transition ${
-                  pagination.currentPage === pageNumber
-                    ? "border-white bg-white text-black"
-                    : "border-[#303030] text-neutral-400 hover:bg-[#242424] hover:text-white"
-                }`}
+                disabled={
+                  !pagination.hasPreviousPage
+                }
+                onClick={handlePreviousPage}
+                className="border border-[#303030] px-3 py-2 text-xs text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
               >
-                {pageNumber}
+                Previous
               </button>
-            ))}
 
-            <button
-              type="button"
-              disabled={!pagination.hasNextPage}
-              onClick={handleNextPage}
-              className="border border-[#303030] px-3 py-2 text-xs text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Next
-            </button>
+              {getPageNumbers().map(
+                (pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    onClick={() =>
+                      setPage(pageNumber)
+                    }
+                    className={`min-w-9 border px-3 py-2 text-xs transition ${
+                      pagination.currentPage ===
+                      pageNumber
+                        ? "border-white bg-white text-black"
+                        : "border-[#303030] text-neutral-400 hover:bg-[#242424] hover:text-white"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                disabled={
+                  !pagination.hasNextPage
+                }
+                onClick={handleNextPage}
+                className="border border-[#303030] px-3 py-2 text-xs text-neutral-400 transition hover:bg-[#242424] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                Next
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* ==========================================================
+        )}
+              {/* ==========================================================
           ORDER DETAIL MODAL
       ========================================================== */}
 
-      {(detailLoading || selectedOrder || detailError) && (
+      {(detailLoading ||
+        selectedOrder ||
+        detailError) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5">
           <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden border border-[#353535] bg-[#151515]">
             {/* MODAL HEADER */}
@@ -844,14 +1215,18 @@ const Orders = () => {
                 </p>
 
                 <h2 className="mt-1 font-mono text-lg text-white">
-                  {selectedOrder?.orderId || "Loading..."}
+                  {selectedOrder?.orderId ||
+                    "Loading..."}
                 </h2>
               </div>
 
               <button
                 type="button"
                 onClick={handleCloseDetails}
-                disabled={updatingStatus}
+                disabled={
+                  updatingStatus ||
+                  Boolean(updatingReturnItemId)
+                }
                 className="flex h-9 w-9 items-center justify-center border border-[#353535] text-lg text-neutral-500 transition hover:bg-[#242424] hover:text-white disabled:opacity-30"
               >
                 ×
@@ -885,17 +1260,20 @@ const Orders = () => {
 
                       <p className="mt-3 text-sm text-white">
                         {selectedOrder.user?.name ||
-                          selectedOrder.shippingAddress?.fullName ||
+                          selectedOrder.shippingAddress
+                            ?.fullName ||
                           "-"}
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-500">
-                        {selectedOrder.user?.email || "-"}
+                        {selectedOrder.user?.email ||
+                          "-"}
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-500">
                         {selectedOrder.user?.phone ||
-                          selectedOrder.shippingAddress?.phone ||
+                          selectedOrder.shippingAddress
+                            ?.phone ||
                           "-"}
                       </p>
                     </div>
@@ -908,15 +1286,19 @@ const Orders = () => {
                       </p>
 
                       <p className="mt-3 text-sm text-white">
-                        {formatDateTime(selectedOrder.createdAt)}
+                        {formatDateTime(
+                          selectedOrder.createdAt
+                        )}
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-500">
-                        Payment: {selectedOrder.paymentMethod}
+                        Payment:{" "}
+                        {selectedOrder.paymentMethod}
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-500">
-                        Payment status: {selectedOrder.paymentStatus}
+                        Payment status:{" "}
+                        {selectedOrder.paymentStatus}
                       </p>
                     </div>
 
@@ -930,7 +1312,7 @@ const Orders = () => {
                       <div className="mt-3">
                         <span
                           className={`inline-flex border px-3 py-1.5 text-xs ${getStatusClass(
-                            selectedOrder.orderStatus,
+                            selectedOrder.orderStatus
                           )}`}
                         >
                           {selectedOrder.orderStatus}
@@ -949,23 +1331,63 @@ const Orders = () => {
                     </p>
 
                     <div className="text-sm leading-6 text-neutral-300">
-                      <p>{selectedOrder.shippingAddress?.fullName}</p>
-
                       <p>
-                        {selectedOrder.shippingAddress?.houseName},{" "}
-                        {selectedOrder.shippingAddress?.street}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.fullName
+                        }
                       </p>
 
                       <p>
-                        {selectedOrder.shippingAddress?.city},{" "}
-                        {selectedOrder.shippingAddress?.state} -{" "}
-                        {selectedOrder.shippingAddress?.pincode}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.houseName
+                        }
+                        ,{" "}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.street
+                        }
                       </p>
 
-                      <p>{selectedOrder.shippingAddress?.country}</p>
+                      <p>
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.city
+                        }
+                        ,{" "}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.state
+                        }{" "}
+                        -{" "}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.pincode
+                        }
+                      </p>
+
+                      <p>
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.country
+                        }
+                      </p>
 
                       <p className="mt-2 text-xs text-neutral-500">
-                        Phone: {selectedOrder.shippingAddress?.phone}
+                        Phone:{" "}
+                        {
+                          selectedOrder
+                            .shippingAddress
+                            ?.phone
+                        }
                       </p>
                     </div>
                   </div>
@@ -1007,129 +1429,338 @@ const Orders = () => {
                               <th className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.12em] text-neutral-600">
                                 Item Status
                               </th>
+
+                              <th className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.12em] text-neutral-600">
+                                Return Management
+                              </th>
                             </tr>
                           </thead>
 
                           <tbody>
-                            {selectedOrder.items?.map((item) => (
-                              <tr
-                                key={item._id}
-                                className="border-b border-[#242424]"
-                              >
-                                <td className="px-4 py-4">
-                                  <div className="flex items-center gap-3">
-                                    {item.productImage ? (
-                                      <img
-                                        src={item.productImage}
-                                        alt={item.productName}
-                                        className="h-12 w-10 object-cover"
-                                      />
-                                    ) : (
-                                      <div className="flex h-12 w-10 items-center justify-center bg-[#242424] text-[9px] text-neutral-600">
-                                        No image
+                            {selectedOrder.items?.map(
+                              (item) => (
+                                <tr
+                                  key={item._id}
+                                  className="border-b border-[#242424]"
+                                >
+                                  <td className="px-4 py-4">
+                                    <div className="flex items-center gap-3">
+                                      {item.productImage ? (
+                                        <img
+                                          src={
+                                            item.productImage
+                                          }
+                                          alt={
+                                            item.productName
+                                          }
+                                          className="h-12 w-10 object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-12 w-10 items-center justify-center bg-[#242424] text-[9px] text-neutral-600">
+                                          No image
+                                        </div>
+                                      )}
+
+                                      <div>
+                                        <p className="text-sm text-neutral-200">
+                                          {
+                                            item.productName
+                                          }
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-neutral-600">
+                                          {item.itemStatus ===
+                                          "Cancelled"
+                                            ? "Cancelled item"
+                                            : "Active item"}
+                                        </p>
                                       </div>
-                                    )}
-
-                                    <div>
-                                      <p className="text-sm text-neutral-200">
-                                        {item.productName}
-                                      </p>
-
-                                      <p className="mt-1 text-xs text-neutral-600">
-                                        {item.itemStatus === "Cancelled"
-                                          ? "Cancelled item"
-                                          : "Active item"}
-                                      </p>
                                     </div>
-                                  </div>
-                                </td>
+                                  </td>
 
-                                <td className="px-4 py-4 text-sm text-neutral-300">
-                                  {item.size}
-                                </td>
+                                  <td className="px-4 py-4 text-sm text-neutral-300">
+                                    {item.size}
+                                  </td>
 
-                                <td className="px-4 py-4 text-sm text-neutral-300">
-                                  {item.quantity}
-                                </td>
+                                  <td className="px-4 py-4 text-sm text-neutral-300">
+                                    {item.quantity}
+                                  </td>
 
-                                <td className="px-4 py-4 text-sm text-neutral-300">
-                                  {formatCurrency(item.price)}
-                                </td>
+                                  <td className="px-4 py-4 text-sm text-neutral-300">
+                                    {formatCurrency(
+                                      item.price
+                                    )}
+                                  </td>
 
-                                <td className="px-4 py-4 text-sm text-neutral-300">
-                                  {formatCurrency(item.itemTotal)}
-                                </td>
+                                  <td className="px-4 py-4 text-sm text-neutral-300">
+                                    {formatCurrency(
+                                      item.itemTotal
+                                    )}
+                                  </td>
 
-                                <td className="px-4 py-4">
-                                  <span
-                                    className={`text-xs ${
-                                      item.itemStatus === "Cancelled"
-                                        ? "text-red-400"
-                                        : "text-green-400"
-                                    }`}
-                                  >
-                                    {item.itemStatus}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
+                                  <td className="px-4 py-4">
+                                    <span
+                                      className={`text-xs ${
+                                        item.itemStatus ===
+                                        "Cancelled"
+                                          ? "text-red-400"
+                                          : "text-green-400"
+                                      }`}
+                                    >
+                                      {item.itemStatus}
+                                    </span>
+                                  </td>
+
+                                  {/* RETURN MANAGEMENT */}
+
+                                  <td className="px-4 py-4">
+                                    <div className="min-w-[210px]">
+                                      {item.returnStatus ===
+                                      "Not Requested" ? (
+                                        <span className="text-xs text-neutral-600">
+                                          No return request
+                                        </span>
+                                      ) : (
+                                        <>
+                                          <span
+                                            className={`inline-flex border px-2.5 py-1 text-[10px] ${getReturnStatusClass(
+                                              item.returnStatus
+                                            )}`}
+                                          >
+                                            {item.returnStatus}
+                                          </span>
+
+                                          {item.returnReason && (
+                                            <p className="mt-2 max-w-[260px] text-xs leading-5 text-neutral-500">
+                                              Reason:{" "}
+                                              {item.returnReason}
+                                            </p>
+                                          )}
+
+                                          {item.returnRequestedAt && (
+                                            <p className="mt-1 text-[10px] text-neutral-600">
+                                              Requested:{" "}
+                                              {formatDateTime(
+                                                item.returnRequestedAt
+                                              )}
+                                            </p>
+                                          )}
+
+                                          {getAllowedNextReturnStatuses(
+                                            item.returnStatus
+                                          ).length > 0 && (
+                                            <div className="mt-3">
+                                              <label
+                                                htmlFor={`return-status-${item._id}`}
+                                                className="mb-1.5 block text-[10px] uppercase tracking-[0.12em] text-neutral-500"
+                                              >
+                                                Update return
+                                              </label>
+
+                                              <select
+                                                id={`return-status-${item._id}`}
+                                                value=""
+                                                disabled={Boolean(
+                                                  updatingReturnItemId
+                                                )}
+                                                onChange={(
+                                                  event
+                                                ) => {
+                                                  const nextStatus =
+                                                    event.target
+                                                      .value;
+
+                                                  if (
+                                                    nextStatus
+                                                  ) {
+                                                    handleReturnStatusUpdate(
+                                                      item._id,
+                                                      nextStatus
+                                                    );
+                                                  }
+                                                }}
+                                                className="w-full border border-[#303030] bg-[#111111] px-2.5 py-2 text-xs text-neutral-200 outline-none focus:border-[#5a5a5a] disabled:cursor-not-allowed disabled:opacity-40"
+                                              >
+                                                <option
+                                                  value=""
+                                                  disabled
+                                                >
+                                                  Select next status
+                                                </option>
+
+                                                {getAllowedNextReturnStatuses(
+                                                  item.returnStatus
+                                                ).map(
+                                                  (
+                                                    nextStatus
+                                                  ) => (
+                                                    <option
+                                                      key={
+                                                        nextStatus
+                                                      }
+                                                      value={
+                                                        nextStatus
+                                                      }
+                                                    >
+                                                      {nextStatus}
+                                                    </option>
+                                                  )
+                                                )}
+                                              </select>
+
+                                              {updatingReturnItemId ===
+                                                item._id && (
+                                                <p className="mt-1 text-[10px] text-neutral-500">
+                                                  Updating...
+                                                </p>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </div>
                   </div>
 
-                  {/* ==================================================
-                      TOTALS
-                  ================================================== */}
+                 
+{/* ==================================================
+    TOTALS
+================================================== */}
 
-                  <div className="flex justify-end">
-                    <div className="w-full max-w-sm border border-[#292929] bg-[#111111] p-5">
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Subtotal</span>
+{(() => {
+  const activeItems = (selectedOrder.items || []).filter(
+    (item) => item.itemStatus !== "Cancelled"
+  );
 
-                          <span className="text-neutral-300">
-                            {formatCurrency(selectedOrder.subtotal)}
-                          </span>
-                        </div>
+  const roundMoney = (value) =>
+    Number(Math.max(Number(value) || 0, 0).toFixed(2));
 
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Discount</span>
+  const subtotal = roundMoney(
+    activeItems.reduce((sum, item) => {
+      const quantity = Math.max(Number(item.quantity) || 0, 0);
+      const price = Math.max(Number(item.price) || 0, 0);
 
-                          <span className="text-neutral-300">
-                            - {formatCurrency(selectedOrder.discount)}
-                          </span>
-                        </div>
+      return sum + price * quantity;
+    }, 0)
+  );
 
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Shipping</span>
+  const productDiscount = roundMoney(
+    activeItems.reduce((sum, item) => {
+      const quantity = Math.max(Number(item.quantity) || 0, 0);
+      const price = Math.max(Number(item.price) || 0, 0);
+      const discount = Math.min(
+        Math.max(Number(item.discount) || 0, 0),
+        price
+      );
 
-                          <span className="text-neutral-300">
-                            {formatCurrency(selectedOrder.shippingCharge)}
-                          </span>
-                        </div>
+      return sum + discount * quantity;
+    }, 0)
+  );
 
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Tax</span>
+  const amountAfterProductDiscount = roundMoney(
+    Math.max(subtotal - productDiscount, 0)
+  );
 
-                          <span className="text-neutral-300">
-                            {formatCurrency(selectedOrder.tax)}
-                          </span>
-                        </div>
+  // Assumes the applied coupon is DIWALI10 (10%).
+  const couponDiscount =
+    activeItems.length > 0
+      ? roundMoney(amountAfterProductDiscount * 0.10)
+      : 0;
 
-                        <div className="border-t border-[#292929] pt-3">
-                          <div className="flex justify-between">
-                            <span className="text-white">Total</span>
+  const shippingCharge =
+    activeItems.length > 0
+      ? Math.max(Number(selectedOrder.shippingCharge) || 0, 0)
+      : 0;
 
-                            <span className="text-lg text-white">
-                              {formatCurrency(selectedOrder.totalAmount)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+  const tax =
+    activeItems.length > 0
+      ? Math.max(Number(selectedOrder.tax) || 0, 0)
+      : 0;
+
+  const totalAmount = roundMoney(
+    Math.max(
+      amountAfterProductDiscount -
+        couponDiscount +
+        shippingCharge +
+        tax,
+      0
+    )
+  );
+
+  return (
+    <div className="flex justify-end">
+      <div className="w-full max-w-sm border border-[#292929] bg-[#111111] p-5">
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Subtotal</span>
+            <span className="text-neutral-300">
+              {formatCurrency(subtotal)}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-neutral-500">
+              Product Discount
+            </span>
+            <span className="text-neutral-300">
+              - {formatCurrency(productDiscount)}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-neutral-500">
+              Amount After Product Discount
+            </span>
+            <span className="text-neutral-300">
+              {formatCurrency(amountAfterProductDiscount)}
+            </span>
+          </div>
+
+          {couponDiscount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-neutral-500">
+                Coupon ({selectedOrder.couponCode || "DIWALI10"})
+              </span>
+              <span className="text-neutral-300">
+                - {formatCurrency(couponDiscount)}
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Shipping</span>
+            <span className="text-neutral-300">
+              {formatCurrency(shippingCharge)}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Tax</span>
+            <span className="text-neutral-300">
+              {formatCurrency(tax)}
+            </span>
+          </div>
+
+          <div className="border-t border-[#292929] pt-3">
+            <div className="flex justify-between">
+              <span className="text-white">Total</span>
+              <span className="text-lg text-white">
+                {formatCurrency(totalAmount)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+})()}
 
                   {/* ==================================================
                       CANCELLATION INFORMATION
@@ -1142,13 +1773,17 @@ const Orders = () => {
                       </p>
 
                       <p className="mt-2 text-sm text-red-300">
-                        {selectedOrder.cancellationReason}
+                        {
+                          selectedOrder.cancellationReason
+                        }
                       </p>
 
                       {selectedOrder.cancelledAt && (
                         <p className="mt-1 text-xs text-red-500/70">
                           Cancelled on{" "}
-                          {formatDateTime(selectedOrder.cancelledAt)}
+                          {formatDateTime(
+                            selectedOrder.cancelledAt
+                          )}
                         </p>
                       )}
                     </div>
@@ -1169,19 +1804,30 @@ const Orders = () => {
                       </div>
                     )}
 
+                    {returnError && (
+                      <div className="mt-4 border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+                        {returnError}
+                      </div>
+                    )}
+
                     {/* CANCELLATION REASON */}
 
                     {showCancelReason && (
                       <div className="mt-4 border border-[#303030] bg-[#111111] p-4">
                         <label className="mb-2 block text-xs text-neutral-400">
                           Cancellation reason
-                          <span className="text-red-400"> *</span>
+                          <span className="text-red-400">
+                            {" "}
+                            *
+                          </span>
                         </label>
 
                         <textarea
                           value={cancelReason}
                           onChange={(event) =>
-                            setCancelReason(event.target.value)
+                            setCancelReason(
+                              event.target.value
+                            )
                           }
                           rows="3"
                           placeholder="Enter reason for cancelling this order..."
@@ -1191,36 +1837,45 @@ const Orders = () => {
                     )}
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {getAllowedNextStatuses(selectedOrder.orderStatus).map(
-                        (nextStatus) => {
-                          const isCancel = nextStatus === "Cancelled";
+                      {getAllowedNextStatuses(
+                        selectedOrder.orderStatus
+                      ).map((nextStatus) => {
+                        const isCancel =
+                          nextStatus ===
+                          "Cancelled";
 
-                          return (
-                            <button
-                              key={nextStatus}
-                              type="button"
-                              disabled={updatingStatus}
-                              onClick={() => handleStatusUpdate(nextStatus)}
-                              className={`border px-4 py-2.5 text-xs transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                                isCancel
-                                  ? "border-red-900 text-red-400 hover:bg-red-950/40"
-                                  : "border-[#3a3a3a] text-neutral-300 hover:bg-[#242424] hover:text-white"
-                              }`}
-                            >
-                              {updatingStatus
-                                ? "Updating..."
-                                : isCancel && showCancelReason
-                                  ? "Confirm Cancellation"
-                                  : `Change to ${nextStatus}`}
-                            </button>
-                          );
-                        },
-                      )}
+                        return (
+                          <button
+                            key={nextStatus}
+                            type="button"
+                            disabled={updatingStatus}
+                            onClick={() =>
+                              handleStatusUpdate(
+                                nextStatus
+                              )
+                            }
+                            className={`border px-4 py-2.5 text-xs transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                              isCancel
+                                ? "border-red-900 text-red-400 hover:bg-red-950/40"
+                                : "border-[#3a3a3a] text-neutral-300 hover:bg-[#242424] hover:text-white"
+                            }`}
+                          >
+                            {updatingStatus
+                              ? "Updating..."
+                              : isCancel &&
+                                showCancelReason
+                              ? "Confirm Cancellation"
+                              : `Change to ${nextStatus}`}
+                          </button>
+                        );
+                      })}
 
-                      {getAllowedNextStatuses(selectedOrder.orderStatus)
-                        .length === 0 && (
+                      {getAllowedNextStatuses(
+                        selectedOrder.orderStatus
+                      ).length === 0 && (
                         <p className="text-xs text-neutral-600">
-                          No further status changes are available for this
+                          No further status changes
+                          are available for this
                           order.
                         </p>
                       )}

@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 import Order from "../models/Order.js";
@@ -21,25 +22,30 @@ const VALID_STATUSES = [
 
 /*
 |--------------------------------------------------------------------------
-| ALLOWED STATUS TRANSITIONS
+| VALID RETURN STATUSES
 |--------------------------------------------------------------------------
 |
-| Pending
-|    ↓
-| Shipped
-|    ↓
-| Out for Delivery
-|    ↓
-| Delivered
+| "Not Requested" is the default state in the Order model.
+| "Requested" is set when the customer submits a return.
+| The remaining statuses are managed by the admin.
 |
-| Pending
-|    ↓
-| Cancelled
-|
-| Partially Cancelled
-|    ↓
-| Shipped
-|
+*/
+
+const VALID_RETURN_STATUSES = [
+  "Approved",
+  "Rejected",
+  "Pickup Scheduled",
+  "Picked Up",
+  "In Transit",
+  "Received",
+  "Inspected",
+  "Refund Completed",
+];
+
+/*
+|--------------------------------------------------------------------------
+| ALLOWED ORDER STATUS TRANSITIONS
+|--------------------------------------------------------------------------
 */
 
 const allowedTransitions = {
@@ -58,23 +64,76 @@ const allowedTransitions = {
 
 /*
 |--------------------------------------------------------------------------
+| ALLOWED RETURN STATUS TRANSITIONS
+|--------------------------------------------------------------------------
+|
+| Requested
+|    ├── Approved
+|    │      └── Pickup Scheduled
+|    │              └── Picked Up
+|    │                      └── In Transit
+|    │                              └── Received
+|    │                                      └── Inspected
+|    │                                              └── Refund Completed
+|    │
+|    └── Rejected
+|
+| A return cannot skip a stage or move backwards.
+|--------------------------------------------------------------------------
+*/
+
+const allowedReturnTransitions = {
+  "Not Requested": ["Requested"],
+
+  Requested: [
+    "Approved",
+    "Rejected",
+  ],
+
+  Approved: [
+    "Pickup Scheduled",
+  ],
+
+  "Pickup Scheduled": [
+    "Picked Up",
+  ],
+
+  "Picked Up": [
+    "In Transit",
+  ],
+
+  "In Transit": [
+    "Received",
+  ],
+
+  Received: [
+    "Inspected",
+  ],
+
+  Inspected: [
+    "Refund Completed",
+  ],
+
+  "Refund Completed": [],
+
+  Rejected: [],
+};
+
+/*
+|--------------------------------------------------------------------------
 | BUILD SEARCH QUERY
 |--------------------------------------------------------------------------
 */
 
-const buildSearchQuery = (search = "", status = "") => {
+const buildSearchQuery = (
+  search = "",
+  status = "",
+) => {
   const query = {};
 
-  const trimmedSearch = search.trim();
-
-  /*
-   * SEARCH
-   *
-   * Search by:
-   * - Order ID
-   * - Customer name
-   * - Customer phone
-   */
+  const trimmedSearch = String(
+    search || "",
+  ).trim();
 
   if (trimmedSearch) {
     query.$or = [
@@ -84,14 +143,12 @@ const buildSearchQuery = (search = "", status = "") => {
           $options: "i",
         },
       },
-
       {
         "shippingAddress.fullName": {
           $regex: trimmedSearch,
           $options: "i",
         },
       },
-
       {
         "shippingAddress.phone": {
           $regex: trimmedSearch,
@@ -101,13 +158,11 @@ const buildSearchQuery = (search = "", status = "") => {
     ];
   }
 
-  /*
-   * STATUS FILTER
-   */
-
   if (status) {
     if (!VALID_STATUSES.includes(status)) {
-      throw new Error("Invalid order status filter");
+      throw new Error(
+        "Invalid order status filter",
+      );
     }
 
     query.orderStatus = status;
@@ -128,46 +183,37 @@ const getAdminOrders = async ({
   search = "",
   status = "",
   sortOrder = "desc",
-}) => {
-  /*
-   * Make sure page is at least 1.
-   */
+} = {}) => {
+  const parsedPage = Math.max(
+    Number(page) || 1,
+    1,
+  );
 
-  const parsedPage = Math.max(Number(page) || 1, 1);
+  const parsedLimit = Math.min(
+    Math.max(Number(limit) || 10, 1),
+    50,
+  );
 
-  /*
-   * Limit between 1 and 50.
-   */
+  const skip =
+    (parsedPage - 1) * parsedLimit;
 
-  const parsedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
+  const normalizedSortOrder =
+    sortOrder === "asc" ? 1 : -1;
 
-  /*
-   * Calculate MongoDB skip.
-   */
+  const query = buildSearchQuery(
+    search,
+    status,
+  );
 
-  const skip = (parsedPage - 1) * parsedLimit;
-
-  /*
-   * Descending = newest first.
-   * Ascending = oldest first.
-   */
-
-  const normalizedSortOrder = sortOrder === "asc" ? 1 : -1;
-
-  /*
-   * Build search/filter query.
-   */
-
-  const query = buildSearchQuery(search, status);
-
-  /*
-   * Fetch orders and total count
-   * at the same time.
-   */
-
-  const [orders, totalOrders] = await Promise.all([
+  const [
+    orders,
+    totalOrders,
+  ] = await Promise.all([
     Order.find(query)
-      .populate("user", "name email phone")
+      .populate(
+        "user",
+        "name email phone",
+      )
       .sort({
         createdAt: normalizedSortOrder,
       })
@@ -178,27 +224,22 @@ const getAdminOrders = async ({
     Order.countDocuments(query),
   ]);
 
-  /*
-   * Calculate total pages.
-   */
-
-  const totalPages = Math.ceil(totalOrders / parsedLimit);
+  const totalPages = Math.ceil(
+    totalOrders / parsedLimit,
+  );
 
   return {
     orders,
 
     pagination: {
       currentPage: parsedPage,
-
       totalPages,
-
       totalOrders,
-
       limit: parsedLimit,
-
-      hasNextPage: parsedPage < totalPages,
-
-      hasPreviousPage: parsedPage > 1,
+      hasNextPage:
+        parsedPage < totalPages,
+      hasPreviousPage:
+        parsedPage > 1,
     },
   };
 };
@@ -209,22 +250,24 @@ const getAdminOrders = async ({
 |--------------------------------------------------------------------------
 */
 
-const getAdminOrderById = async (orderId) => {
-  /*
-   * Validate MongoDB ObjectId.
-   */
-
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+const getAdminOrderById = async (
+  orderId,
+) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      orderId,
+    )
+  ) {
     throw new Error("Invalid order ID");
   }
 
-  /*
-   * Fetch order and populate
-   * user information.
-   */
-
-  const order = await Order.findById(orderId)
-    .populate("user", "name email phone")
+  const order = await Order.findById(
+    orderId,
+  )
+    .populate(
+      "user",
+      "name email phone",
+    )
     .lean();
 
   if (!order) {
@@ -238,131 +281,119 @@ const getAdminOrderById = async (orderId) => {
 |--------------------------------------------------------------------------
 | UPDATE ADMIN ORDER STATUS
 |--------------------------------------------------------------------------
-|
-| This is the function that handles:
-|
-| Pending
-|    ↓
-| Shipped
-|
-| Shipped
-|    ↓
-| Out for Delivery
-|
-| Out for Delivery
-|    ↓
-| Delivered
-|
-| And cancellation.
-|--------------------------------------------------------------------------
 */
 
-const updateAdminOrderStatus = async (orderId, newStatus, reason = "") => {
+const updateAdminOrderStatus = async (
+  orderId,
+  newStatus,
+  reason = "",
+) => {
   /*
-   * ---------------------------------------------------------------
    * VALIDATE ORDER ID
-   * ---------------------------------------------------------------
    */
 
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      orderId,
+    )
+  ) {
     throw new Error("Invalid order ID");
   }
 
   /*
-   * ---------------------------------------------------------------
-   * VALIDATE STATUS
-   * ---------------------------------------------------------------
+   * VALIDATE NEW STATUS
    */
 
-  if (!VALID_STATUSES.includes(newStatus)) {
-    throw new Error("Invalid order status");
+  if (
+    !VALID_STATUSES.includes(newStatus)
+  ) {
+    throw new Error(
+      "Invalid order status",
+    );
   }
 
   /*
-   * ---------------------------------------------------------------
    * FIND ORDER
-   * ---------------------------------------------------------------
    */
 
-  const order = await Order.findById(orderId);
+  const order = await Order.findById(
+    orderId,
+  );
 
   if (!order) {
     throw new Error("Order not found");
   }
 
   /*
-   * ---------------------------------------------------------------
-   * SAME STATUS
-   * ---------------------------------------------------------------
-   *
-   * If the order already has this status,
-   * don't perform another update.
+   * RETURN ORDER IF STATUS IS UNCHANGED
    */
 
   if (order.orderStatus === newStatus) {
     return Order.findById(order._id)
-      .populate("user", "name email phone")
+      .populate(
+        "user",
+        "name email phone",
+      )
       .lean();
   }
 
   /*
-   * ---------------------------------------------------------------
-   * CANCEL ORDER
-   * ---------------------------------------------------------------
+   * HANDLE ORDER CANCELLATION
    *
-   * IMPORTANT:
-   *
-   * We reuse the existing user cancellation
-   * service instead of duplicating cancellation
-   * and stock-restoration logic.
-   *
-   * order.user is already the User ObjectId.
+   * Reuse the existing cancellation service
+   * so stock restoration and cancellation
+   * rules remain consistent.
    */
 
   if (newStatus === "Cancelled") {
-    const cancelledOrder = await cancelUserOrder(
-      order.user,
-      order.orderId,
-      reason,
-    );
+    const cancelledOrder =
+      await cancelUserOrder(
+        order.user,
+        order.orderId,
+        reason,
+      );
 
-    return Order.findById(cancelledOrder._id)
-      .populate("user", "name email phone")
+    return Order.findById(
+      cancelledOrder._id,
+    )
+      .populate(
+        "user",
+        "name email phone",
+      )
       .lean();
   }
 
   /*
-   * ---------------------------------------------------------------
-   * VALIDATE STATUS TRANSITION
-   * ---------------------------------------------------------------
+   * VALIDATE ORDER STATUS TRANSITION
    */
 
-  const allowedNextStatuses = allowedTransitions[order.orderStatus] || [];
+  const allowedNextStatuses =
+    allowedTransitions[
+      order.orderStatus
+    ] || [];
 
-  if (!allowedNextStatuses.includes(newStatus)) {
+  if (
+    !allowedNextStatuses.includes(
+      newStatus,
+    )
+  ) {
     throw new Error(
       `Cannot change order status from "${order.orderStatus}" to "${newStatus}"`,
     );
   }
 
   /*
-   * ---------------------------------------------------------------
    * UPDATE ORDER STATUS
-   * ---------------------------------------------------------------
    */
 
   order.orderStatus = newStatus;
 
   /*
-   * ---------------------------------------------------------------
    * PAYMENT STATUS
-   * ---------------------------------------------------------------
    *
    * UrbanThread currently uses COD.
-   *
-   * Therefore payment is considered
-   * successfully collected when the order
-   * reaches Delivered.
+   * Mark payment as paid when delivery
+   * is completed, as in the existing flow.
    */
 
   if (newStatus === "Delivered") {
@@ -370,20 +401,207 @@ const updateAdminOrderStatus = async (orderId, newStatus, reason = "") => {
   }
 
   /*
-   * ---------------------------------------------------------------
    * SAVE ORDER
-   * ---------------------------------------------------------------
    */
 
   await order.save();
 
   /*
-   * ---------------------------------------------------------------
    * RETURN UPDATED ORDER
-   * ---------------------------------------------------------------
    */
 
-  return Order.findById(order._id).populate("user", "name email phone").lean();
+  return Order.findById(order._id)
+    .populate(
+      "user",
+      "name email phone",
+    )
+    .lean();
 };
 
-export { getAdminOrders, getAdminOrderById, updateAdminOrderStatus };
+/*
+|--------------------------------------------------------------------------
+| UPDATE ADMIN ORDER ITEM RETURN STATUS
+|--------------------------------------------------------------------------
+|
+| Customer:
+| Not Requested → Requested
+|
+| Admin:
+| Requested → Approved / Rejected
+| Approved → Pickup Scheduled
+| Pickup Scheduled → Picked Up
+| Picked Up → In Transit
+| In Transit → Received
+| Received → Inspected
+| Inspected → Refund Completed
+|
+| This function updates the return status only.
+| It does not issue a refund, restore stock,
+| or schedule a physical pickup automatically.
+|--------------------------------------------------------------------------
+*/
+
+const updateAdminOrderItemReturn = async (
+  orderId,
+  itemId,
+  returnStatus,
+) => {
+  /*
+   * VALIDATE ORDER ID
+   */
+
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      orderId,
+    )
+  ) {
+    throw new Error("Invalid order ID");
+  }
+
+  /*
+   * VALIDATE ITEM ID
+   */
+
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      itemId,
+    )
+  ) {
+    throw new Error(
+      "Invalid order item ID",
+    );
+  }
+
+  /*
+   * VALIDATE RETURN STATUS
+   */
+
+  if (
+    !VALID_RETURN_STATUSES.includes(
+      returnStatus,
+    )
+  ) {
+    throw new Error(
+      "Invalid return status",
+    );
+  }
+
+  /*
+   * FIND ORDER
+   */
+
+  const order = await Order.findById(
+    orderId,
+  );
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  /*
+   * FIND ORDER ITEM
+   */
+
+  const orderItem = order.items.find(
+    (item) =>
+      item._id.toString() === itemId,
+  );
+
+  if (!orderItem) {
+    throw new Error(
+      "Order item not found",
+    );
+  }
+
+  /*
+   * PREVENT RETURNING CANCELLED ITEMS
+   */
+
+  if (
+    orderItem.itemStatus === "Cancelled"
+  ) {
+    throw new Error(
+      "A cancelled product cannot be returned",
+    );
+  }
+
+  /*
+   * GET CURRENT RETURN STATUS
+   *
+   * Fallback supports older order items
+   * that may not have a returnStatus value.
+   */
+
+  const currentReturnStatus =
+    orderItem.returnStatus ||
+    "Not Requested";
+
+  /*
+   * ENSURE A RETURN REQUEST EXISTS
+   */
+
+  if (
+    currentReturnStatus ===
+    "Not Requested"
+  ) {
+    throw new Error(
+      "The customer has not requested a return for this item",
+    );
+  }
+
+  /*
+   * VALIDATE RETURN STATUS TRANSITION
+   */
+
+  const allowedNextStatuses =
+    allowedReturnTransitions[
+      currentReturnStatus
+    ] || [];
+
+  if (
+    !allowedNextStatuses.includes(
+      returnStatus,
+    )
+  ) {
+    throw new Error(
+      `Cannot change return status from "${currentReturnStatus}" to "${returnStatus}"`,
+    );
+  }
+
+  /*
+   * UPDATE RETURN STATUS
+   */
+
+  orderItem.returnStatus =
+    returnStatus;
+
+  /*
+   * SAVE ORDER
+   */
+
+  await order.save();
+
+  /*
+   * RETURN UPDATED ORDER
+   */
+
+  return Order.findById(order._id)
+    .populate(
+      "user",
+      "name email phone",
+    )
+    .lean();
+};
+
+/*
+|--------------------------------------------------------------------------
+| EXPORTS
+|--------------------------------------------------------------------------
+*/
+
+export {
+  getAdminOrders,
+  getAdminOrderById,
+  updateAdminOrderStatus,
+  updateAdminOrderItemReturn,
+};

@@ -9,7 +9,9 @@ import { AuthContext } from "../../context/AuthContext";
 import {
   cancelOrder,
   cancelOrderItem,
+  downloadOrderInvoice,
   getOrder,
+  returnOrderItem,
 } from "../../services/orderService";
 
 const OrderDetails = () => {
@@ -28,6 +30,10 @@ const OrderDetails = () => {
   const [cancelling, setCancelling] = useState(false);
 
   const [cancellingItemId, setCancellingItemId] = useState("");
+
+  const [returningItemId, setReturningItemId] = useState("");
+
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   const formatPrice = (value) =>
     `₹${Number(value || 0).toLocaleString("en-IN", {
@@ -67,9 +73,9 @@ const OrderDetails = () => {
   };
 
   /*
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | LOAD ORDER
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   */
 
   const loadOrder = async () => {
@@ -88,7 +94,10 @@ const OrderDetails = () => {
     } catch (error) {
       console.error("LOAD ORDER DETAILS ERROR:", error);
 
-      setError(error?.response?.data?.message || "Unable to load order");
+      setError(
+        error?.response?.data?.message ||
+          "Unable to load order",
+      );
     } finally {
       setLoading(false);
     }
@@ -99,9 +108,9 @@ const OrderDetails = () => {
   }, [token, orderId]);
 
   /*
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | CANCEL ENTIRE ORDER
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   */
 
   const handleCancelOrder = async () => {
@@ -117,7 +126,10 @@ const OrderDetails = () => {
       return;
     }
 
-    const reason = window.prompt("Enter a cancellation reason (optional):", "");
+    const reason = window.prompt(
+      "Enter a cancellation reason (optional):",
+      "",
+    );
 
     if (reason === null) {
       return;
@@ -125,9 +137,14 @@ const OrderDetails = () => {
 
     try {
       setCancelling(true);
+
       setError("");
 
-      const response = await cancelOrder(order.orderId, reason, token);
+      const response = await cancelOrder(
+        order.orderId,
+        reason,
+        token,
+      );
 
       if (response?.order) {
         setOrder(response.order);
@@ -137,16 +154,19 @@ const OrderDetails = () => {
     } catch (error) {
       console.error("CANCEL ORDER ERROR:", error);
 
-      setError(error?.response?.data?.message || "Unable to cancel order");
+      setError(
+        error?.response?.data?.message ||
+          "Unable to cancel order",
+      );
     } finally {
       setCancelling(false);
     }
   };
 
   /*
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | CANCEL SPECIFIC PRODUCT
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   */
 
   const handleCancelItem = async (item) => {
@@ -154,7 +174,11 @@ const OrderDetails = () => {
       return;
     }
 
-    if (!["Pending", "Partially Cancelled"].includes(order.orderStatus)) {
+    if (
+      !["Pending", "Partially Cancelled"].includes(
+        order.orderStatus,
+      )
+    ) {
       return;
     }
 
@@ -195,11 +219,184 @@ const OrderDetails = () => {
     } catch (error) {
       console.error("CANCEL ORDER ITEM ERROR:", error);
 
-      setError(error?.response?.data?.message || "Unable to cancel product");
+      setError(
+        error?.response?.data?.message ||
+          "Unable to cancel product",
+      );
     } finally {
       setCancellingItemId("");
     }
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | RETURN SPECIFIC PRODUCT
+  |--------------------------------------------------------------------------
+  */
+
+  const handleReturnItem = async (item) => {
+    if (!order || !item) {
+      return;
+    }
+
+    if (order.orderStatus !== "Delivered") {
+      setError(
+        "Only products from delivered orders can be returned.",
+      );
+
+      return;
+    }
+
+    if (item.itemStatus === "Cancelled") {
+      return;
+    }
+
+    if (
+      item.returnStatus &&
+      item.returnStatus !== "Not Requested"
+    ) {
+      return;
+    }
+
+    const reason = window.prompt(
+      `Enter a return reason for ${item.productName}:`,
+      "",
+    );
+
+    if (reason === null) {
+      return;
+    }
+
+    const trimmedReason = reason.trim();
+
+    if (!trimmedReason) {
+      setError("Return reason is required.");
+
+      return;
+    }
+
+    if (trimmedReason.length > 500) {
+      setError(
+        "Return reason cannot exceed 500 characters.",
+      );
+
+      return;
+    }
+
+    try {
+      setReturningItemId(item._id);
+
+      setError("");
+
+      const response = await returnOrderItem(
+        order.orderId,
+        item._id,
+        trimmedReason,
+        token,
+      );
+
+      if (response?.order) {
+        setOrder(response.order);
+      } else {
+        await loadOrder();
+      }
+    } catch (error) {
+      console.error("RETURN ORDER ITEM ERROR:", error);
+
+      setError(
+        error?.response?.data?.message ||
+          "Unable to submit return request",
+      );
+    } finally {
+      setReturningItemId("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | DOWNLOAD INVOICE
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDownloadInvoice = async () => {
+    if (!order || !token) {
+      return;
+    }
+
+    try {
+      setDownloadingInvoice(true);
+
+      setError("");
+
+      const pdfBlob = await downloadOrderInvoice(
+        order.orderId,
+        token,
+      );
+
+      const blob =
+        pdfBlob instanceof Blob
+          ? pdfBlob
+          : new Blob([pdfBlob], {
+              type: "application/pdf",
+            });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+
+      link.download = `UrbanThread-Invoice-${order.orderId}.pdf`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(
+        "DOWNLOAD INVOICE ERROR:",
+        error,
+      );
+
+      setError(
+        error?.response?.data?.message ||
+          "Unable to download invoice",
+      );
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | RETURN STATUS
+  |--------------------------------------------------------------------------
+  */
+
+  const getReturnStatusClass = (status) => {
+    if (status === "Requested") {
+      return "border-amber-900/60 text-amber-400";
+    }
+
+    if (status === "Approved") {
+      return "border-[#3d4d3d] text-neutral-300";
+    }
+
+    if (status === "Rejected") {
+      return "border-red-900/60 text-red-400";
+    }
+
+    return "border-[#3a3a3a] text-neutral-500";
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | LOADING
+  |--------------------------------------------------------------------------
+  */
 
   if (loading) {
     return (
@@ -211,11 +408,38 @@ const OrderDetails = () => {
     );
   }
 
-  if (error || !order) {
+  /*
+  |--------------------------------------------------------------------------
+  | ERROR / ORDER NOT FOUND
+  |--------------------------------------------------------------------------
+  */
+
+  if (error && !order) {
     return (
       <div className="min-h-screen bg-[#111111] px-6 py-20 text-white">
         <div className="mx-auto max-w-2xl border border-red-900/50 bg-red-950/20 p-8 text-center">
-          <p className="text-sm text-red-400">{error || "Order not found"}</p>
+          <p className="text-sm text-red-400">
+            {error || "Order not found"}
+          </p>
+
+          <Link
+            to="/orders"
+            className="mt-6 inline-flex bg-white px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-black"
+          >
+            Back to Orders
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-[#111111] px-6 py-20 text-white">
+        <div className="mx-auto max-w-2xl border border-[#2b2b2b] bg-[#171717] p-8 text-center">
+          <p className="text-sm text-neutral-400">
+            Order not found.
+          </p>
 
           <Link
             to="/orders"
@@ -230,17 +454,25 @@ const OrderDetails = () => {
 
   const address = order.shippingAddress;
 
-  const canCancelOrder = order.orderStatus === "Pending";
+  const canCancelOrder =
+    order.orderStatus === "Pending";
 
-  const canCancelItems = ["Pending", "Partially Cancelled"].includes(
-    order.orderStatus,
-  );
+  const canCancelItems = [
+    "Pending",
+    "Partially Cancelled",
+  ].includes(order.orderStatus);
+
+  const canReturnItems =
+    order.orderStatus === "Delivered";
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <header className="border-b border-[#262626] bg-[#151515]">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 lg:px-10">
-          <Link to="/home" className="font-serif text-lg tracking-wide">
+          <Link
+            to="/home"
+            className="font-serif text-lg tracking-wide"
+          >
             UrbanThread
           </Link>
 
@@ -263,6 +495,10 @@ const OrderDetails = () => {
       </header>
 
       <main className="mx-auto max-w-[1400px] px-6 py-10 lg:px-10 lg:py-14">
+        {/* --------------------------------------------------------------
+            HEADER
+        -------------------------------------------------------------- */}
+
         <div className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-8 sm:flex-row sm:items-end">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
@@ -283,7 +519,8 @@ const OrderDetails = () => {
               className={`w-fit border px-4 py-3 text-[9px] uppercase tracking-[0.14em] ${
                 order.orderStatus === "Cancelled"
                   ? "border-red-900/60 text-red-400"
-                  : order.orderStatus === "Partially Cancelled"
+                  : order.orderStatus ===
+                      "Partially Cancelled"
                     ? "border-amber-900/60 text-amber-400"
                     : order.orderStatus === "Delivered"
                       ? "border-[#3d4d3d] text-neutral-300"
@@ -293,6 +530,17 @@ const OrderDetails = () => {
               {order.orderStatus}
             </span>
 
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="border border-[#3a3a3a] px-5 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-neutral-300 transition hover:border-[#666666] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloadingInvoice
+                ? "Preparing..."
+                : "Download Invoice"}
+            </button>
+
             {canCancelOrder && (
               <button
                 type="button"
@@ -300,11 +548,17 @@ const OrderDetails = () => {
                 disabled={cancelling}
                 className="border border-red-900/60 px-5 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {cancelling ? "Cancelling..." : "Cancel Order"}
+                {cancelling
+                  ? "Cancelling..."
+                  : "Cancel Order"}
               </button>
             )}
           </div>
         </div>
+
+        {/* --------------------------------------------------------------
+            ERROR
+        -------------------------------------------------------------- */}
 
         {error && (
           <div className="mt-6 border border-red-900/50 bg-red-950/20 px-5 py-4 text-sm text-red-400">
@@ -312,26 +566,40 @@ const OrderDetails = () => {
           </div>
         )}
 
-        {order.orderStatus === "Cancelled" && order.cancellationReason && (
-          <div className="mt-6 border border-red-900/40 bg-red-950/10 px-5 py-4">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-red-500">
-              Cancellation Reason
-            </p>
+        {/* --------------------------------------------------------------
+            ORDER CANCELLATION INFORMATION
+        -------------------------------------------------------------- */}
 
-            <p className="mt-2 text-sm text-neutral-400">
-              {order.cancellationReason}
-            </p>
-
-            {order.cancelledAt && (
-              <p className="mt-2 text-xs text-neutral-600">
-                Cancelled on {formatDate(order.cancelledAt)}
+        {order.orderStatus === "Cancelled" &&
+          order.cancellationReason && (
+            <div className="mt-6 border border-red-900/40 bg-red-950/10 px-5 py-4">
+              <p className="text-[9px] uppercase tracking-[0.15em] text-red-500">
+                Cancellation Reason
               </p>
-            )}
-          </div>
-        )}
+
+              <p className="mt-2 text-sm text-neutral-400">
+                {order.cancellationReason}
+              </p>
+
+              {order.cancelledAt && (
+                <p className="mt-2 text-xs text-neutral-600">
+                  Cancelled on{" "}
+                  {formatDate(order.cancelledAt)}
+                </p>
+              )}
+            </div>
+          )}
+
+        {/* --------------------------------------------------------------
+            CONTENT
+        -------------------------------------------------------------- */}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-8">
+            {/* ----------------------------------------------------------
+                PRODUCTS
+            ---------------------------------------------------------- */}
+
             <section className="border border-[#2b2b2b] bg-[#171717] p-6 sm:p-7">
               <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
                 Products
@@ -341,13 +609,32 @@ const OrderDetails = () => {
                 Order Items
               </h2>
 
+              {canReturnItems && (
+                <p className="mt-3 text-xs text-neutral-600">
+                  Delivered products can be returned by
+                  submitting a return reason.
+                </p>
+              )}
+
               <div className="mt-7 divide-y divide-[#292929]">
                 {order.items?.map((item) => {
                   const imageUrl = getImageUrl(item);
 
-                  const isCancelled = item.itemStatus === "Cancelled";
+                  const isCancelled =
+                    item.itemStatus === "Cancelled";
 
-                  const isCancellingItem = cancellingItemId === item._id;
+                  const isCancellingItem =
+                    cancellingItemId === item._id;
+
+                  const isReturningItem =
+                    returningItemId === item._id;
+
+                  const returnStatus =
+                    item.returnStatus ||
+                    "Not Requested";
+
+                  const hasReturnRequest =
+                    returnStatus !== "Not Requested";
 
                   return (
                     <div
@@ -360,9 +647,14 @@ const OrderDetails = () => {
                         {imageUrl ? (
                           <img
                             src={imageUrl}
-                            alt={item.productName || "Product"}
+                            alt={
+                              item.productName ||
+                              "Product"
+                            }
                             className={`h-full w-full object-cover ${
-                              isCancelled ? "grayscale" : ""
+                              isCancelled
+                                ? "grayscale"
+                                : ""
                             }`}
                           />
                         ) : (
@@ -392,7 +684,9 @@ const OrderDetails = () => {
                             </p>
 
                             <p className="mt-2 text-sm text-white">
-                              {formatPrice(item.itemTotal)}
+                              {formatPrice(
+                                item.itemTotal,
+                              )}
                             </p>
                           </div>
                         </div>
@@ -400,45 +694,145 @@ const OrderDetails = () => {
                         <div className="mt-3 space-y-1 text-xs text-neutral-500">
                           <p>Size: {item.size}</p>
 
-                          <p>Quantity: {item.quantity}</p>
+                          <p>
+                            Quantity: {item.quantity}
+                          </p>
 
-                          <p>Price: {formatPrice(item.price)}</p>
+                          <p>
+                            Price:{" "}
+                            {formatPrice(item.price)}
+                          </p>
                         </div>
 
-                        {isCancelled && item.cancellationReason && (
-                          <div className="mt-4 border border-red-900/30 bg-red-950/10 px-4 py-3">
-                            <p className="text-[8px] uppercase tracking-[0.15em] text-red-500">
-                              Cancellation Reason
-                            </p>
+                        {/* ------------------------------------------------
+                            ITEM CANCELLATION INFORMATION
+                        ------------------------------------------------ */}
 
-                            <p className="mt-1 text-xs text-neutral-500">
-                              {item.cancellationReason}
-                            </p>
-
-                            {item.cancelledAt && (
-                              <p className="mt-1 text-[10px] text-neutral-700">
-                                Cancelled on {formatDate(item.cancelledAt)}
+                        {isCancelled &&
+                          item.cancellationReason && (
+                            <div className="mt-4 border border-red-900/30 bg-red-950/10 px-4 py-3">
+                              <p className="text-[8px] uppercase tracking-[0.15em] text-red-500">
+                                Cancellation Reason
                               </p>
-                            )}
-                          </div>
-                        )}
 
-                        {!isCancelled && canCancelItems && (
-                          <button
-                            type="button"
-                            onClick={() => handleCancelItem(item)}
-                            disabled={isCancellingItem || cancelling}
-                            className="mt-5 border border-red-900/60 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {isCancellingItem ? "Cancelling..." : "Cancel Item"}
-                          </button>
-                        )}
+                              <p className="mt-1 text-xs text-neutral-500">
+                                {item.cancellationReason}
+                              </p>
+
+                              {item.cancelledAt && (
+                                <p className="mt-1 text-[10px] text-neutral-700">
+                                  Cancelled on{" "}
+                                  {formatDate(
+                                    item.cancelledAt,
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                        {/* ------------------------------------------------
+                            RETURN STATUS
+                        ------------------------------------------------ */}
+
+                        {!isCancelled &&
+                          hasReturnRequest && (
+                            <div className="mt-4 border border-[#292929] bg-[#141414] px-4 py-4">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-[8px] uppercase tracking-[0.15em] text-neutral-600">
+                                    Return Status
+                                  </p>
+
+                                  <span
+                                    className={`mt-2 inline-flex border px-3 py-1.5 text-[8px] uppercase tracking-[0.13em] ${getReturnStatusClass(
+                                      returnStatus,
+                                    )}`}
+                                  >
+                                    {returnStatus}
+                                  </span>
+                                </div>
+
+                                {item.returnRequestedAt && (
+                                  <p className="text-[10px] text-neutral-700">
+                                    Requested on{" "}
+                                    {formatDate(
+                                      item.returnRequestedAt,
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+
+                              {item.returnReason && (
+                                <div className="mt-4 border-t border-[#292929] pt-3">
+                                  <p className="text-[8px] uppercase tracking-[0.15em] text-neutral-600">
+                                    Return Reason
+                                  </p>
+
+                                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                                    {item.returnReason}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        {/* ------------------------------------------------
+                            CANCEL ITEM
+                        ------------------------------------------------ */}
+
+                        {!isCancelled &&
+                          canCancelItems && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCancelItem(item)
+                              }
+                              disabled={
+                                isCancellingItem ||
+                                cancelling
+                              }
+                              className="mt-5 border border-red-900/60 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isCancellingItem
+                                ? "Cancelling..."
+                                : "Cancel Item"}
+                            </button>
+                          )}
+
+                        {/* ------------------------------------------------
+                            RETURN ITEM
+                        ------------------------------------------------ */}
+
+                        {!isCancelled &&
+                          canReturnItems &&
+                          returnStatus ===
+                            "Not Requested" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleReturnItem(item)
+                              }
+                              disabled={
+                                isReturningItem ||
+                                downloadingInvoice
+                              }
+                              className="mt-5 border border-amber-900/60 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-400 transition hover:border-amber-700 hover:bg-amber-950/20 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isReturningItem
+                                ? "Submitting..."
+                                : "Return Item"}
+                            </button>
+                          )}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </section>
+
+            {/* ------------------------------------------------------------
+                SHIPPING ADDRESS
+            ------------------------------------------------------------ */}
 
             <section className="border border-[#2b2b2b] bg-[#171717] p-6 sm:p-7">
               <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
@@ -456,7 +850,8 @@ const OrderDetails = () => {
                   </p>
 
                   <p className="mt-3 text-sm leading-6 text-neutral-500">
-                    {address.houseName}, {address.street}, {address.city},{" "}
+                    {address.houseName},{" "}
+                    {address.street}, {address.city},{" "}
                     {address.state} - {address.pincode}
                   </p>
 
@@ -466,6 +861,10 @@ const OrderDetails = () => {
                 </div>
               )}
             </section>
+
+            {/* ------------------------------------------------------------
+                PAYMENT
+            ------------------------------------------------------------ */}
 
             <section className="border border-[#2b2b2b] bg-[#171717] p-6 sm:p-7">
               <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
@@ -500,6 +899,10 @@ const OrderDetails = () => {
             </section>
           </div>
 
+          {/* --------------------------------------------------------------
+              PRICE SUMMARY
+          -------------------------------------------------------------- */}
+
           <aside className="h-fit border border-[#2b2b2b] bg-[#171717] p-6 sm:p-7 lg:sticky lg:top-6">
             <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
               Summary
@@ -511,7 +914,9 @@ const OrderDetails = () => {
 
             <div className="mt-7 space-y-4 border-b border-[#292929] pb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Subtotal</span>
+                <span className="text-neutral-500">
+                  Subtotal
+                </span>
 
                 <span className="text-neutral-300">
                   {formatPrice(order.subtotal)}
@@ -519,26 +924,36 @@ const OrderDetails = () => {
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Discount</span>
+                <span className="text-neutral-500">
+                  Discount
+                </span>
 
                 <span className="text-neutral-300">
-                  {order.discount > 0 ? `-${formatPrice(order.discount)}` : "—"}
+                  {order.discount > 0
+                    ? `-${formatPrice(order.discount)}`
+                    : "—"}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Shipping</span>
+                <span className="text-neutral-500">
+                  Shipping
+                </span>
 
                 <span className="text-neutral-300">
                   {order.shippingCharge === 0
                     ? "Free"
-                    : formatPrice(order.shippingCharge)}
+                    : formatPrice(
+                        order.shippingCharge,
+                      )}
                 </span>
               </div>
 
               {order.tax > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">Tax</span>
+                  <span className="text-neutral-500">
+                    Tax
+                  </span>
 
                   <span className="text-neutral-300">
                     {formatPrice(order.tax)}
@@ -557,27 +972,52 @@ const OrderDetails = () => {
               </span>
             </div>
 
+            {/* ----------------------------------------------------------
+                DOWNLOAD INVOICE
+            ---------------------------------------------------------- */}
+
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="flex w-full items-center justify-center bg-white px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.17em] text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloadingInvoice
+                ? "Preparing Invoice..."
+                : "Download Invoice"}
+            </button>
+
+            {/* ----------------------------------------------------------
+                CANCEL ORDER
+            ---------------------------------------------------------- */}
+
             {canCancelOrder && (
               <button
                 type="button"
                 onClick={handleCancelOrder}
                 disabled={cancelling}
-                className="mb-4 flex w-full items-center justify-center border border-red-900/60 px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.17em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 flex w-full items-center justify-center border border-red-900/60 px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.17em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {cancelling ? "Cancelling Order..." : "Cancel Order"}
+                {cancelling
+                  ? "Cancelling Order..."
+                  : "Cancel Order"}
               </button>
             )}
 
+            {/* ----------------------------------------------------------
+                NAVIGATION
+            ---------------------------------------------------------- */}
+
             <Link
               to="/orders"
-              className="flex w-full items-center justify-center border border-[#3a3a3a] px-5 py-4 text-[10px] uppercase tracking-[0.17em] text-neutral-400 hover:border-[#666666] hover:text-white"
+              className="mt-4 flex w-full items-center justify-center border border-[#3a3a3a] px-5 py-4 text-[10px] uppercase tracking-[0.17em] text-neutral-400 hover:border-[#666666] hover:text-white"
             >
               Back to Orders
             </Link>
 
             <Link
               to="/shop"
-              className="mt-4 flex w-full items-center justify-center bg-white px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.17em] text-black hover:bg-neutral-200"
+              className="mt-4 flex w-full items-center justify-center border border-[#292929] px-5 py-4 text-[10px] uppercase tracking-[0.17em] text-neutral-500 hover:border-[#444444] hover:text-white"
             >
               Continue Shopping
             </Link>

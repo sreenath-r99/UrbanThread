@@ -4,11 +4,18 @@ import {
   getAdminOrdersController,
   getAdminOrderController,
   updateAdminOrderStatusController,
+  updateAdminOrderItemReturnController,
 } from "../controllers/adminOrderController.js";
 
-import { protectAdmin } from "../middleware/adminMiddleware.js";
+import {
+  protectAdmin,
+} from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
+
+/*
+ * All admin order routes require admin authentication.
+ */
 
 router.use(protectAdmin);
 
@@ -16,33 +23,58 @@ router.use(protectAdmin);
 |--------------------------------------------------------------------------
 | GET ALL ORDERS
 |--------------------------------------------------------------------------
-|
 | GET /api/admin/orders
-|
 */
 
 router.get("/", getAdminOrdersController);
 
 /*
 |--------------------------------------------------------------------------
-| GET SINGLE ORDER
+| UPDATE ORDER ITEM RETURN STATUS
 |--------------------------------------------------------------------------
+| PATCH /api/admin/orders/:orderId/items/:itemId/return
 |
-| GET /api/admin/orders/:orderId
+| Body:
+| {
+|   "status": "Approved"
+| }
 |
+| Or:
+| {
+|   "status": "Rejected"
+| }
+|--------------------------------------------------------------------------
 */
 
-router.get("/:orderId", getAdminOrderController);
+router.patch(
+  "/:orderId/items/:itemId/return",
+  updateAdminOrderItemReturnController,
+);
 
 /*
 |--------------------------------------------------------------------------
 | UPDATE ORDER STATUS
 |--------------------------------------------------------------------------
-|
 | PATCH /api/admin/orders/:orderId/status
-|
+|--------------------------------------------------------------------------
 */
 
-router.patch("/:orderId/status", updateAdminOrderStatusController);
+router.patch(
+  "/:orderId/status",
+  updateAdminOrderStatusController,
+);
+
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE ORDER
+|--------------------------------------------------------------------------
+| GET /api/admin/orders/:orderId
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/:orderId",
+  getAdminOrderController,
+);
 
 export default router;

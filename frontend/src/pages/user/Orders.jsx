@@ -17,6 +17,10 @@ const Orders = () => {
 
   const [loading, setLoading] = useState(true);
 
+  const [searchInput, setSearchInput] = useState("");
+
+  const [activeSearch, setActiveSearch] = useState("");
+
   const [error, setError] = useState("");
 
   const [cancellingOrderId, setCancellingOrderId] = useState("");
@@ -38,7 +42,13 @@ const Orders = () => {
     });
   };
 
-  const loadOrders = async () => {
+  /*
+  |--------------------------------------------------------------------------
+  | LOAD ORDERS
+  |--------------------------------------------------------------------------
+  */
+
+  const loadOrders = async (searchValue = activeSearch) => {
     if (!token) {
       navigate("/", {
         replace: true,
@@ -49,28 +59,69 @@ const Orders = () => {
 
     try {
       setLoading(true);
+
       setError("");
 
-      const response = await getOrders(token);
+      const response = await getOrders(
+        token,
+        searchValue.trim(),
+      );
 
-      setOrders(Array.isArray(response?.orders) ? response.orders : []);
+      setOrders(
+        Array.isArray(response?.orders)
+          ? response.orders
+          : [],
+      );
     } catch (error) {
       console.error("LOAD ORDERS ERROR:", error);
 
-      setError(error?.response?.data?.message || "Unable to load orders");
+      setError(
+        error?.response?.data?.message ||
+          "Unable to load orders",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadOrders();
+    void loadOrders("");
   }, [token]);
 
   /*
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
+  | SEARCH ORDERS
+  |--------------------------------------------------------------------------
+  */
+
+  const handleSearch = async (event) => {
+    event?.preventDefault();
+
+    const searchValue = searchInput.trim();
+
+    setActiveSearch(searchValue);
+
+    await loadOrders(searchValue);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | CLEAR SEARCH
+  |--------------------------------------------------------------------------
+  */
+
+  const handleClearSearch = async () => {
+    setSearchInput("");
+
+    setActiveSearch("");
+
+    await loadOrders("");
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | CANCEL ENTIRE ORDER
-  |--------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   */
 
   const handleCancelOrder = async (order) => {
@@ -86,7 +137,10 @@ const Orders = () => {
       return;
     }
 
-    const reason = window.prompt("Enter a cancellation reason (optional):", "");
+    const reason = window.prompt(
+      "Enter a cancellation reason (optional):",
+      "",
+    );
 
     if (reason === null) {
       return;
@@ -97,7 +151,11 @@ const Orders = () => {
 
       setError("");
 
-      const response = await cancelOrder(order.orderId, reason, token);
+      const response = await cancelOrder(
+        order.orderId,
+        reason,
+        token,
+      );
 
       const updatedOrder = response?.order;
 
@@ -110,16 +168,25 @@ const Orders = () => {
           ),
         );
       } else {
-        await loadOrders();
+        await loadOrders(activeSearch);
       }
     } catch (error) {
       console.error("CANCEL ORDER ERROR:", error);
 
-      setError(error?.response?.data?.message || "Unable to cancel order");
+      setError(
+        error?.response?.data?.message ||
+          "Unable to cancel order",
+      );
     } finally {
       setCancellingOrderId("");
     }
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | ORDER STATUS STYLE
+  |--------------------------------------------------------------------------
+  */
 
   const getStatusClass = (status) => {
     if (status === "Delivered") {
@@ -137,6 +204,49 @@ const Orders = () => {
     return "border-[#454545] text-neutral-400";
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | RETURN STATUS SUMMARY
+  |--------------------------------------------------------------------------
+  */
+
+  const getReturnSummary = (items = []) => {
+    const returnItems = items.filter(
+      (item) =>
+        item?.returnStatus &&
+        item.returnStatus !== "Not Requested",
+    );
+
+    if (returnItems.length === 0) {
+      return null;
+    }
+
+    const requestedCount = returnItems.filter(
+      (item) => item.returnStatus === "Requested",
+    ).length;
+
+    const approvedCount = returnItems.filter(
+      (item) => item.returnStatus === "Approved",
+    ).length;
+
+    const rejectedCount = returnItems.filter(
+      (item) => item.returnStatus === "Rejected",
+    ).length;
+
+    return {
+      total: returnItems.length,
+      requestedCount,
+      approvedCount,
+      rejectedCount,
+    };
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | LOADING STATE
+  |--------------------------------------------------------------------------
+  */
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#111111] text-white">
@@ -145,17 +255,28 @@ const Orders = () => {
             Orders
           </p>
 
-          <h1 className="mt-3 font-serif text-4xl">Loading orders...</h1>
+          <h1 className="mt-3 font-serif text-4xl">
+            Loading orders...
+          </h1>
         </div>
       </div>
     );
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | PAGE
+  |--------------------------------------------------------------------------
+  */
+
   return (
     <div className="min-h-screen bg-[#111111] text-white">
       <header className="border-b border-[#262626] bg-[#151515]">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 lg:px-10">
-          <Link to="/home" className="font-serif text-lg tracking-wide">
+          <Link
+            to="/home"
+            className="font-serif text-lg tracking-wide"
+          >
             UrbanThread
           </Link>
 
@@ -185,17 +306,88 @@ const Orders = () => {
       </header>
 
       <main className="mx-auto max-w-[1400px] px-6 py-10 lg:px-10 lg:py-14">
+        {/* --------------------------------------------------------------
+            PAGE HEADER
+        -------------------------------------------------------------- */}
+
         <div className="border-b border-[#292929] pb-8">
           <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
             Purchase History
           </p>
 
-          <h1 className="mt-3 font-serif text-4xl text-[#e8e3dc]">My Orders</h1>
+          <h1 className="mt-3 font-serif text-4xl text-[#e8e3dc]">
+            My Orders
+          </h1>
 
           <p className="mt-3 text-sm text-neutral-500">
-            View your previous UrbanThread purchases and order details.
+            View your previous UrbanThread purchases and
+            order details.
           </p>
         </div>
+
+        {/* --------------------------------------------------------------
+            SEARCH ORDERS
+        -------------------------------------------------------------- */}
+
+        <form
+          onSubmit={handleSearch}
+          className="mt-8 border border-[#2b2b2b] bg-[#151515] p-5 sm:p-6"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+            <div className="flex-1">
+              <label
+                htmlFor="order-search"
+                className="text-[9px] uppercase tracking-[0.16em] text-neutral-600"
+              >
+                Search Orders
+              </label>
+
+              <input
+                id="order-search"
+                type="text"
+                value={searchInput}
+                onChange={(event) =>
+                  setSearchInput(event.target.value)
+                }
+                placeholder="Search by order ID or status"
+                className="mt-2 w-full border border-[#333333] bg-[#111111] px-4 py-3 text-sm text-white outline-none transition placeholder:text-neutral-700 focus:border-[#555555]"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-white px-6 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Search
+              </button>
+
+              {activeSearch && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="border border-[#3a3a3a] px-6 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-neutral-400 transition hover:border-[#555555] hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {activeSearch && (
+            <p className="mt-4 text-[10px] uppercase tracking-[0.12em] text-neutral-600">
+              Showing results for:{" "}
+              <span className="text-neutral-400">
+                {activeSearch}
+              </span>
+            </p>
+          )}
+        </form>
+
+        {/* --------------------------------------------------------------
+            ERROR
+        -------------------------------------------------------------- */}
 
         {error && (
           <div className="mt-6 border border-red-900/50 bg-red-950/20 px-5 py-4 text-sm text-red-400">
@@ -203,37 +395,68 @@ const Orders = () => {
           </div>
         )}
 
+        {/* --------------------------------------------------------------
+            EMPTY / SEARCH RESULT STATE
+        -------------------------------------------------------------- */}
+
         {orders.length === 0 ? (
           <div className="mt-10 border border-dashed border-[#3a3a3a] bg-[#151515] p-12 text-center">
             <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-600">
-              No Orders
+              {activeSearch
+                ? "No Matching Orders"
+                : "No Orders"}
             </p>
 
             <h2 className="mt-3 font-serif text-3xl text-[#e8e3dc]">
-              You haven't placed an order yet.
+              {activeSearch
+                ? "No orders matched your search."
+                : "You haven't placed an order yet."}
             </h2>
 
-            <Link
-              to="/shop"
-              className="mt-8 inline-flex bg-white px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-black hover:bg-neutral-200"
-            >
-              Start Shopping
-            </Link>
+            {activeSearch ? (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="mt-8 inline-flex border border-[#3a3a3a] px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-300 hover:border-[#555555] hover:text-white"
+              >
+                View All Orders
+              </button>
+            ) : (
+              <Link
+                to="/shop"
+                className="mt-8 inline-flex bg-white px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-black hover:bg-neutral-200"
+              >
+                Start Shopping
+              </Link>
+            )}
           </div>
         ) : (
+          /* --------------------------------------------------------------
+             ORDER LIST
+          -------------------------------------------------------------- */
+
           <div className="mt-8 space-y-4">
             {orders.map((order) => {
-              const isCancelling = cancellingOrderId === order.orderId;
+              const isCancelling =
+                cancellingOrderId === order.orderId;
 
-              const canCancel = order.orderStatus === "Pending";
+              const canCancel =
+                order.orderStatus === "Pending";
 
               const activeItemCount =
-                order.items?.filter((item) => item.itemStatus !== "Cancelled")
-                  .length || 0;
+                order.items?.filter(
+                  (item) =>
+                    item.itemStatus !== "Cancelled",
+                ).length || 0;
 
               const cancelledItemCount =
-                order.items?.filter((item) => item.itemStatus === "Cancelled")
-                  .length || 0;
+                order.items?.filter(
+                  (item) =>
+                    item.itemStatus === "Cancelled",
+                ).length || 0;
+
+              const returnSummary =
+                getReturnSummary(order.items);
 
               return (
                 <article
@@ -251,7 +474,8 @@ const Orders = () => {
                       </h2>
 
                       <p className="mt-2 text-xs text-neutral-600">
-                        Placed on {formatDate(order.createdAt)}
+                        Placed on{" "}
+                        {formatDate(order.createdAt)}
                       </p>
                     </div>
 
@@ -278,11 +502,15 @@ const Orders = () => {
                       {canCancel && (
                         <button
                           type="button"
-                          onClick={() => handleCancelOrder(order)}
+                          onClick={() =>
+                            handleCancelOrder(order)
+                          }
                           disabled={isCancelling}
                           className="border border-red-900/60 px-5 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-red-400 transition hover:border-red-700 hover:bg-red-950/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {isCancelling ? "Cancelling..." : "Cancel Order"}
+                          {isCancelling
+                            ? "Cancelling..."
+                            : "Cancel Order"}
                         </button>
                       )}
                     </div>
@@ -295,8 +523,12 @@ const Orders = () => {
                       </p>
 
                       <p className="mt-2 text-sm text-neutral-300">
-                        {order.items?.length || 0} product
-                        {(order.items?.length || 0) === 1 ? "" : "s"}
+                        {order.items?.length || 0}{" "}
+                        product
+                        {(order.items?.length || 0) ===
+                        1
+                          ? ""
+                          : "s"}
                       </p>
                     </div>
 
@@ -330,6 +562,65 @@ const Orders = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* ------------------------------------------------------
+                      RETURN STATUS
+                  ------------------------------------------------------ */}
+
+                  {returnSummary && (
+                    <div className="mt-5 border-t border-[#292929] pt-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-[0.15em] text-neutral-600">
+                            Return Status
+                          </p>
+
+                          <p className="mt-2 text-sm text-neutral-300">
+                            {returnSummary.total}{" "}
+                            {returnSummary.total === 1
+                              ? "item"
+                              : "items"}{" "}
+                            with return request
+                            {returnSummary.total === 1
+                              ? ""
+                              : "s"}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {returnSummary.requestedCount >
+                            0 && (
+                            <span className="border border-amber-900/60 px-3 py-2 text-[8px] uppercase tracking-[0.13em] text-amber-400">
+                              {
+                                returnSummary.requestedCount
+                              }{" "}
+                              Requested
+                            </span>
+                          )}
+
+                          {returnSummary.approvedCount >
+                            0 && (
+                            <span className="border border-[#3d4d3d] px-3 py-2 text-[8px] uppercase tracking-[0.13em] text-neutral-300">
+                              {
+                                returnSummary.approvedCount
+                              }{" "}
+                              Approved
+                            </span>
+                          )}
+
+                          {returnSummary.rejectedCount >
+                            0 && (
+                            <span className="border border-red-900/60 px-3 py-2 text-[8px] uppercase tracking-[0.13em] text-red-400">
+                              {
+                                returnSummary.rejectedCount
+                              }{" "}
+                              Rejected
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </article>
               );
             })}

@@ -2,6 +2,7 @@ import {
   getAdminOrders,
   getAdminOrderById,
   updateAdminOrderStatus,
+  updateAdminOrderItemReturn,
 } from "../services/adminOrderService.js";
 
 /*
@@ -51,7 +52,9 @@ const getAdminOrdersController = async (req, res) => {
 
 const getAdminOrderController = async (req, res) => {
   try {
-    const order = await getAdminOrderById(req.params.orderId);
+    const order = await getAdminOrderById(
+      req.params.orderId,
+    );
 
     return res.status(200).json({
       success: true,
@@ -74,7 +77,10 @@ const getAdminOrderController = async (req, res) => {
 |--------------------------------------------------------------------------
 */
 
-const updateAdminOrderStatusController = async (req, res) => {
+const updateAdminOrderStatusController = async (
+  req,
+  res,
+) => {
   try {
     const { status, reason = "" } = req.body;
 
@@ -97,17 +103,73 @@ const updateAdminOrderStatusController = async (req, res) => {
       order,
     });
   } catch (error) {
-    console.error("UPDATE ADMIN ORDER STATUS ERROR:", error);
+    console.error(
+      "UPDATE ADMIN ORDER STATUS ERROR:",
+      error,
+    );
 
     return res.status(400).json({
       success: false,
-      message: error.message || "Unable to update order status",
+      message:
+        error.message || "Unable to update order status",
     });
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE ORDER ITEM RETURN STATUS
+|--------------------------------------------------------------------------
+*/
+
+const updateAdminOrderItemReturnController = async (
+  req,
+  res,
+) => {
+  try {
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Return status is required",
+      });
+    }
+
+    const order = await updateAdminOrderItemReturn(
+      req.params.orderId,
+      req.params.itemId,
+      status,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Return ${status.toLowerCase()} successfully`,
+      order,
+    });
+  } catch (error) {
+    console.error(
+      "UPDATE ADMIN ORDER RETURN ERROR:",
+      error,
+    );
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message || "Unable to update return status",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| EXPORTS
+|--------------------------------------------------------------------------
+*/
 
 export {
   getAdminOrdersController,
   getAdminOrderController,
   updateAdminOrderStatusController,
+  updateAdminOrderItemReturnController,
 };
