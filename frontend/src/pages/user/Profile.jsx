@@ -1,3 +1,4 @@
+
 import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -6,25 +7,16 @@ import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
   const { user, token, logout } = useContext(AuthContext);
-
   const navigate = useNavigate();
   const location = useLocation();
-
-  const currentPath = location.pathname;
-
-  // ==========================
-  // ADDRESS STATE
-  // ==========================
 
   const [addresses, setAddresses] = useState([]);
   const [addressLoading, setAddressLoading] = useState(true);
   const [addressError, setAddressError] = useState("");
 
-  // ==========================
-  // FETCH USER ADDRESSES
-  // ==========================
-
   useEffect(() => {
+    let active = true;
+
     const fetchAddresses = async () => {
       try {
         setAddressLoading(true);
@@ -32,198 +24,151 @@ const Profile = () => {
 
         const response = await getAddresses(token);
 
-        setAddresses(response.addresses || []);
+        if (active) {
+          setAddresses(response?.addresses || []);
+        }
       } catch (error) {
         console.error("FETCH ADDRESSES ERROR:", error);
 
-        setAddressError(
-          error.response?.data?.message || "Unable to load addresses",
-        );
+        if (active) {
+          setAddressError(
+            error.response?.data?.message ||
+              "Unable to load saved addresses.",
+          );
+        }
       } finally {
-        setAddressLoading(false);
+        if (active) {
+          setAddressLoading(false);
+        }
       }
     };
 
     if (token) {
       fetchAddresses();
     } else {
+      setAddresses([]);
       setAddressLoading(false);
     }
-  }, [token]);
 
-  // ==========================
-  // LOGOUT
-  // ==========================
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
   };
 
-  // ==========================
-  // USER INITIALS
-  // ==========================
-
   const getInitials = () => {
-    if (!user?.name) {
-      return "U";
-    }
+    if (!user?.name) return "U";
 
     return user.name
-      .split(" ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
       .map((word) => word.charAt(0))
       .join("")
       .slice(0, 2)
       .toUpperCase();
   };
 
-  // ==========================
-  // PHONE FORMAT
-  // ==========================
-
-  const formatPhone = () => {
-    return user?.phone || "Not added";
-  };
-
-  // ==========================
-  // SIDEBAR MENU
-  // ==========================
-
   const menuItems = [
     {
       label: "Overview",
       path: "/profile",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <rect x="4" y="4" width="6" height="6" rx="1" />
-          <rect x="14" y="4" width="6" height="6" rx="1" />
-          <rect x="4" y="14" width="6" height="6" rx="1" />
-          <rect x="14" y="14" width="6" height="6" rx="1" />
-        </svg>
-      ),
+      icon: "▦",
     },
     {
       label: "Personal Info",
       path: "/profile/edit",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <circle cx="12" cy="8" r="3.5" />
-          <path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" />
-        </svg>
-      ),
+      icon: "○",
     },
     {
       label: "Orders",
       path: "/orders",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <path d="M6 4h12l2 4v12H4V8l2-4Z" />
-          <path d="M4 8h16" />
-          <path d="M9 12h6" />
-        </svg>
-      ),
+      icon: "▤",
     },
     {
       label: "Wishlist",
       path: "/wishlist",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <path d="M20.8 8.8c0 5.5-8.8 10.2-8.8 10.2S3.2 14.3 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z" />
-        </svg>
-      ),
+      icon: "♡",
     },
     {
       label: "Addresses",
       path: "/addresses",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-          <circle cx="12" cy="10" r="2.5" />
-        </svg>
-      ),
+      icon: "⌖",
     },
     {
       label: "Coupons",
       path: "/coupons",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5"
-        >
-          <path d="M20 12a2 2 0 0 0 0-4V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3Z" />
-          <path d="M12 7v2" />
-          <path d="M12 15v2" />
-        </svg>
-      ),
+      icon: "%",
+    },
+    {
+      label: "My Wallet",
+      path: "/wallet",
+      icon: "₹",
+    },
+  ];
+
+  const overviewCards = [
+    {
+      title: "Orders",
+      description: "View your order history and track purchases.",
+      action: "View Orders",
+      path: "/orders",
+      symbol: "▤",
+    },
+    {
+      title: "Wishlist",
+      description: "Access products you have saved.",
+      action: "Manage Wishlist",
+      path: "/wishlist",
+      symbol: "♡",
+    },
+    {
+      title: "Saved Addresses",
+      description: addressLoading
+        ? "Loading saved addresses..."
+        : `${addresses.length} saved ${
+            addresses.length === 1 ? "address" : "addresses"
+          }`,
+      action: "Manage Addresses",
+      path: "/addresses",
+      symbol: "⌖",
+    },
+    {
+      title: "Coupons & Offers",
+      description: "Explore available offers and coupons.",
+      action: "View Offers",
+      path: "/coupons",
+      symbol: "%",
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#111111] text-white">
-      <div className="flex min-h-screen">
-        {/* ======================
-            SIDEBAR
-        ====================== */}
+      <div className="flex min-h-screen flex-col md:flex-row">
+        {/* SIDEBAR */}
 
-        <aside className="flex w-[245px] shrink-0 flex-col border-r border-[#333333] bg-[#181818]">
-          {/* Brand */}
-
-          <div className="border-b border-[#333333] px-7 py-7">
+        <aside className="flex w-full shrink-0 flex-col border-b border-[#333333] bg-[#181818] md:min-h-screen md:w-[245px] md:border-b-0 md:border-r">
+          <div className="border-b border-[#333333] px-6 py-6">
             <Link
               to="/"
-              className="font-serif text-[17px] tracking-[0.08em] text-[#d7d2ca]"
+              className="font-serif text-lg tracking-[0.08em] text-[#d7d2ca]"
             >
               URBAN THREAD
             </Link>
           </div>
 
-          {/* User Summary */}
+          {/* USER SUMMARY */}
 
           <div className="border-b border-[#333333] px-6 py-6">
             <div className="flex items-center gap-4">
               {user?.profileImage || user?.googleImage ? (
                 <img
                   src={user.profileImage || user.googleImage}
-                  alt={user.name}
+                  alt={user?.name || "User"}
                   className="h-11 w-11 rounded-full object-cover"
                 />
               ) : (
@@ -233,10 +178,9 @@ const Profile = () => {
               )}
 
               <div className="min-w-0">
-                <p className="truncate font-serif text-[16px] text-[#d7d2ca]">
+                <p className="truncate font-serif text-base text-[#d7d2ca]">
                   {user?.name || "User"}
                 </p>
-
                 <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-gray-500">
                   Customer Account
                 </p>
@@ -244,76 +188,73 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* NAVIGATION */}
 
-          <nav className="flex-1 py-4">
+          <nav className="grid grid-cols-2 py-3 sm:grid-cols-3 md:flex md:flex-1 md:flex-col md:py-4">
             {menuItems.map((item) => {
-              const isActive = currentPath === item.path;
+              const isActive =
+                item.path === "/profile"
+                  ? location.pathname === "/profile"
+                  : location.pathname === item.path ||
+                    location.pathname.startsWith(`${item.path}/`);
 
               return (
                 <Link
-                  key={item.label}
+                  key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-4 border-l-2 px-6 py-4 text-[11px] font-medium uppercase tracking-[0.16em] transition ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 border-l-2 px-4 py-3 text-[10px] font-medium uppercase tracking-[0.12em] transition sm:px-6 md:py-4 ${
                     isActive
-                      ? "border-blue-500 bg-[#242424] text-[#e8e3dc]"
-                      : "border-transparent text-gray-500 hover:bg-[#222222] hover:text-[#d7d2ca]"
+                      ? "border-white bg-[#242424] text-[#e8e3dc]"
+                      : "border-transparent text-gray-500 hover:bg-[#222222] hover:text-white"
                   }`}
                 >
-                  {item.icon}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base">
+                    {item.icon}
+                  </span>
                   <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Logout */}
+          {/* LOGOUT */}
 
-          <div className="border-t border-[#333333] p-6">
+          <div className="border-t border-[#333333] p-5 md:p-6">
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-gray-500 transition hover:text-white"
+              className="flex w-full items-center gap-3 text-left text-[11px] uppercase tracking-[0.16em] text-gray-500 transition hover:text-white"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                className="h-5 w-5"
-              >
-                <path d="M10 17l5-5-5-5" />
-                <path d="M15 12H3" />
-                <path d="M21 19V5a2 2 0 0 0-2-2h-5" />
-              </svg>
-
-              <span>Logout</span>
+              <span className="text-lg">↗</span>
+              Logout
             </button>
           </div>
         </aside>
 
-        {/* ======================
-            MAIN CONTENT
-        ====================== */}
+        {/* MAIN CONTENT */}
 
-        <main className="flex-1 px-6 py-8 sm:px-10 lg:px-14">
-          {/* Header */}
+        <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-12">
+          {/* PAGE HEADER */}
 
-          <div className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-7 md:flex-row md:items-center">
+          <header className="flex flex-col justify-between gap-5 border-b border-[#292929] pb-7 md:flex-row md:items-center">
             <div>
-              <h1 className="font-serif text-3xl text-[#e8e3dc] sm:text-4xl">
-                {user?.name || "User"}
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
+                Customer Account
+              </p>
+
+              <h1 className="mt-2 font-serif text-3xl text-[#e8e3dc] sm:text-4xl">
+                {user?.name || "My Account"}
               </h1>
 
-              <p className="mt-3 text-sm text-gray-500">
-                Welcome back to UrbanThread. Here is a summary of your account
-                activity.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
+                Manage your UrbanThread account, orders, addresses, offers,
+                and wallet in one place.
               </p>
             </div>
 
             <div
-              className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.16em] ${
+              className={`inline-flex w-fit items-center gap-2 border px-4 py-2 text-[10px] uppercase tracking-[0.16em] ${
                 user?.isVerified
                   ? "border-[#3a3a3a] text-gray-400"
                   : "border-yellow-900 text-yellow-600"
@@ -324,226 +265,154 @@ const Profile = () => {
                   user?.isVerified ? "bg-gray-400" : "bg-yellow-600"
                 }`}
               />
-
               {user?.isVerified ? "Verified Account" : "Unverified Account"}
             </div>
-          </div>
+          </header>
 
-          {/* Overview Heading */}
+          {/* ACCOUNT OVERVIEW */}
 
-          <div className="mt-9">
+          <section className="mt-9">
             <h2 className="font-serif text-2xl text-[#e8e3dc]">
               Account Overview
             </h2>
-          </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Choose a section below to manage your account.
+            </p>
 
-          {/* Overview and Personal Info */}
-
-          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-            {/* Overview Cards */}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Orders Card */}
-
-              <div className="group rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[#333333] text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      className="h-5 w-5"
-                    >
-                      <path d="M6 4h12l2 4v12H4V8l2-4Z" />
-                      <path d="M4 8h16" />
-                      <path d="M9 12h6" />
-                    </svg>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {overviewCards.map((card) => (
+                <article
+                  key={card.path}
+                  className="border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-10 w-10 items-center justify-center border border-[#333333] text-xl text-gray-400">
+                      {card.symbol}
+                    </span>
+                    <span className="font-serif text-3xl text-[#343434]">
+                      {card.path === "/addresses"
+                        ? addressLoading
+                          ? "—"
+                          : addresses.length
+                        : "↗"}
+                    </span>
                   </div>
 
-                  <span className="font-serif text-3xl text-[#343434]">0</span>
-                </div>
+                  <h3 className="mt-6 text-sm font-medium text-[#e8e3dc]">
+                    {card.title}
+                  </h3>
 
-                <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
-                  Total Orders
-                </p>
+                  <p className="mt-2 min-h-10 text-xs leading-5 text-gray-500">
+                    {card.description}
+                  </p>
 
-                <Link
-                  to="/orders"
-                  className="mt-4 inline-block text-[10px] uppercase tracking-[0.14em] text-gray-400 transition hover:text-white"
-                >
-                  View History
-                </Link>
-              </div>
+                  <Link
+                    to={card.path}
+                    className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-gray-400 transition hover:text-white"
+                  >
+                    {card.action}
+                    <span>→</span>
+                  </Link>
+                </article>
+              ))}
 
-              {/* Wishlist Card */}
+              {/* WALLET CARD */}
 
-              <div className="group rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]">
+              <Link
+                to="/wallet"
+                className="group border border-[#454545] bg-[#151515] p-5 transition hover:border-gray-300 hover:bg-[#1b1b1b] sm:col-span-2 xl:col-span-1"
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[#333333] text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      className="h-5 w-5"
-                    >
-                      <path d="M20.8 8.8c0 5.5-8.8 10.2-8.8 10.2S3.2 14.3 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z" />
-                    </svg>
-                  </div>
-
-                  <span className="font-serif text-3xl text-[#343434]">0</span>
-                </div>
-
-                <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
-                  Wishlist Items
-                </p>
-
-                <Link
-                  to="/wishlist"
-                  className="mt-4 inline-block text-[10px] uppercase tracking-[0.14em] text-gray-400 transition hover:text-white"
-                >
-                  Manage Wishlist
-                </Link>
-              </div>
-
-              {/* Address Count Card */}
-
-              <div className="group rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[#333333] text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      className="h-5 w-5"
-                    >
-                      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                      <circle cx="12" cy="10" r="2.5" />
-                    </svg>
+                  <div className="flex h-10 w-10 items-center justify-center border border-[#454545] font-serif text-xl text-[#e8e3dc]">
+                    ₹
                   </div>
 
                   <span className="font-serif text-3xl text-[#343434]">
-                    {addressLoading ? "—" : addresses.length}
+                    →
                   </span>
                 </div>
 
-                <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
-                  Saved Addresses
+                <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-400">
+                  UrbanThread Wallet
                 </p>
 
-                <Link
-                  to="/addresses"
-                  className="mt-4 inline-block text-[10px] uppercase tracking-[0.14em] text-gray-400 transition hover:text-white"
-                >
-                  Edit Addresses
-                </Link>
-              </div>
+                <h3 className="mt-2 font-serif text-2xl text-[#e8e3dc]">
+                  My Wallet
+                </h3>
 
-              {/* Coupons Card */}
+                <p className="mt-3 text-sm leading-6 text-gray-500">
+                  Check your wallet balance, view refunds and wallet
+                  transactions, and use your balance during checkout.
+                </p>
 
-              <div className="group rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-5 transition hover:border-[#454545]">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[#333333] text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      className="h-5 w-5"
-                    >
-                      <path d="M20 12a2 2 0 0 0 0-4V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3Z" />
-                      <path d="M12 7v2" />
-                      <path d="M12 15v2" />
-                    </svg>
+                <div className="mt-6 flex items-center justify-between border-t border-[#303030] pt-4">
+                  <span className="text-[10px] uppercase tracking-[0.15em] text-gray-300">
+                    Open Wallet
+                  </span>
+                  <span className="transition group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </Link>
+
+              {/* PERSONAL INFORMATION CARD */}
+
+              <article className="border border-[#2c2c2c] bg-[#1b1b1b] p-5 sm:col-span-2 xl:col-span-1">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500">
+                  Account Details
+                </p>
+
+                <h3 className="mt-3 font-serif text-2xl text-[#e8e3dc]">
+                  Personal Info
+                </h3>
+
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-gray-500">
+                      Full Name
+                    </p>
+                    <p className="mt-1 break-words text-sm text-gray-300">
+                      {user?.name || "Not available"}
+                    </p>
                   </div>
 
-                  <span className="font-serif text-3xl text-[#343434]">0</span>
-                </div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-gray-500">
+                      Email Address
+                    </p>
+                    <p className="mt-1 break-all text-sm text-gray-300">
+                      {user?.email || "Not available"}
+                    </p>
+                  </div>
 
-                <p className="mt-6 text-[10px] uppercase tracking-[0.16em] text-gray-500">
-                  Active Coupons
-                </p>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-gray-500">
+                      Phone Number
+                    </p>
+                    <p className="mt-1 text-sm text-gray-300">
+                      {user?.phone || "Not added"}
+                    </p>
+                  </div>
+                </div>
 
                 <Link
-                  to="/coupons"
-                  className="mt-4 inline-block text-[10px] uppercase tracking-[0.14em] text-gray-400 transition hover:text-white"
+                  to="/profile/edit"
+                  className="mt-6 inline-flex border-b border-gray-600 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-white hover:text-white"
                 >
-                  View Offers
+                  Edit Personal Info
                 </Link>
-              </div>
+              </article>
             </div>
+          </section>
 
-            {/* Personal Information Card */}
-
-            <div className="rounded-md border border-[#2c2c2c] bg-[#1b1b1b] p-6">
-              <h3 className="font-serif text-xl text-[#e8e3dc]">
-                Personal Info
-              </h3>
-
-              <div className="mt-7 space-y-6">
-                {/* Full Name */}
-
-                <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-gray-500">
-                    Full Name
-                  </p>
-
-                  <p className="mt-2 text-sm text-gray-300">
-                    {user?.name || "Not available"}
-                  </p>
-                </div>
-
-                {/* Email */}
-
-                <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-gray-500">
-                    Email Address
-                  </p>
-
-                  <p className="mt-2 break-all text-sm text-gray-300">
-                    {user?.email || "Not available"}
-                  </p>
-                </div>
-
-                {/* Phone */}
-
-                <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-gray-500">
-                    Phone Number
-                  </p>
-
-                  <p className="mt-2 text-sm text-gray-300">{formatPhone()}</p>
-                </div>
-              </div>
-
-              <Link
-                to="/profile/edit"
-                className="mt-8 inline-flex border-b border-gray-600 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-white hover:text-white"
-              >
-                Edit Personal Info
-              </Link>
-            </div>
-          </div>
-
-          {/* ==========================
-              SAVED ADDRESSES SECTION
-          ========================== */}
+          {/* SAVED ADDRESSES */}
 
           <section className="mt-10 border-t border-[#292929] pt-9">
-            {/* Address Header */}
-
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
                   Delivery Information
                 </p>
-
                 <h2 className="mt-2 font-serif text-2xl text-[#e8e3dc]">
                   Saved Addresses
                 </h2>
@@ -554,7 +423,7 @@ const Profile = () => {
                   {addressLoading
                     ? "Loading..."
                     : `${addresses.length} ${
-                        addresses.length === 1 ? "Address" : "Addresses"
+                        addresses.length === 1 ? "address" : "addresses"
                       }`}
                 </span>
 
@@ -567,8 +436,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Loading State */}
-
             {addressLoading && (
               <div className="border border-[#2c2c2c] bg-[#1b1b1b] p-7">
                 <p className="text-sm text-gray-500">
@@ -577,97 +444,109 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Error State */}
-
             {!addressLoading && addressError && (
-              <div className="border border-red-900/50 bg-red-950/20 p-7">
+              <div
+                role="alert"
+                className="border border-red-900/50 bg-red-950/20 p-5"
+              >
                 <p className="text-sm text-red-400">{addressError}</p>
-              </div>
-            )}
-
-            {/* Empty State */}
-
-            {!addressLoading && !addressError && addresses.length === 0 && (
-              <div className="border border-dashed border-[#3a3a3a] bg-[#151515] p-10 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#333333] text-gray-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-5 w-5"
-                  >
-                    <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                    <circle cx="12" cy="10" r="2.5" />
-                  </svg>
-                </div>
-
-                <p className="mt-4 text-sm text-gray-400">
-                  No saved addresses yet.
-                </p>
-
-                <p className="mt-2 text-xs text-gray-600">
-                  Your saved delivery addresses will appear here.
-                </p>
-
                 <Link
                   to="/addresses"
-                  className="mt-6 inline-block border border-[#3a3a3a] px-5 py-3 text-[10px] uppercase tracking-[0.15em] text-gray-400 transition hover:border-gray-500 hover:text-white"
+                  className="mt-3 inline-block text-xs text-gray-300 underline hover:text-white"
                 >
-                  Add Your First Address
+                  Open address management
                 </Link>
               </div>
             )}
 
-            {/* Address Cards */}
-
-            {!addressLoading && !addressError && addresses.length > 0 && (
-              <div className="grid gap-5 md:grid-cols-2">
-                {addresses.map((address) => (
-                  <div
-                    key={address._id}
-                    className="border border-[#2c2c2c] bg-[#1b1b1b] p-6 transition hover:border-[#454545]"
+            {!addressLoading &&
+              !addressError &&
+              addresses.length === 0 && (
+                <div className="border border-dashed border-[#3a3a3a] bg-[#151515] p-8 text-center">
+                  <p className="text-sm text-gray-400">
+                    No saved addresses yet.
+                  </p>
+                  <p className="mt-2 text-xs text-gray-600">
+                    Add an address for a faster checkout experience.
+                  </p>
+                  <Link
+                    to="/addresses"
+                    className="mt-5 inline-block border border-[#3a3a3a] px-5 py-3 text-[10px] uppercase tracking-[0.15em] text-gray-300 transition hover:border-gray-500 hover:text-white"
                   >
-                    {/* Card Header */}
+                    Add an Address
+                  </Link>
+                </div>
+              )}
 
-                    <div className="mb-5 flex items-center justify-between gap-3">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-gray-400">
-                        {address.addressType || "Address"}
-                      </p>
+            {!addressLoading &&
+              !addressError &&
+              addresses.length > 0 && (
+                <div className="grid gap-5 md:grid-cols-2">
+                  {addresses.map((address) => (
+                    <article
+                      key={address._id}
+                      className="border border-[#2c2c2c] bg-[#1b1b1b] p-6 transition hover:border-[#454545]"
+                    >
+                      <div className="mb-5 flex items-center justify-between gap-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-gray-400">
+                          {address.addressType || "Address"}
+                        </p>
 
-                      {address.isDefault && (
-                        <span className="border border-[#555555] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-gray-300">
-                          Default
-                        </span>
-                      )}
-                    </div>
+                        {address.isDefault && (
+                          <span className="border border-[#555555] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-gray-300">
+                            Default
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Address Details */}
+                      <div className="space-y-2 text-sm leading-6 text-gray-400">
+                        <p className="font-medium text-white">
+                          {address.fullName}
+                        </p>
+                        {address.phone && <p>{address.phone}</p>}
+                        {address.houseName && <p>{address.houseName}</p>}
+                        {address.street && <p>{address.street}</p>}
+                        <p>
+                          {[address.city, address.state]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                        <p>
+                          {[address.pincode, address.country]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+          </section>
 
-                    <div className="space-y-2 text-sm leading-6 text-gray-400">
-                      <p className="font-medium text-white">
-                        {address.fullName}
-                      </p>
+          {/* WALLET SHORTCUT */}
 
-                      <p>{address.phone}</p>
-
-                      <p>{address.houseName}</p>
-
-                      <p>{address.street}</p>
-
-                      <p>
-                        {address.city}, {address.state}
-                      </p>
-
-                      <p>
-                        {address.pincode}, {address.country}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          <section className="mt-10 border-t border-[#292929] pt-8">
+            <div className="flex flex-col justify-between gap-4 border border-[#333333] bg-[#181818] p-5 sm:flex-row sm:items-center sm:p-7">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
+                  Payments & Refunds
+                </p>
+                <h2 className="mt-2 font-serif text-xl text-[#e8e3dc]">
+                  Need to check your wallet?
+                </h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  View available balance and wallet transaction history.
+                </p>
               </div>
-            )}
+
+              <Link
+                to="/wallet"
+                className="inline-flex w-fit items-center gap-3 bg-white px-5 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-black transition hover:bg-neutral-200"
+              >
+                Go to Wallet
+                <span>→</span>
+              </Link>
+            </div>
           </section>
         </main>
       </div>

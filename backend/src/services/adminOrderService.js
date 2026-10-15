@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 
 import Order from "../models/Order.js";
 
+import { creditWallet } from "./walletService.js";
+
 import { cancelUserOrder } from "./orderService.js";
 
 /*
@@ -441,157 +443,185 @@ const updateAdminOrderStatus = async (
 |--------------------------------------------------------------------------
 */
 
+
 const updateAdminOrderItemReturn = async (
   orderId,
   itemId,
   returnStatus,
 ) => {
-  /*
-   * VALIDATE ORDER ID
-   */
-
-  if (
-    !mongoose.Types.ObjectId.isValid(
-      orderId,
-    )
-  ) {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new Error("Invalid order ID");
   }
 
-  /*
-   * VALIDATE ITEM ID
-   */
-
-  if (
-    !mongoose.Types.ObjectId.isValid(
-      itemId,
-    )
-  ) {
-    throw new Error(
-      "Invalid order item ID",
-    );
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    throw new Error("Invalid order item ID");
   }
 
-  /*
-   * VALIDATE RETURN STATUS
-   */
-
-  if (
-    !VALID_RETURN_STATUSES.includes(
-      returnStatus,
-    )
-  ) {
-    throw new Error(
-      "Invalid return status",
-    );
+  if (!VALID_RETURN_STATUSES.includes(returnStatus)) {
+    throw new Error("Invalid return status");
   }
 
-  /*
-   * FIND ORDER
-   */
-
-  const order = await Order.findById(
-    orderId,
-  );
+  const order = await Order.findById(orderId);
 
   if (!order) {
     throw new Error("Order not found");
   }
 
-  /*
-   * FIND ORDER ITEM
-   */
-
   const orderItem = order.items.find(
-    (item) =>
-      item._id.toString() === itemId,
+    (item) => item._id.toString() === itemId,
   );
 
   if (!orderItem) {
-    throw new Error(
-      "Order item not found",
-    );
+    throw new Error("Order item not found");
   }
 
-  /*
-   * PREVENT RETURNING CANCELLED ITEMS
-   */
-
-  if (
-    orderItem.itemStatus === "Cancelled"
-  ) {
+  if (orderItem.itemStatus === "Cancelled") {
     throw new Error(
       "A cancelled product cannot be returned",
     );
   }
 
-  /*
-   * GET CURRENT RETURN STATUS
-   *
-   * Fallback supports older order items
-   * that may not have a returnStatus value.
-   */
-
   const currentReturnStatus =
-    orderItem.returnStatus ||
-    "Not Requested";
+    orderItem.returnStatus || "Not Requested";
 
-  /*
-   * ENSURE A RETURN REQUEST EXISTS
-   */
-
-  if (
-    currentReturnStatus ===
-    "Not Requested"
-  ) {
+  if (currentReturnStatus === "Not Requested") {
     throw new Error(
       "The customer has not requested a return for this item",
     );
   }
 
-  /*
-   * VALIDATE RETURN STATUS TRANSITION
-   */
-
   const allowedNextStatuses =
-    allowedReturnTransitions[
-      currentReturnStatus
-    ] || [];
+    allowedReturnTransitions[currentReturnStatus] || [];
 
-  if (
-    !allowedNextStatuses.includes(
-      returnStatus,
-    )
-  ) {
+  if (!allowedNextStatuses.includes(returnStatus)) {
     throw new Error(
       `Cannot change return status from "${currentReturnStatus}" to "${returnStatus}"`,
     );
   }
 
-  /*
-   * UPDATE RETURN STATUS
-   */
+  let refundAmount = 0;
 
-  orderItem.returnStatus =
-    returnStatus;
+  if (returnStatus === "Refund Completed") {
+    if (currentReturnStatus !== "Inspected") {
+      throw new Error(
+        "The returned item must be inspected before refunding",
+      );
+    }
 
-  /*
-   * SAVE ORDER
-   */
+    const itemAmount = Number(orderItem.itemTotal);
+
+    if (
+      !Number.isFinite(itemAmount) ||
+      itemAmount <= 0
+    ) {
+      throw new Error(
+        "A valid refundable item total was not found",
+      );
+    }
+
+    if (!order.user) {
+      throw new Error(
+        "The customer associated with this order was not found",
+      );
+    }
+
+    // Sum the selling totals of all items before the
+    // order-level coupon discount.
+    const orderItemsSubtotal = order.items.reduce(
+      (total, item) => {
+        const amount = Number(item.itemTotal || 0);
+
+        if (!Number.isFinite(amount) || amount < 0) {
+          throw new Error(
+            "Invalid item total found in the order",
+          );
+        }
+
+        return total + amount;
+      },
+      0,
+    );
+
+    const couponDiscount = Number(
+      order.couponDiscount || 0,
+    );
+
+    if (
+      !Number.isFinite(couponDiscount) ||
+      couponDiscount < 0
+    ) {
+      throw new Error(
+        "Invalid coupon discount found in the order",
+      );
+    }
+
+    if (
+      couponDiscount > 0 &&
+      orderItemsSubtotal <= 0
+    ) {
+      throw new Error(
+        "Cannot allocate the coupon discount because the order subtotal is invalid",
+      );
+    }
+
+    if (couponDiscount > orderItemsSubtotal) {
+      throw new Error(
+        "Coupon discount cannot exceed the order items subtotal",
+      );
+    }
+
+    // Allocate the actual coupon discount proportionally
+    // according to each item's share of the selling total.
+    const itemCouponDiscount =
+      orderItemsSubtotal > 0
+        ? Math.round(
+            (
+              (couponDiscount * itemAmount) /
+                orderItemsSubtotal +
+              Number.EPSILON
+            ) * 100,
+          ) / 100
+        : 0;
+
+    // Refund the item amount after its allocated coupon discount.
+    refundAmount = Math.max(
+      0,
+      Math.round(
+        (
+          itemAmount -
+          itemCouponDiscount +
+          Number.EPSILON
+        ) * 100,
+      ) / 100,
+    );
+
+    if (refundAmount <= 0) {
+      throw new Error(
+        "The calculated refund amount must be greater than zero",
+      );
+    }
+
+    await creditWallet({
+      userId: order.user,
+      amount: refundAmount,
+      category: "Return Refund",
+      referenceType: "OrderItem",
+      referenceId: itemId,
+      description: `Return refund for order ${order.orderId}`,
+    });
+  }
+
+  orderItem.returnStatus = returnStatus;
 
   await order.save();
 
-  /*
-   * RETURN UPDATED ORDER
-   */
-
   return Order.findById(order._id)
-    .populate(
-      "user",
-      "name email phone",
-    )
+    .populate("user", "name email phone")
     .lean();
 };
+
+
+
 
 /*
 |--------------------------------------------------------------------------

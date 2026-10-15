@@ -25,6 +25,7 @@
     "multer": "^2.3.0",
     "nodemailer": "^10.0.10",
     "pdfkit": "^0.20.2",
+    "razorpay": "^2.9.8",
     "react-easy-crop": "^6.2.3",
     "zod": "^4.6.2"
   },

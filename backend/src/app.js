@@ -23,6 +23,9 @@ import ratingRoutes from "./routes/ratingRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import availableCouponRoutes from "./routes/availableCouponRoutes.js";
+import walletRoutes from "./routes/walletRoutes.js";
+
+import offerRoutes from "./routes/offerRoutes.js";
 
 const app = express();
 
@@ -242,5 +245,9 @@ app.use("/api/coupons/available", availableCouponRoutes);
 */
 
 app.use("/api/coupons", couponRoutes);
+
+app.use("/api/wallet", walletRoutes);
+
+app.use("/api/admin/offers", offerRoutes);
 
 export default app;

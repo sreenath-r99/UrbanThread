@@ -1,3 +1,4 @@
+
 import { Navigate, Routes, Route, Outlet } from "react-router-dom";
 
 // ============================================================
@@ -34,6 +35,8 @@ import OrderSuccess from "../pages/user/OrderSuccess";
 import Orders from "../pages/user/Orders";
 import OrderDetails from "../pages/user/OrderDetails";
 
+import Wallet from "../pages/user/Wallet.jsx";
+
 // ============================================================
 // ADMIN PAGES
 // ============================================================
@@ -58,9 +61,9 @@ import Inventory from "../pages/admin/Inventory";
 import Users from "../pages/admin/Users";
 import AdminOrders from "../pages/admin/Orders";
 
-// Reviews and Coupons
 import Reviews from "../pages/admin/Reviews";
 import Coupons from "../pages/admin/Coupons";
+import Offers from "../pages/admin/Offers";
 
 // ============================================================
 // ADMIN COMPONENTS
@@ -78,105 +81,80 @@ import AdminProtectedRoute from "./AdminProtectedRoute";
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* ====================================================== */}
-      {/* PUBLIC USER AUTH ROUTES */}
-      {/* ====================================================== */}
+      {/* ======================================================
+          PUBLIC USER AUTH ROUTES
+      ====================================================== */}
 
       <Route path="/register" element={<Register />} />
-
       <Route path="/verify-otp" element={<VerifyOtp />} />
-
       <Route path="/login" element={<Login />} />
-
       <Route path="/forgot-password" element={<ForgotPassword />} />
-
       <Route path="/verify-reset-otp" element={<VerifyResetOtp />} />
-
       <Route path="/create-new-password" element={<CreateNewPassword />} />
-
       <Route path="/" element={<Landing />} />
 
-      {/* ====================================================== */}
-      {/* PROTECTED USER ROUTES */}
-      {/* ====================================================== */}
+      {/* ======================================================
+          PROTECTED USER ROUTES
+      ====================================================== */}
 
       <Route element={<ProtectedRoute />}>
-        {/* HOME */}
-
         <Route path="/home" element={<Home />} />
-
-        {/* SHOP */}
-
         <Route path="/shop" element={<Shop />} />
-
-        {/* PRODUCT DETAILS */}
-
         <Route path="/products/:productId" element={<ProductDetails />} />
-
-        {/* CART */}
-
         <Route path="/cart" element={<Cart />} />
-
-        {/* CHECKOUT */}
-
         <Route path="/checkout" element={<Checkout />} />
-
-        {/* WISHLIST */}
-
         <Route path="/wishlist" element={<Wishlist />} />
-
-        {/* ORDERS */}
-
         <Route path="/orders" element={<Orders />} />
-
-        {/* ORDER DETAILS */}
-
         <Route path="/orders/:orderId" element={<OrderDetails />} />
-
-        {/* ORDER SUCCESS */}
-
-        <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route
+          path="/order-success/:orderId"
+          element={<OrderSuccess />}
+        />
 
         {/* PROFILE */}
-
         <Route path="/profile" element={<Profile />} />
-
         <Route path="/profile/edit" element={<EditProfile />} />
-
-        <Route path="/profile/change-password" element={<ChangePassword />} />
-
+        <Route
+          path="/profile/change-password"
+          element={<ChangePassword />}
+        />
         <Route path="/profile/change-email" element={<ChangeEmail />} />
 
         {/* ADDRESSES */}
-
         <Route path="/addresses" element={<Addresses />} />
-
         <Route path="/addresses/add" element={<AddAddress />} />
+        <Route
+          path="/addresses/edit/:addressId"
+          element={<EditAddress />}
+        />
 
-        <Route path="/addresses/edit/:addressId" element={<EditAddress />} />
+        {/* WALLET */}
+        <Route path="/wallet" element={<Wallet />} />
       </Route>
 
-      {/* ====================================================== */}
-      {/* ADMIN AUTH ROUTES */}
-      {/* ====================================================== */}
+      {/* ======================================================
+          ADMIN AUTH ROUTES
+      ====================================================== */}
 
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route
+        path="/admin/forgot-password"
+        element={<AdminForgotPassword />}
+      />
+      <Route
+        path="/admin/verify-reset-otp"
+        element={<AdminVerifyResetOtp />}
+      />
+      <Route
+        path="/admin/reset-password"
+        element={<AdminResetPassword />}
+      />
 
-      <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
-
-      <Route path="/admin/verify-reset-otp" element={<AdminVerifyResetOtp />} />
-
-      <Route path="/admin/reset-password" element={<AdminResetPassword />} />
-
-      {/* ====================================================== */}
-      {/* PROTECTED ADMIN ROUTES */}
-      {/* ====================================================== */}
+      {/* ======================================================
+          PROTECTED ADMIN ROUTES
+      ====================================================== */}
 
       <Route element={<AdminProtectedRoute />}>
-        {/* ==================================================== */}
-        {/* ADMIN LAYOUT */}
-        {/* ==================================================== */}
-
         <Route
           element={
             <AdminLayout>
@@ -184,79 +162,63 @@ const AppRoutes = () => {
             </AdminLayout>
           }
         >
-          {/* ================================================== */}
           {/* DASHBOARD */}
-          {/* ================================================== */}
+          <Route
+            path="/admin/dashboard"
+            element={<AdminDashboard />}
+          />
 
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-
-          {/* ================================================== */}
           {/* PRODUCTS */}
-          {/* ================================================== */}
-
           <Route path="/admin/products" element={<Products />} />
 
-          {/* ================================================== */}
           {/* INVENTORY */}
-          {/* ================================================== */}
-
           <Route path="/admin/inventory" element={<Inventory />} />
 
-          {/* ================================================== */}
           {/* CATEGORIES */}
-          {/* ================================================== */}
-
           <Route path="/admin/categories" element={<Categories />} />
-
-          <Route path="/admin/categories/add" element={<AddCategory />} />
-
+          <Route
+            path="/admin/categories/add"
+            element={<AddCategory />}
+          />
           <Route
             path="/admin/categories/edit/:categoryId"
             element={<EditCategory />}
           />
 
-          {/* ================================================== */}
           {/* SUBCATEGORIES */}
-          {/* ================================================== */}
-
-          <Route path="/admin/subcategories" element={<Subcategories />} />
-
-          <Route path="/admin/subcategories/add" element={<AddSubcategory />} />
-
+          <Route
+            path="/admin/subcategories"
+            element={<Subcategories />}
+          />
+          <Route
+            path="/admin/subcategories/add"
+            element={<AddSubcategory />}
+          />
           <Route
             path="/admin/subcategories/edit/:subcategoryId"
             element={<EditSubcategory />}
           />
 
-          {/* ================================================== */}
           {/* ORDERS */}
-          {/* ================================================== */}
-
           <Route path="/admin/orders" element={<AdminOrders />} />
 
-          {/* ================================================== */}
           {/* USERS */}
-          {/* ================================================== */}
-
           <Route path="/admin/users" element={<Users />} />
 
-          {/* ================================================== */}
           {/* REVIEWS */}
-          {/* ================================================== */}
-
           <Route path="/admin/reviews" element={<Reviews />} />
 
-          {/* ================================================== */}
           {/* COUPONS */}
-          {/* ================================================== */}
-
           <Route path="/admin/coupons" element={<Coupons />} />
+
+          {/* OFFERS */}
+          <Route path="/admin/offers" element={<Offers />} />
         </Route>
       </Route>
 
-      {/* ====================================================== */}
-      {/* FALLBACK ROUTE */}
-      {/* ====================================================== */}
+      {/* ======================================================
+          FALLBACK ROUTE
+      ====================================================== */}
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
